@@ -18,82 +18,68 @@ import { getSalInfo } from "./_mock-events";
 type OjpEventComponentProps = {
   event: OjpEventPositioned;
   timeHourFrom: number;
+  timeHourTo: number;
 };
 
-export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, timeHourFrom }) => {
+export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, timeHourFrom, timeHourTo }) => {
   const isDialogOpen = useSignal(false);
   const timeFormatter = new Intl.DateTimeFormat("cs", { hourCycle: "h23", timeStyle: "short" });
 
-  // Vypočítáme pozici v gridu
-  const startMinutes = event.dateFrom.getHours() * 60 + event.dateFrom.getMinutes();
-  const endMinutes = event.dateTo.getHours() * 60 + event.dateTo.getMinutes();
-  const gridStartMinutes = timeHourFrom * 60;
+  // Vypočítáme pozici v procentech
+  const totalMinutes = (timeHourTo - timeHourFrom) * 60;
+  const startMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
+  const endMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
-  // Každá hodina má 4 sloupce (15min intervaly), začínáme od sloupce 1
-  const startColumn = Math.floor((startMinutes - gridStartMinutes) / 15) + 1;
-  const endColumn = Math.floor((endMinutes - gridStartMinutes) / 15) + 1;
-  const spanColumns = endColumn - startColumn;
+  const leftPercent = (startMinutes / totalMinutes) * 100;
+  const widthPercent = ((endMinutes - startMinutes) / totalMinutes) * 100;
 
   const salInfo = getSalInfo(event.sal);
 
-  // Styling podle typu události
-  const getEventStyle = () => {
-    const baseStyle = "absolute inset-1 rounded border-2 p-2 cursor-pointer hover:shadow-md transition-shadow z-20";
+  // Styling podle typu události - úklidy a pauzy vždy šedé
+  const isUtilityEvent =
+    event.typ === "uklid" || event.typ === "pauza" || event.title.includes("ÚS") || event.title.includes("OBĚDOVÁ");
 
-    switch (event.typ) {
-      case "uklid":
-        return `${baseStyle} bg-gray-200 text-gray-800 border-gray-400`;
-      case "pauza":
-        return `${baseStyle} bg-yellow-100 text-yellow-800 border-yellow-400`;
-      case "operace":
-      default:
-        return `${baseStyle} text-black border-opacity-80`;
-    }
-  };
+  const backgroundColor = isUtilityEvent ? "#e5e7eb" : salInfo.bgColor;
+  const borderColor = isUtilityEvent ? "#9ca3af" : salInfo.color;
 
   return (
     <>
       <div
-        class="relative"
+        class="group absolute bottom-2 top-2 z-10 cursor-pointer rounded-md border-2 p-2 text-xs transition-all hover:z-20 hover:shadow-lg"
+        onClick$={() => {
+          isDialogOpen.value = true;
+        }}
         style={`
-          grid-column: ${startColumn} / span ${spanColumns};
-          grid-row: 1;
-        `}
-      >
-        <div
-          class={getEventStyle()}
-          onClick$={() => {
-            isDialogOpen.value = true;
-          }}
-          style={`
-            background-color: ${salInfo.bgColor};
-            border-color: ${salInfo.color};
+            left: ${leftPercent}%;
+            width: ${widthPercent}%;
+            background-color: ${backgroundColor};
+            border-color: ${borderColor};
           `}
-        >
-          <div class="absolute right-1 top-1 opacity-0 transition-opacity hover:opacity-100">
-            <Button
-              aria-label="Editovat"
-              class="rounded p-1 hover:bg-white hover:bg-opacity-50"
-              onClick$={() => {
-                isDialogOpen.value = true;
-              }}
-              size="xs"
-              type="button"
-            >
-              <ButtonLabelIcon as={EditIcon} standalone />
-              <span class="sr-only">Editovat událost</span>
-            </Button>
-          </div>
-
-          <div class="text-sm font-bold">{event.title}</div>
-          <div class="text-xs opacity-75">
-            {timeFormatter.format(event.dateFrom)} - {timeFormatter.format(event.dateTo)}
-          </div>
-          {event.operator && <div class="mt-1 text-xs opacity-75">{event.operator}</div>}
+      >
+        <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
+          <Button
+            aria-label="Editovat"
+            class="rounded p-1 hover:bg-white hover:bg-opacity-50"
+            onClick$={(e) => {
+              e.stopPropagation();
+              isDialogOpen.value = true;
+            }}
+            size="xs"
+            type="button"
+          >
+            <ButtonLabelIcon as={EditIcon} standalone />
+            <span class="sr-only">Editovat událost</span>
+          </Button>
         </div>
+
+        <div class="overflow-hidden font-semibold leading-tight text-black">{event.title}</div>
+        <div class="mt-1 text-[0.6rem] opacity-75">
+          {timeFormatter.format(event.dateFrom)} - {timeFormatter.format(event.dateTo)}
+        </div>
+        {event.operator && <div class="mt-1 overflow-hidden text-[0.6rem] opacity-75">{event.operator}</div>}
       </div>
 
-      <Dialog bind:show={isDialogOpen} open={isDialogOpen.value}>
+      <Dialog bind:show={isDialogOpen}>
         <DialogHeader>Detail události - {event.title}</DialogHeader>
         <DialogBody>
           <div class="space-y-4">
@@ -107,9 +93,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, ti
             </div>
 
             <PreviewText label="Doba trvání" value={`${event.duration} min`} />
-
             {event.operator && <PreviewText label="Operatér" value={event.operator} />}
-
             {event.poznamka && <PreviewText label="Poznámka" value={event.poznamka} />}
           </div>
         </DialogBody>

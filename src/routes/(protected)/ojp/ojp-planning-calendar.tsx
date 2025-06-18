@@ -1,3 +1,4 @@
+import { Card } from "@akeso/ui-components";
 import { component$ } from "@builder.io/qwik";
 
 import { useOjpPlanningData } from "./_loaders";
@@ -8,16 +9,18 @@ export const OjpPlanningCalendar = component$(() => {
   const data = useOjpPlanningData().value;
 
   return (
-    <div class="flex h-full flex-col">
+    <Card class="flex h-[calc(100vh-12rem)] flex-col">
       <OjpCalendarHeader weekStart={data.weekStart} />
-      <OjpCalendarBody
-        dates={data.dates}
-        events={data.events}
-        saly={data.saly}
-        timeHourFrom={data.calendarHourFrom}
-        timeHourTo={data.calendarHourTo}
-        times={data.times}
-      />
-    </div>
+      <div class="flex-1 overflow-hidden">
+        <OjpCalendarBody
+          dates={data.dates}
+          events={data.events}
+          saly={data.saly}
+          timeHourFrom={data.calendarHourFrom}
+          timeHourTo={data.calendarHourTo}
+          times={data.times}
+        />
+      </div>
+    </Card>
   );
 });

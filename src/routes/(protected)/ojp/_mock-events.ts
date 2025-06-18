@@ -40,7 +40,7 @@ export const OJP_SALY: OjpSalInfo[] = [
   { bgColor: "#ADD8E6", color: "#000080", displayName: "MODRÝ", name: "MODRY", uhrada: 726000, vykony: 5 },
   { bgColor: "#FFA500", color: "#FF4500", displayName: "ORANŽOVÝ", name: "ORANZOVY", uhrada: 491527, vykony: 10 },
   { bgColor: "#FFB6C1", color: "#8B008B", displayName: "RŮŽOVÝ", name: "RUZOVY", uhrada: 478180, vykony: 10 },
-  { bgColor: "#D2B48C", color: "#8B4513", displayName: "ŠEPTICKÝ", name: "SEPTICKY", uhrada: 0, vykony: 0 },
+  { bgColor: "#D2B48C", color: "#8B4513", displayName: "SEPTICKÝ", name: "SEPTICKY", uhrada: 0, vykony: 0 },
   { bgColor: "#90EE90", color: "#006400", displayName: "ZELENÝ", name: "ZELENY", uhrada: 355865, vykony: 10 },
 ];
 
