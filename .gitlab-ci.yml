@@ -1,0 +1,123 @@
+stages:
+  - semantic-release
+  - build
+  - deploy
+
+semantic-release:
+  stage: semantic-release
+  tags:
+    - k8s
+  image: imbios/bun-node:1-21-alpine-git
+  variables:
+    HUSKY: 0
+    GITLAB_TOKEN: ${CI_REPOSITORY_UPDATES_TOKEN}
+  before_script:
+    - bun add --global semantic-release@23.0.8 @semantic-release/changelog@6.0.3 @semantic-release/exec@6.0.3 @semantic-release/git@10.0.1 @semantic-release/gitlab@13.0.4 conventional-changelog-conventionalcommits@7.0.2
+
+  script:
+    - semantic-release
+    - bun -e "console.log('PACKAGE_VERSION=' + require('./package.json').version);" >> release.env
+  artifacts:
+    reports:
+      dotenv: release.env
+  only:
+    - canary
+    - next
+    - stable
+
+build:
+  stage: build
+  tags:
+    - k8s
+  image:
+    name: gcr.io/kaniko-project/executor:v1.22.0-debug
+    entrypoint: [""]
+  variables:
+    HUSKY: 0
+  script:
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "stable" ]; then
+        IMAGE_TAG="latest"
+        cp deployment/kube/stable/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${STABLE_AUTH_SECRET}" >> .env
+      elif [ "$CI_COMMIT_BRANCH" == "next" ]; then
+        IMAGE_TAG="next"
+        cp deployment/kube/next/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${NEXT_AUTH_SECRET}" >> .env
+      else
+        IMAGE_TAG="canary"
+        cp deployment/kube/canary/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${CANARY_AUTH_SECRET}" >> .env
+      fi
+    - grep '^[^#]' .env | sed 's/.*/--build-arg &/' > .build.args
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "stable" ]; then
+        echo -e "--destination $CI_REGISTRY_IMAGE:v$PACKAGE_VERSION" >> .build.args
+      fi
+    - cat .build.args | xargs /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${IMAGE_TAG}"
+      --build-arg GITLAB_NPM_TOKEN=${CI_REPOSITORY_UPDATES_TOKEN}
+  only:
+    - canary
+    - next
+    - stable
+  environment:
+    name: $CI_COMMIT_BRANCH
+
+deploy:
+  stage: deploy
+  tags:
+    - k8s
+  image:
+    name: bitnami/kubectl:latest
+    entrypoint: ['']
+  script:
+    - kubectl config use-context dev/k8s-agent:k8s-agent
+
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "stable" ]; then
+        MANIFEST="deployment/kube/stable/manifest.yaml"
+        cp deployment/kube/stable/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${STABLE_AUTH_SECRET}" >> .env
+      elif [ "$CI_COMMIT_BRANCH" == "next" ]; then
+        MANIFEST="deployment/kube/next/manifest.yaml"
+        cp deployment/kube/next/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${NEXT_AUTH_SECRET}" >> .env
+      else
+        MANIFEST="deployment/kube/canary/manifest.yaml"
+        cp deployment/kube/canary/variables.env ./.env
+        echo -e "\n\n" >> .env
+        echo -e "ORIGIN=${CI_ENVIRONMENT_URL}" >> .env
+        echo -e "AUTH_SECRET=${CANARY_AUTH_SECRET}" >> .env
+      fi
+
+    # Extract values from kube manifest
+    - DEPLOYMENT_NAME=$(grep -A 1 'metadata:' ${MANIFEST} | head -n 2 | tail -n 1 | awk '{print $2}')
+    - NAMESPACE=$(grep -A 2 'metadata:' ${MANIFEST} | head -n 3 | tail -n 1 | awk '{print $2}')
+    - ENV_SECRET_NAME=$(grep -A 5 'envFrom:' ${MANIFEST} | grep 'name' | awk '{print $2}')
+
+    - kubectl delete secret ${ENV_SECRET_NAME} --ignore-not-found --namespace ${NAMESPACE}
+    - kubectl create secret generic ${ENV_SECRET_NAME} --from-env-file=.env --namespace ${NAMESPACE}
+
+    - kubectl apply -f ${MANIFEST}
+
+    # Restart deployment
+    - kubectl rollout restart deployment/${DEPLOYMENT_NAME} --namespace ${NAMESPACE}
+  only:
+    - canary
+    - next
+    - stable
+  environment:
+    name: $CI_COMMIT_BRANCH

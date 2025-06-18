@@ -1,0 +1,144 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+html {
+  padding: 0;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  padding: 0;
+}
+
+div.page-header {
+  margin: 0;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
+div.page-header > div {
+  margin-left: auto;
+  margin-right: auto;
+  width: max-content;
+}
+
+.text-accent {
+  color: #1c72d8;
+}
+
+h1 {
+  font-weight: bolder;
+  font-size: 18px;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-weight: bolder;
+  font-size: 16px;
+  margin-bottom: 0.25rem;
+}
+
+.pagebreak-after { page-break-after: always; }
+
+.content {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  row-gap: 0.5rem;
+}
+
+.content > div {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  padding-right: 2px;
+}
+
+.content .col-span-2 {
+  grid-column: span 2 / span 2;
+}
+
+.content .col-span-3 {
+  grid-column: span 3 / span 3;
+}
+
+.content .col-span-4 {
+  grid-column: span 4 / span 4;
+}
+
+.content .border-b {
+  border-width: 0;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-color: black;
+}
+
+.content .border-t {
+  border-width: 0;
+  border-top-width: 1px;
+  border-top-style: solid;
+  border-color: black;
+}
+
+.content .border-dotted {
+  border-style: dotted;
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}
+
+p {
+  text-align: justify;
+}
+
+ul > li {
+  font-size: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table th {
+  background-color: rgba(28, 113, 217, 0.3);
+  margin: 0;
+  padding: 2px 4px;
+  font-weight: bolder;
+}
+
+table td {
+  margin: 0;
+  padding: 2px 4px;
+}
+
+table.bordered th, table.bordered td {
+  border: 1px solid black;
+}
+
+div.checkbox-paragraph {
+  display: flex;
+  align-items: flex-start;
+  background-color: aqua;
+}
+
+div.checkbox-paragraph > svg {
+  background-color: blueviolet;
+  padding-top: 0;
+  margin-top: 0;
+  width: 1.25rem; 
+  height: 1.25rem;
+}
+
+div.checkbox-paragraph > p {
+  margin-left: 1rem;
+  margin-top: 0;
+  padding-top: 0;
+}

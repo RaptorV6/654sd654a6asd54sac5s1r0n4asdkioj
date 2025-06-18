@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canary-sirona
+  namespace: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: canary-sirona
+  template:
+    metadata:
+      labels:
+        app: canary-sirona
+    spec:
+      containers:
+      - name: canary-sirona
+        image: gitlab.akesoapp.cz:5050/dev/akeso-online/sirona:canary
+        envFrom:
+        - secretRef: 
+            name: canary-sirona-env-secret        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: gitlab-docker-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: canary-sirona
+  namespace: development
+spec:
+  selector:
+    app: canary-sirona
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

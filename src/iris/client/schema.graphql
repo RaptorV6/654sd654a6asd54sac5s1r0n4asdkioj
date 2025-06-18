@@ -1,0 +1,4426 @@
+directive @defer(label: String, if: Boolean! = true) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+enum AbsenceTypeGql {
+  D
+  H
+  I
+  L
+  N
+  O
+  OTHER
+  V
+}
+
+"""Building of a hospital, clinic, etc."""
+type Building {
+  description: String
+  id: ID!
+  location: Location
+  locationId: ID
+  name: String!
+  shortcut: String
+}
+
+type BuildingConnection {
+  """A list of edges."""
+  edges: [BuildingEdge!]!
+
+  """A list of nodes."""
+  nodes: [Building!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input BuildingConnectionSortBy {
+  direction: SortDirection!
+  field: BuildingConnectionSortByField!
+}
+
+enum BuildingConnectionSortByField {
+  NAME
+}
+
+"""An edge in a connection."""
+type BuildingEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Building!
+}
+
+type CmsAkesoNewsPost {
+  documentId: ID!
+  title: String!
+  slug: String
+  teaserText: String!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+  locale: String
+  localizations_connection(filters: CmsAkesoNewsPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsAkesoNewsPostRelationResponseCollection
+  localizations(filters: CmsAkesoNewsPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsAkesoNewsPost]!
+}
+
+type CmsAkesoNewsPostEntityResponseCollection {
+  nodes: [CmsAkesoNewsPost!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsAkesoNewsPostFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  locale: CmsStringFilterInput
+  localizations: CmsAkesoNewsPostFiltersInput
+  and: [CmsAkesoNewsPostFiltersInput]
+  or: [CmsAkesoNewsPostFiltersInput]
+  not: CmsAkesoNewsPostFiltersInput
+}
+
+input CmsAkesoNewsPostInput {
+  title: String
+  slug: String
+  teaserText: String
+  publishedAt: CmsDateTime
+}
+
+type CmsAkesoNewsPostRelationResponseCollection {
+  nodes: [CmsAkesoNewsPost!]!
+}
+
+input CmsBooleanFilterInput {
+  and: [Boolean]
+  or: [Boolean]
+  not: CmsBooleanFilterInput
+  eq: Boolean
+  eqi: Boolean
+  ne: Boolean
+  nei: Boolean
+  startsWith: Boolean
+  endsWith: Boolean
+  contains: Boolean
+  notContains: Boolean
+  containsi: Boolean
+  notContainsi: Boolean
+  gt: Boolean
+  gte: Boolean
+  lt: Boolean
+  lte: Boolean
+  null: Boolean
+  notNull: Boolean
+  in: [Boolean]
+  notIn: [Boolean]
+  between: [Boolean]
+}
+
+type CmsComponentLinksExterniLinka {
+  id: ID!
+  label: String!
+  href: String!
+}
+
+input CmsComponentLinksExterniLinkaFiltersInput {
+  label: CmsStringFilterInput
+  href: CmsStringFilterInput
+  and: [CmsComponentLinksExterniLinkaFiltersInput]
+  or: [CmsComponentLinksExterniLinkaFiltersInput]
+  not: CmsComponentLinksExterniLinkaFiltersInput
+}
+
+input CmsComponentLinksExterniLinkaInput {
+  id: ID
+  label: String
+  href: String
+}
+
+"""
+A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar CmsDate
+
+input CmsDateFilterInput {
+  and: [CmsDate]
+  or: [CmsDate]
+  not: CmsDateFilterInput
+  eq: CmsDate
+  eqi: CmsDate
+  ne: CmsDate
+  nei: CmsDate
+  startsWith: CmsDate
+  endsWith: CmsDate
+  contains: CmsDate
+  notContains: CmsDate
+  containsi: CmsDate
+  notContainsi: CmsDate
+  gt: CmsDate
+  gte: CmsDate
+  lt: CmsDate
+  lte: CmsDate
+  null: Boolean
+  notNull: Boolean
+  in: [CmsDate]
+  notIn: [CmsDate]
+  between: [CmsDate]
+}
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar CmsDateTime
+
+input CmsDateTimeFilterInput {
+  and: [CmsDateTime]
+  or: [CmsDateTime]
+  not: CmsDateTimeFilterInput
+  eq: CmsDateTime
+  eqi: CmsDateTime
+  ne: CmsDateTime
+  nei: CmsDateTime
+  startsWith: CmsDateTime
+  endsWith: CmsDateTime
+  contains: CmsDateTime
+  notContains: CmsDateTime
+  containsi: CmsDateTime
+  notContainsi: CmsDateTime
+  gt: CmsDateTime
+  gte: CmsDateTime
+  lt: CmsDateTime
+  lte: CmsDateTime
+  null: Boolean
+  notNull: Boolean
+  in: [CmsDateTime]
+  notIn: [CmsDateTime]
+  between: [CmsDateTime]
+}
+
+type CmsDeleteMutationResponse {
+  documentId: ID!
+}
+
+input CmsFloatFilterInput {
+  and: [Float]
+  or: [Float]
+  not: CmsFloatFilterInput
+  eq: Float
+  eqi: Float
+  ne: Float
+  nei: Float
+  startsWith: Float
+  endsWith: Float
+  contains: Float
+  notContains: Float
+  containsi: Float
+  notContainsi: Float
+  gt: Float
+  gte: Float
+  lt: Float
+  lte: Float
+  null: Boolean
+  notNull: Boolean
+  in: [Float]
+  notIn: [Float]
+  between: [Float]
+}
+
+union CmsGenericMorph = CmsComponentLinksExterniLinka | CmsUploadFile | CmsAkesoNewsPost | CmsIntranetBenefit | CmsIntranetEducationCategory | CmsIntranetEducationInstruction | CmsIntranetEmployeeContact | CmsIntranetEvent | CmsIntranetEventReport | CmsIntranetFaq | CmsIntranetLink | CmsIntranetLocation | CmsIntranetMagazineNea | CmsIntranetNewsItem | CmsIntranetRole | CmsItBlogAbout | CmsItBlogBanner | CmsItBlogPost | CmsItBlogTag | CmsSalusEducationPost | CmsSalusEducationTag | CmsSalusFaq | CmsSalusVzdelavaniVerifiedBy
+
+"""A string used to identify an i18n locale"""
+scalar CmsI18NLocaleCode
+
+input CmsIDFilterInput {
+  and: [ID]
+  or: [ID]
+  not: CmsIDFilterInput
+  eq: ID
+  eqi: ID
+  ne: ID
+  nei: ID
+  startsWith: ID
+  endsWith: ID
+  contains: ID
+  notContains: ID
+  containsi: ID
+  notContainsi: ID
+  gt: ID
+  gte: ID
+  lt: ID
+  lte: ID
+  null: Boolean
+  notNull: Boolean
+  in: [ID]
+  notIn: [ID]
+  between: [ID]
+}
+
+input CmsIntFilterInput {
+  and: [Int]
+  or: [Int]
+  not: CmsIntFilterInput
+  eq: Int
+  eqi: Int
+  ne: Int
+  nei: Int
+  startsWith: Int
+  endsWith: Int
+  contains: Int
+  notContains: Int
+  containsi: Int
+  notContainsi: Int
+  gt: Int
+  gte: Int
+  lt: Int
+  lte: Int
+  null: Boolean
+  notNull: Boolean
+  in: [Int]
+  notIn: [Int]
+  between: [Int]
+}
+
+type CmsIntranetBenefit {
+  documentId: ID!
+  title: String!
+  slug: String!
+  teaserText: String
+  teaserImage: CmsUploadFile
+  body: CmsJSON
+  author: String
+  approverEmails: String
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  attachedDocuments_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  attachedDocuments(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  externalLinks(filters: CmsComponentLinksExterniLinkaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsComponentLinksExterniLinka]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetBenefitEntityResponseCollection {
+  nodes: [CmsIntranetBenefit!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetBenefitFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  author: CmsStringFilterInput
+  approverEmails: CmsStringFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  externalLinks: CmsComponentLinksExterniLinkaFiltersInput
+  validFrom: CmsDateTimeFilterInput
+  validTo: CmsDateTimeFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetBenefitFiltersInput]
+  or: [CmsIntranetBenefitFiltersInput]
+  not: CmsIntranetBenefitFiltersInput
+}
+
+input CmsIntranetBenefitInput {
+  title: String
+  slug: String
+  teaserText: String
+  teaserImage: ID
+  body: CmsJSON
+  author: String
+  approverEmails: String
+  locations: [ID]
+  attachedDocuments: [ID]
+  externalLinks: [CmsComponentLinksExterniLinkaInput]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEducationCategory {
+  documentId: ID!
+  name: String!
+  slug: String!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEducationCategoryEntityResponseCollection {
+  nodes: [CmsIntranetEducationCategory!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetEducationCategoryFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetEducationCategoryFiltersInput]
+  or: [CmsIntranetEducationCategoryFiltersInput]
+  not: CmsIntranetEducationCategoryFiltersInput
+}
+
+input CmsIntranetEducationCategoryInput {
+  name: String
+  slug: String
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEducationCategoryRelationResponseCollection {
+  nodes: [CmsIntranetEducationCategory!]!
+}
+
+type CmsIntranetEducationInstruction {
+  documentId: ID!
+  title: String!
+  slug: String!
+  teaserText: String
+  teaserImage: CmsUploadFile
+  body: CmsJSON
+  author: String
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  roles_connection(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetRoleRelationResponseCollection
+  roles(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetRole]!
+  categories_connection(filters: CmsIntranetEducationCategoryFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetEducationCategoryRelationResponseCollection
+  categories(filters: CmsIntranetEducationCategoryFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetEducationCategory]!
+  attachedDocuments_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  attachedDocuments(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  externalLinks(filters: CmsComponentLinksExterniLinkaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsComponentLinksExterniLinka]
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEducationInstructionEntityResponseCollection {
+  nodes: [CmsIntranetEducationInstruction!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetEducationInstructionFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  author: CmsStringFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  roles: CmsIntranetRoleFiltersInput
+  categories: CmsIntranetEducationCategoryFiltersInput
+  externalLinks: CmsComponentLinksExterniLinkaFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetEducationInstructionFiltersInput]
+  or: [CmsIntranetEducationInstructionFiltersInput]
+  not: CmsIntranetEducationInstructionFiltersInput
+}
+
+input CmsIntranetEducationInstructionInput {
+  title: String
+  slug: String
+  teaserText: String
+  teaserImage: ID
+  body: CmsJSON
+  author: String
+  locations: [ID]
+  roles: [ID]
+  categories: [ID]
+  attachedDocuments: [ID]
+  externalLinks: [CmsComponentLinksExterniLinkaInput]
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEmployeeContact {
+  documentId: ID!
+  firstName: String!
+  lastName: String!
+  email: String
+  phoneNumberInternal: String
+  phoneNumberWorkMobile: String
+  phoneNumberPrivateMobile: String
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEmployeeContactEntityResponseCollection {
+  nodes: [CmsIntranetEmployeeContact!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetEmployeeContactFiltersInput {
+  documentId: CmsIDFilterInput
+  firstName: CmsStringFilterInput
+  lastName: CmsStringFilterInput
+  email: CmsStringFilterInput
+  phoneNumberInternal: CmsStringFilterInput
+  phoneNumberWorkMobile: CmsStringFilterInput
+  phoneNumberPrivateMobile: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetEmployeeContactFiltersInput]
+  or: [CmsIntranetEmployeeContactFiltersInput]
+  not: CmsIntranetEmployeeContactFiltersInput
+}
+
+input CmsIntranetEmployeeContactInput {
+  firstName: String
+  lastName: String
+  email: String
+  phoneNumberInternal: String
+  phoneNumberWorkMobile: String
+  phoneNumberPrivateMobile: String
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEvent {
+  documentId: ID!
+  title: String!
+  startDate: CmsDateTime!
+  endDate: CmsDateTime!
+  body: CmsJSON
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  attachedDocuments_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  attachedDocuments(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  externalLinks(filters: CmsComponentLinksExterniLinkaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsComponentLinksExterniLinka]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  reports_connection(filters: CmsIntranetEventReportFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetEventReportRelationResponseCollection
+  reports(filters: CmsIntranetEventReportFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetEventReport]!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEventEntityResponseCollection {
+  nodes: [CmsIntranetEvent!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetEventFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  startDate: CmsDateTimeFilterInput
+  endDate: CmsDateTimeFilterInput
+  body: CmsJSONFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  externalLinks: CmsComponentLinksExterniLinkaFiltersInput
+  validFrom: CmsDateTimeFilterInput
+  validTo: CmsDateTimeFilterInput
+  reports: CmsIntranetEventReportFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetEventFiltersInput]
+  or: [CmsIntranetEventFiltersInput]
+  not: CmsIntranetEventFiltersInput
+}
+
+input CmsIntranetEventInput {
+  title: String
+  startDate: CmsDateTime
+  endDate: CmsDateTime
+  body: CmsJSON
+  locations: [ID]
+  attachedDocuments: [ID]
+  externalLinks: [CmsComponentLinksExterniLinkaInput]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  reports: [ID]
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEventReport {
+  documentId: ID!
+  title: String!
+  body: CmsJSON
+  mediaGallery_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  mediaGallery(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  attachedDocuments_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  attachedDocuments(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  externalLinks(filters: CmsComponentLinksExterniLinkaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsComponentLinksExterniLinka]
+  event: CmsIntranetEvent
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEventReportEntityResponseCollection {
+  nodes: [CmsIntranetEventReport!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetEventReportFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  externalLinks: CmsComponentLinksExterniLinkaFiltersInput
+  event: CmsIntranetEventFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetEventReportFiltersInput]
+  or: [CmsIntranetEventReportFiltersInput]
+  not: CmsIntranetEventReportFiltersInput
+}
+
+input CmsIntranetEventReportInput {
+  title: String
+  body: CmsJSON
+  mediaGallery: [ID]
+  locations: [ID]
+  attachedDocuments: [ID]
+  externalLinks: [CmsComponentLinksExterniLinkaInput]
+  event: ID
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetEventReportRelationResponseCollection {
+  nodes: [CmsIntranetEventReport!]!
+}
+
+type CmsIntranetFaq {
+  documentId: ID!
+  title: String!
+  slug: String!
+  body: CmsJSON
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  attachedDocuments_connection(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsUploadFileRelationResponseCollection
+  attachedDocuments(filters: CmsUploadFileFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsUploadFile]!
+  externalLinks(filters: CmsComponentLinksExterniLinkaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsComponentLinksExterniLinka]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetFaqEntityResponseCollection {
+  nodes: [CmsIntranetFaq!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetFaqFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  externalLinks: CmsComponentLinksExterniLinkaFiltersInput
+  validFrom: CmsDateTimeFilterInput
+  validTo: CmsDateTimeFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetFaqFiltersInput]
+  or: [CmsIntranetFaqFiltersInput]
+  not: CmsIntranetFaqFiltersInput
+}
+
+input CmsIntranetFaqInput {
+  title: String
+  slug: String
+  body: CmsJSON
+  locations: [ID]
+  attachedDocuments: [ID]
+  externalLinks: [CmsComponentLinksExterniLinkaInput]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetLink {
+  documentId: ID!
+  label: String!
+  href: String!
+  type: ENUM_CMS_INTRANETLINK_TYPE
+  teaserText: String
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetLinkEntityResponseCollection {
+  nodes: [CmsIntranetLink!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetLinkFiltersInput {
+  documentId: CmsIDFilterInput
+  label: CmsStringFilterInput
+  href: CmsStringFilterInput
+  type: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetLinkFiltersInput]
+  or: [CmsIntranetLinkFiltersInput]
+  not: CmsIntranetLinkFiltersInput
+}
+
+input CmsIntranetLinkInput {
+  label: String
+  href: String
+  type: ENUM_CMS_INTRANETLINK_TYPE
+  teaserText: String
+  locations: [ID]
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetLocation {
+  documentId: ID!
+  name: String!
+  slug: String!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetLocationEntityResponseCollection {
+  nodes: [CmsIntranetLocation!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetLocationFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetLocationFiltersInput]
+  or: [CmsIntranetLocationFiltersInput]
+  not: CmsIntranetLocationFiltersInput
+}
+
+input CmsIntranetLocationInput {
+  name: String
+  slug: String
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetLocationRelationResponseCollection {
+  nodes: [CmsIntranetLocation!]!
+}
+
+type CmsIntranetMagazineNea {
+  documentId: ID!
+  title: String!
+  teaserImage: CmsUploadFile
+  releaseDate: CmsDate
+  href: String
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetMagazineNeaEntityResponseCollection {
+  nodes: [CmsIntranetMagazineNea!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetMagazineNeaFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  releaseDate: CmsDateFilterInput
+  href: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetMagazineNeaFiltersInput]
+  or: [CmsIntranetMagazineNeaFiltersInput]
+  not: CmsIntranetMagazineNeaFiltersInput
+}
+
+input CmsIntranetMagazineNeaInput {
+  title: String
+  teaserImage: ID
+  releaseDate: CmsDate
+  href: String
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetNewsItem {
+  documentId: ID!
+  title: String!
+  slug: String!
+  teaserText: String
+  teaserImage: CmsUploadFile
+  body: CmsJSON
+  author: String
+  locations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetLocationRelationResponseCollection
+  locations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetLocation]!
+  roles_connection(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsIntranetRoleRelationResponseCollection
+  roles(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsIntranetRole]!
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetNewsItemEntityResponseCollection {
+  nodes: [CmsIntranetNewsItem!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetNewsItemFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  author: CmsStringFilterInput
+  locations: CmsIntranetLocationFiltersInput
+  roles: CmsIntranetRoleFiltersInput
+  validFrom: CmsDateTimeFilterInput
+  validTo: CmsDateTimeFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetNewsItemFiltersInput]
+  or: [CmsIntranetNewsItemFiltersInput]
+  not: CmsIntranetNewsItemFiltersInput
+}
+
+input CmsIntranetNewsItemInput {
+  title: String
+  slug: String
+  teaserText: String
+  teaserImage: ID
+  body: CmsJSON
+  author: String
+  locations: [ID]
+  roles: [ID]
+  validFrom: CmsDateTime
+  validTo: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetRole {
+  documentId: ID!
+  name: String!
+  slug: String!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetRoleEntityResponseCollection {
+  nodes: [CmsIntranetRole!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsIntranetRoleFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsIntranetRoleFiltersInput]
+  or: [CmsIntranetRoleFiltersInput]
+  not: CmsIntranetRoleFiltersInput
+}
+
+input CmsIntranetRoleInput {
+  name: String
+  slug: String
+  publishedAt: CmsDateTime
+}
+
+type CmsIntranetRoleRelationResponseCollection {
+  nodes: [CmsIntranetRole!]!
+}
+
+type CmsItBlogAbout {
+  documentId: ID!
+  about: String
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogAboutEntityResponseCollection {
+  nodes: [CmsItBlogAbout!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsItBlogAboutFiltersInput {
+  documentId: CmsIDFilterInput
+  about: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsItBlogAboutFiltersInput]
+  or: [CmsItBlogAboutFiltersInput]
+  not: CmsItBlogAboutFiltersInput
+}
+
+input CmsItBlogAboutInput {
+  about: String
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogBanner {
+  documentId: ID!
+  image: CmsUploadFile
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogBannerEntityResponseCollection {
+  nodes: [CmsItBlogBanner!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsItBlogBannerFiltersInput {
+  documentId: CmsIDFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsItBlogBannerFiltersInput]
+  or: [CmsItBlogBannerFiltersInput]
+  not: CmsItBlogBannerFiltersInput
+}
+
+input CmsItBlogBannerInput {
+  image: ID
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogPost {
+  documentId: ID!
+  title: String
+  slug: String
+  teaserImage: CmsUploadFile
+  author: String
+  date: CmsDate
+  avatar: CmsUploadFile
+  body: String
+  thumbsUp: Int
+  thumbsDown: Int
+  categoryTag_connection(filters: CmsItBlogTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsItBlogTagRelationResponseCollection
+  categoryTag(filters: CmsItBlogTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsItBlogTag]!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogPostEntityResponseCollection {
+  nodes: [CmsItBlogPost!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsItBlogPostFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  author: CmsStringFilterInput
+  date: CmsDateFilterInput
+  body: CmsStringFilterInput
+  thumbsUp: CmsIntFilterInput
+  thumbsDown: CmsIntFilterInput
+  categoryTag: CmsItBlogTagFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsItBlogPostFiltersInput]
+  or: [CmsItBlogPostFiltersInput]
+  not: CmsItBlogPostFiltersInput
+}
+
+input CmsItBlogPostInput {
+  title: String
+  slug: String
+  teaserImage: ID
+  author: String
+  date: CmsDate
+  avatar: ID
+  body: String
+  thumbsUp: Int
+  thumbsDown: Int
+  categoryTag: [ID]
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogPostRelationResponseCollection {
+  nodes: [CmsItBlogPost!]!
+}
+
+type CmsItBlogTag {
+  documentId: ID!
+  title: String
+  slug: String
+  assign_categoryTag_connection(filters: CmsItBlogPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsItBlogPostRelationResponseCollection
+  assign_categoryTag(filters: CmsItBlogPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsItBlogPost]!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogTagEntityResponseCollection {
+  nodes: [CmsItBlogTag!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsItBlogTagFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  assign_categoryTag: CmsItBlogPostFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsItBlogTagFiltersInput]
+  or: [CmsItBlogTagFiltersInput]
+  not: CmsItBlogTagFiltersInput
+}
+
+input CmsItBlogTagInput {
+  title: String
+  slug: String
+  assign_categoryTag: [ID]
+  publishedAt: CmsDateTime
+}
+
+type CmsItBlogTagRelationResponseCollection {
+  nodes: [CmsItBlogTag!]!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar CmsJSON
+
+input CmsJSONFilterInput {
+  and: [CmsJSON]
+  or: [CmsJSON]
+  not: CmsJSONFilterInput
+  eq: CmsJSON
+  eqi: CmsJSON
+  ne: CmsJSON
+  nei: CmsJSON
+  startsWith: CmsJSON
+  endsWith: CmsJSON
+  contains: CmsJSON
+  notContains: CmsJSON
+  containsi: CmsJSON
+  notContainsi: CmsJSON
+  gt: CmsJSON
+  gte: CmsJSON
+  lt: CmsJSON
+  lte: CmsJSON
+  null: Boolean
+  notNull: Boolean
+  in: [CmsJSON]
+  notIn: [CmsJSON]
+  between: [CmsJSON]
+}
+
+type CmsPagination {
+  total: Int!
+  page: Int!
+  pageSize: Int!
+  pageCount: Int!
+}
+
+input CmsPaginationArg {
+  page: Int
+  pageSize: Int
+  start: Int
+  limit: Int
+}
+
+enum CmsPublicationStatus {
+  DRAFT
+  PUBLISHED
+}
+
+type CmsSalusEducationPost {
+  documentId: ID!
+  title: String!
+  slug: String!
+  teaserText: String!
+  teaserImage: CmsUploadFile
+  body: CmsJSON!
+  tags_connection(filters: CmsSalusEducationTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsSalusEducationTagRelationResponseCollection
+  tags(filters: CmsSalusEducationTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsSalusEducationTag]!
+  verifiedBy: CmsSalusVzdelavaniVerifiedBy
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+  locale: String
+  localizations_connection(filters: CmsSalusEducationPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsSalusEducationPostRelationResponseCollection
+  localizations(filters: CmsSalusEducationPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsSalusEducationPost]!
+}
+
+type CmsSalusEducationPostEntityResponseCollection {
+  nodes: [CmsSalusEducationPost!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsSalusEducationPostFiltersInput {
+  documentId: CmsIDFilterInput
+  title: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  teaserText: CmsStringFilterInput
+  body: CmsJSONFilterInput
+  tags: CmsSalusEducationTagFiltersInput
+  verifiedBy: CmsSalusVzdelavaniVerifiedByFiltersInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  locale: CmsStringFilterInput
+  localizations: CmsSalusEducationPostFiltersInput
+  and: [CmsSalusEducationPostFiltersInput]
+  or: [CmsSalusEducationPostFiltersInput]
+  not: CmsSalusEducationPostFiltersInput
+}
+
+input CmsSalusEducationPostInput {
+  title: String
+  slug: String
+  teaserText: String
+  teaserImage: ID
+  body: CmsJSON
+  tags: [ID]
+  verifiedBy: ID
+  publishedAt: CmsDateTime
+}
+
+type CmsSalusEducationPostRelationResponseCollection {
+  nodes: [CmsSalusEducationPost!]!
+}
+
+type CmsSalusEducationTag {
+  documentId: ID!
+  name: String!
+  slug: String!
+  educationPosts_connection(filters: CmsSalusEducationPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsSalusEducationPostRelationResponseCollection
+  educationPosts(filters: CmsSalusEducationPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsSalusEducationPost]!
+  educationPageOrder: Int
+  isCategory: Boolean!
+  weight: Int
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+  locale: String
+  localizations_connection(filters: CmsSalusEducationTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsSalusEducationTagRelationResponseCollection
+  localizations(filters: CmsSalusEducationTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsSalusEducationTag]!
+}
+
+type CmsSalusEducationTagEntityResponseCollection {
+  nodes: [CmsSalusEducationTag!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsSalusEducationTagFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  slug: CmsStringFilterInput
+  educationPosts: CmsSalusEducationPostFiltersInput
+  educationPageOrder: CmsIntFilterInput
+  isCategory: CmsBooleanFilterInput
+  weight: CmsIntFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  locale: CmsStringFilterInput
+  localizations: CmsSalusEducationTagFiltersInput
+  and: [CmsSalusEducationTagFiltersInput]
+  or: [CmsSalusEducationTagFiltersInput]
+  not: CmsSalusEducationTagFiltersInput
+}
+
+input CmsSalusEducationTagInput {
+  name: String
+  slug: String
+  educationPosts: [ID]
+  educationPageOrder: Int
+  isCategory: Boolean
+  weight: Int
+  publishedAt: CmsDateTime
+}
+
+type CmsSalusEducationTagRelationResponseCollection {
+  nodes: [CmsSalusEducationTag!]!
+}
+
+type CmsSalusFaq {
+  documentId: ID!
+  question: String!
+  answer: CmsJSON!
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+  locale: String
+  localizations_connection(filters: CmsSalusFaqFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): CmsSalusFaqRelationResponseCollection
+  localizations(filters: CmsSalusFaqFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = []): [CmsSalusFaq]!
+}
+
+type CmsSalusFaqEntityResponseCollection {
+  nodes: [CmsSalusFaq!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsSalusFaqFiltersInput {
+  documentId: CmsIDFilterInput
+  question: CmsStringFilterInput
+  answer: CmsJSONFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  locale: CmsStringFilterInput
+  localizations: CmsSalusFaqFiltersInput
+  and: [CmsSalusFaqFiltersInput]
+  or: [CmsSalusFaqFiltersInput]
+  not: CmsSalusFaqFiltersInput
+}
+
+input CmsSalusFaqInput {
+  question: String
+  answer: CmsJSON
+  publishedAt: CmsDateTime
+}
+
+type CmsSalusFaqRelationResponseCollection {
+  nodes: [CmsSalusFaq!]!
+}
+
+type CmsSalusVzdelavaniVerifiedBy {
+  documentId: ID!
+  name: String!
+  namePrefix: String
+  nameSuffix: String
+  image: CmsUploadFile
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+type CmsSalusVzdelavaniVerifiedByEntityResponseCollection {
+  nodes: [CmsSalusVzdelavaniVerifiedBy!]!
+  pageInfo: CmsPagination!
+}
+
+input CmsSalusVzdelavaniVerifiedByFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  namePrefix: CmsStringFilterInput
+  nameSuffix: CmsStringFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsSalusVzdelavaniVerifiedByFiltersInput]
+  or: [CmsSalusVzdelavaniVerifiedByFiltersInput]
+  not: CmsSalusVzdelavaniVerifiedByFiltersInput
+}
+
+input CmsSalusVzdelavaniVerifiedByInput {
+  name: String
+  namePrefix: String
+  nameSuffix: String
+  image: ID
+  publishedAt: CmsDateTime
+}
+
+input CmsStringFilterInput {
+  and: [String]
+  or: [String]
+  not: CmsStringFilterInput
+  eq: String
+  eqi: String
+  ne: String
+  nei: String
+  startsWith: String
+  endsWith: String
+  contains: String
+  notContains: String
+  containsi: String
+  notContainsi: String
+  gt: String
+  gte: String
+  lt: String
+  lte: String
+  null: Boolean
+  notNull: Boolean
+  in: [String]
+  notIn: [String]
+  between: [String]
+}
+
+type CmsUploadFile {
+  documentId: ID!
+  name: String!
+  alternativeText: String
+  caption: String
+  width: Int
+  height: Int
+  formats: CmsJSON
+  hash: String!
+  ext: String
+  mime: String!
+  size: Float!
+  url: String!
+  previewUrl: String
+  provider: String!
+  provider_metadata: CmsJSON
+  related: [CmsGenericMorph]
+  createdAt: CmsDateTime
+  updatedAt: CmsDateTime
+  publishedAt: CmsDateTime
+}
+
+input CmsUploadFileFiltersInput {
+  documentId: CmsIDFilterInput
+  name: CmsStringFilterInput
+  alternativeText: CmsStringFilterInput
+  caption: CmsStringFilterInput
+  width: CmsIntFilterInput
+  height: CmsIntFilterInput
+  formats: CmsJSONFilterInput
+  hash: CmsStringFilterInput
+  ext: CmsStringFilterInput
+  mime: CmsStringFilterInput
+  size: CmsFloatFilterInput
+  url: CmsStringFilterInput
+  previewUrl: CmsStringFilterInput
+  provider: CmsStringFilterInput
+  provider_metadata: CmsJSONFilterInput
+  createdAt: CmsDateTimeFilterInput
+  updatedAt: CmsDateTimeFilterInput
+  publishedAt: CmsDateTimeFilterInput
+  and: [CmsUploadFileFiltersInput]
+  or: [CmsUploadFileFiltersInput]
+  not: CmsUploadFileFiltersInput
+}
+
+type CmsUploadFileRelationResponseCollection {
+  nodes: [CmsUploadFile!]!
+}
+
+input CompleteFormSubmissionInput {
+  id: ID!
+}
+
+type CostCenter {
+  code: String!
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+  name: String!
+}
+
+input CreateEmployeeFormInput {
+  employeeId: ID!
+  formId: ID!
+}
+
+input CreateFormFillSessionInput {
+  departmentAkordId: Int
+  documentationAkordId: Int
+  formSubmissionId: ID!
+  stationAkordId: Int
+}
+
+input CreateFormInput {
+  code: String!
+  consumer: FormConsumer!
+  description: String
+  kind: FormKind!
+  name: String!
+  title: String!
+}
+
+input CreateFormResultBindInput {
+  akordVislBlobId: Int
+  formSubmissionId: ID!
+  resultKindId: ID!
+}
+
+input CreateFormResultKindInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+input CreateFormSubmissionAttachmentInput {
+  dataBase64: String!
+  fileName: String!
+  formSubmissionId: ID!
+  mimeType: String!
+}
+
+input CreateFormSubmissionInput {
+  dataJson: FormSubmissionData
+  formId: ID!
+  formVersionId: ID!
+  isComplete: Boolean
+  patientId: ID!
+}
+
+input CreateFormVersionInput {
+  description: String
+  formId: ID!
+  number: String!
+  validFrom: DateTime
+  validTo: DateTime
+}
+
+input CreatePatientFamilyMemberInput {
+  memberPatientId: ID!
+  patientId: ID!
+}
+
+input CreatePatientImageInput {
+  """Uploaded, original, image data, serialized to Base64"""
+  imageBase64: String!
+  patientId: ID!
+}
+
+input CreateSalusPatientProfileInput {
+  email: String!
+  emailVerified: DateTime
+  name: String!
+  patientId: ID!
+}
+
+input CreateSalusPatientSessionInput {
+  expiresAt: DateTime!
+  patientProfileId: ID!
+  sessionToken: String!
+}
+
+input CreateSalusVerificationTokenInput {
+  expires: DateTime!
+  identifier: String!
+  token: String!
+}
+
+input CreateSironaEmployeeProfileGrantInput {
+  employeeProfileId: ID!
+  grant: String!
+}
+
+input CreateSironaEmployeeProfileInput {
+  defaultFacilityId: ID!
+  email: String!
+  employeeId: ID!
+}
+
+input CreateSironaPermissionInput {
+  code: String!
+  description: String
+  facilities: [ID!]
+  name: String!
+  roles: [ID!]
+}
+
+input CreateSironaRoleInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+input CreateSmenovkaEmployeeProfileGrantInput {
+  employeeProfileId: ID!
+  grant: String!
+}
+
+input CreateSmenovkaEmployeeProfileInput {
+  email: String!
+  employeeId: ID!
+}
+
+input CreateSmenovkaPermissionInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+input CreateSmenovkaRoleInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+input CreateTabsyEmployeeProfileInput {
+  employeeId: ID!
+}
+
+input CreateZapkaEmployeeProfileGrantInput {
+  employeeProfileId: ID!
+  grant: String!
+}
+
+input CreateZapkaEmployeeProfileInput {
+  email: String!
+  employeeId: ID!
+}
+
+input CreateZapkaPermissionInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+input CreateZapkaRoleInput {
+  code: String!
+  description: String
+  name: String!
+}
+
+"""
+Implement the DateTime<Utc> scalar
+
+The input/output is a string in RFC3339 format.
+"""
+scalar DateTime
+
+input DeactivateFormVersionInput {
+  id: ID!
+  validTo: DateTime
+}
+
+input DeactivateSironaEmployeeProfileInput {
+  id: ID!
+}
+
+input DeactivateSmenovkaEmployeeProfileInput {
+  id: ID!
+}
+
+input DeactivateZapkaEmployeeProfileInput {
+  id: ID!
+}
+
+input DeleteEmployeeFormInput {
+  id: ID!
+}
+
+input DeleteFormResultBindInput {
+  id: ID!
+}
+
+input DeleteFormResultKindInput {
+  id: ID!
+}
+
+input DeleteFormSubmissionAttachmentInput {
+  id: ID!
+}
+
+input DeletePatientFamilyMemberInput {
+  memberPatientId: ID!
+  patientId: ID!
+}
+
+input DeletePatientImageInput {
+  patientId: ID!
+}
+
+input DeleteSalusPatientProfileInput {
+  id: ID!
+}
+
+input DeleteSalusPatientSessionByIdInput {
+  id: ID!
+}
+
+input DeleteSalusPatientSessionBySessionTokenInput {
+  sessionToken: String!
+}
+
+input DeleteSalusVerificationTokenInput {
+  identifier: String!
+  token: String!
+}
+
+input DeleteSironaEmployeeProfileGrantInput {
+  id: ID!
+}
+
+input DeleteSironaPermissionInput {
+  id: ID!
+}
+
+input DeleteSironaRoleInput {
+  id: ID!
+}
+
+input DeleteSmenovkaEmployeeProfileGrantInput {
+  id: ID!
+}
+
+input DeleteSmenovkaPermissionInput {
+  id: ID!
+}
+
+input DeleteSmenovkaRoleInput {
+  id: ID!
+}
+
+input DeleteTabsyEmployeeProfileInput {
+  id: ID!
+}
+
+input DeleteZapkaEmployeeProfileGrantInput {
+  id: ID!
+}
+
+input DeleteZapkaPermissionInput {
+  id: ID!
+}
+
+input DeleteZapkaRoleInput {
+  id: ID!
+}
+
+type DietAccount {
+  allowedDebit: String!
+  balance: String!
+  consumer: DietConsumer
+  consumerId: ID
+  disabledFlag: Boolean!
+  id: ID!
+  lastMove: DateTime
+  validTo: DateTime
+}
+
+type DietAccountConnection {
+  """A list of edges."""
+  edges: [DietAccountEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietAccount!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Diet Type Connection Filter"""
+input DietAccountConnectionFilterInput {
+  isValid: Boolean
+}
+
+input DietAccountConnectionSortBy {
+  direction: SortDirection!
+  field: DietAccountConnectionSortByField!
+}
+
+enum DietAccountConnectionSortByField {
+  ID
+}
+
+"""An edge in a connection."""
+type DietAccountEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietAccount!
+}
+
+type DietAccountTransaction {
+  """Transaction account"""
+  account: DietAccount
+  accountId: ID!
+
+  """Amount (price) of the transaction"""
+  amount: String!
+  dietOrder: DietOrder
+  dietOrderId: ID
+  id: ID!
+  originalTrans: DietAccountTransaction
+  originalTransactionId: ID
+  status: Int!
+  transactionDate: DateTime!
+
+  """Type of transaction"""
+  transactionType: DietAccountTransactionType
+  transactionTypeId: ID!
+}
+
+type DietAccountTransactionConnection {
+  """A list of edges."""
+  edges: [DietAccountTransactionEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietAccountTransaction!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Diet Type Connection Filter"""
+input DietAccountTransactionConnectionFilterInput {
+  accountId: ID
+  dietOrderId: ID
+  status: Int
+  transactionDateFrom: DateTime
+  transactionDateTo: DateTime
+  transactionTypeId: ID
+}
+
+input DietAccountTransactionConnectionSortBy {
+  direction: SortDirection!
+  field: DietAccountTransactionConnectionSortByField!
+}
+
+enum DietAccountTransactionConnectionSortByField {
+  ID
+  TRANSACTION_DATE
+}
+
+"""An edge in a connection."""
+type DietAccountTransactionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietAccountTransaction!
+}
+
+type DietAccountTransactionType {
+  disabledFlag: Boolean!
+  fullName: String
+  id: ID!
+  shortName: String
+}
+
+type DietConsumer {
+  fullName: String
+  id: ID!
+  worker: DietWorker
+  workerId: ID!
+}
+
+type DietConsumerConnection {
+  """A list of edges."""
+  edges: [DietConsumerEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietConsumer!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input DietConsumerConnectionSortBy {
+  direction: SortDirection!
+  field: DietConsumerConnectionSortByField!
+}
+
+enum DietConsumerConnectionSortByField {
+  ID
+}
+
+"""An edge in a connection."""
+type DietConsumerEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietConsumer!
+}
+
+type DietFacility {
+  facilityCode: String!
+  facilityName: String!
+  id: ID!
+}
+
+type DietFoodType {
+  disabledFlag: Boolean!
+  fullName: String
+  id: ID!
+  shortName: String!
+}
+
+type DietMenu {
+  allergens: String
+  dietFacility: DietFacility!
+  dietFacilityId: ID!
+  dietFoodType: DietFoodType!
+  dietFoodTypeId: ID!
+  dietType: DietType!
+  dietTypeId: ID!
+  foodName: String!
+  id: String!
+  menuDate: DateTime!
+}
+
+type DietMenuConnection {
+  """A list of edges."""
+  edges: [DietMenuEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietMenu!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Patient Connection Filter"""
+input DietMenuConnectionFilterInput {
+  dateFrom: DateTime
+  dateTo: DateTime
+  dietFacilityId: ID
+  dietTypeId: ID
+  foodTypeId: ID
+  forEmployees: Boolean
+  withAllergens: String
+  withName: String
+  withoutAllergens: String
+  withoutName: String
+}
+
+input DietMenuConnectionSortBy {
+  direction: SortDirection!
+  field: DietMenuConnectionSortByField!
+}
+
+enum DietMenuConnectionSortByField {
+  ID
+}
+
+"""An edge in a connection."""
+type DietMenuEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietMenu!
+}
+
+type DietOrder {
+  createdDate: DateTime
+  deliveredDate: DateTime
+  dietConsumer: DietConsumer
+  dietConsumerId: ID!
+  dietMenu: DietMenu!
+  dietMenuId: String!
+  dietOriginalOrder: DietOrder
+  id: ID!
+  orderAmount: Int!
+  orderDate: DateTime!
+  orderStatus: Int!
+  originalOrderId: ID
+}
+
+type DietOrderConnection {
+  """A list of edges."""
+  edges: [DietOrderEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietOrder!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Diet Type Connection Filter"""
+input DietOrderConnectionFilterInput {
+  alreadyDelivered: Boolean
+  createdFrom: DateTime
+  createdTo: DateTime
+  dietConsumerId: ID
+  orderStatus: Int
+}
+
+input DietOrderConnectionSortBy {
+  direction: SortDirection!
+  field: DietOrderConnectionSortByField!
+}
+
+enum DietOrderConnectionSortByField {
+  ID
+  ORDER_DATE
+}
+
+"""An edge in a connection."""
+type DietOrderEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietOrder!
+}
+
+type DietType {
+  code: String!
+  disabled: Boolean!
+  id: ID!
+  name: String
+  order: Int!
+}
+
+type DietTypeConnection {
+  """A list of edges."""
+  edges: [DietTypeEdge!]!
+
+  """A list of nodes."""
+  nodes: [DietType!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Diet Type Connection Filter"""
+input DietTypeConnectionFilterInput {
+  """If `true`, include inactive `DietType`s."""
+  includeInactive: Boolean
+
+  """
+  Filter DietType by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+}
+
+input DietTypeConnectionSortBy {
+  direction: SortDirection!
+  field: DietTypeConnectionSortByField!
+}
+
+enum DietTypeConnectionSortByField {
+  CODE
+  ID
+  NAME
+}
+
+"""An edge in a connection."""
+type DietTypeEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: DietType!
+}
+
+type DietWorker {
+  dietFacilityId: ID
+  disabledFlag: Boolean!
+  firstName: String
+  id: ID!
+  lastName: String
+  personalNumber: String
+  titleAfter: String
+  titleBefore: String
+  userAkordId: Int
+}
+
+type Doctor {
+  active: Boolean
+  advice: Boolean
+  description: String
+  fictive: Boolean
+  firstName: String!
+  fullName: String!
+  id: ID!
+  instruction: String
+  lastName: String!
+  namePrefix: String
+  nameSuffix: String
+  telephone: String
+  veryFullName: String!
+}
+
+type DoctorConnection {
+  """A list of edges."""
+  edges: [DoctorEdge!]!
+
+  """A list of nodes."""
+  nodes: [Doctor!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input DoctorConnectionSortBy {
+  direction: SortDirection!
+  field: DoctorConnectionSortByField!
+}
+
+enum DoctorConnectionSortByField {
+  NAME
+}
+
+"""An edge in a connection."""
+type DoctorEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Doctor!
+}
+
+"""Doctor connection filter."""
+input DoctortConnectionFilterInput {
+  """
+  By default only active Doctors are listed. `true` to include inactive doctors.
+  """
+  includeInactive: Boolean
+}
+
+type Employee {
+  """First name of the employee."""
+  firstName: String!
+
+  """ID of the employee."""
+  id: ID!
+
+  """Last name of the employee."""
+  lastName: String!
+
+  """Connection of AMOS slots scheduled for this employee."""
+  scheduledSlots(after: String, before: String, first: Int, last: Int): SlotConnection @deprecated(reason: "Use implementation in EmployeeFacilityCard instead.")
+
+  """
+  Employee's education records.
+  
+  By default returns only valid education records included.
+  If you want to include invalid records, set `include_invalid` to `true`.
+  """
+  education(
+    """Select education records for a specific facility."""
+    facilityId: ID
+
+    """`true` for all records."""
+    includeInvalid: Boolean
+  ): [EmployeeEducation!]!
+
+  """List of email addresses separated by comma."""
+  emailAddresses: [String!]
+
+  """Employee assigned facilities list."""
+  facilities: [Facility!]!
+
+  """Employee's cards for facilities."""
+  facilityCards(
+    """ID of an facility to filter by."""
+    facilityId: ID
+  ): [EmployeeFacilityCard!]!
+
+  """Encoded {LastName} {FirstName}."""
+  fullName: String!
+
+  """
+  Employee image as base64 encoded string of JPG image.
+  
+  In frontend, you can use this string as `src` attribute of `img` tag with value
+  `src="data:image/png;base64,<value_of_field>"`.
+  """
+  image(size: EmployeeImageSize): EmployeeImage
+
+  """`true` if the employee is active."""
+  isActive: Boolean!
+
+  """Prefix of the employee's name. Degree, title, etc."""
+  namePrefix: String!
+
+  """Suffix of the employee's name. Degree, title, etc."""
+  nameSuffix: String!
+
+  """List of phone numbers separated by comma."""
+  phoneNumbers: [String!]
+
+  """Users for the employee."""
+  users: [EmployeeUser!]!
+
+  """Encoded {NamePrefix} {LastName} {FirstName} {NameSuffix}."""
+  veryFullName: String!
+
+  """List of forms assigned to the employee."""
+  assignedForms: [EmployeeForm!]!
+
+  """Count of forms assigned to the employee."""
+  assignedFormsCount: Int!
+
+  """Checks if the employee has a Sirona profile."""
+  hasSironaProfile: Boolean!
+
+  """Checks if the employee has a Smenovka profile."""
+  hasSmenovkaProfile: Boolean!
+
+  """Checks if the employee has a Tabsy profile."""
+  hasTabsyProfile: Boolean!
+
+  """Checks if the employee has a Zapka profile."""
+  hasZapkaProfile: Boolean!
+
+  """Sirona profile of the employee."""
+  sironaProfile: SironaEmployeeProfile
+
+  """Smenovka profile of the employee."""
+  smenovkaProfile: SmenovkaEmployeeProfile
+
+  """Tabsy profile of the employee."""
+  tabsyProfile: TabsyEmployeeProfile
+
+  """Zapka profile of the employee."""
+  zapkaProfile: ZapkaEmployeeProfile
+}
+
+type EmployeeAbsence {
+  absenceType: AbsenceTypeGql!
+  contractNumber: String
+  day: Int!
+  employeeCardId: ID!
+  facilityId: ID!
+  hours: Float!
+  month: Int!
+  retrieved: Float!
+  year: Int!
+}
+
+type EmployeeConnection {
+  """A list of edges."""
+  edges: [EmployeeEdge!]!
+
+  """A list of nodes."""
+  nodes: [Employee!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Employee Connection Filter"""
+input EmployeeConnectionFilterInput {
+  """
+  Filter Employees by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+}
+
+input EmployeeConnectionSortBy {
+  direction: SortDirection!
+  field: EmployeeConnectionSortByField!
+}
+
+enum EmployeeConnectionSortByField {
+  FULL_NAME
+  ID
+}
+
+"""An edge in a connection."""
+type EmployeeEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Employee!
+}
+
+type EmployeeEducation {
+  employee: Employee!
+  employeeId: ID!
+  graducationDate: DateTime
+  id: ID!
+
+  """Education kind."""
+  kind: EmployeeEducationKind
+
+  """Education kind ID."""
+  kindId: ID
+  name: String
+  note: String
+  validTo: DateTime
+}
+
+type EmployeeEducationKind {
+  code: String!
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+  name: String!
+  target: EmployeeEducationKindTarget!
+}
+
+enum EmployeeEducationKindTarget {
+  """Certifikáty"""
+  CERTIFICATES
+
+  """Funkční licence"""
+  FUNCTIONAL_LICENSE
+
+  """Licence"""
+  LICENSES
+
+  """Specializace - lékaři"""
+  SPECIALISATION_DOCTORS
+
+  """specializace - NLZP (nelékařská zdravotnická povolání)"""
+  SPECIALISATION_NLZP
+
+  """Kmen"""
+  STRAIN
+}
+
+type EmployeeFacilityCard {
+  """Employee first name."""
+  firstName: String
+  id: ID!
+
+  """Employee last name."""
+  lastName: String
+
+  """Connection of AMOS slots scheduled for this employee."""
+  scheduledSlots(after: String, before: String, first: Int, last: Int): SlotConnection
+
+  """
+  List of authorized absences of the employee in the facility.
+  
+  If `year` and `month` are provided, only absences for the given year and month are returned.
+  
+  Default `year` is the current year.
+  """
+  authorizedAbsences(month: Int, year: Int): [EmployeeAbsence!]!
+
+  """Birth registration number of the employee."""
+  birthRegistrationNumber: String
+
+  """Returns all contracts of the employee in the facility."""
+  contracts(includeInactive: Boolean): [EmployeeWorkContract!]!
+
+  """Login to the domain for the Facility."""
+  domainLogin: String
+
+  """Email address of the employee."""
+  emailAddress: String
+
+  """Returns the employee of the employee card."""
+  employee: Employee!
+
+  """ID of the employee."""
+  employeeId: ID!
+
+  """Number of the employee in the facility."""
+  employeeNumber: String
+
+  """Returns the facility of the employee card."""
+  facility: Facility!
+
+  """ID of the facility."""
+  facilityId: ID!
+
+  """Employee has main employment in the facility."""
+  hasEmploymentMain: Boolean!
+
+  """Employee has partial employment in the facility."""
+  hasEmploymentPartial: Boolean!
+
+  """Insurance number of the employee."""
+  insuranceNumber: String
+
+  """Is the card active."""
+  isActive: Boolean!
+
+  """Returns all organization hierarchies of the employee in the facility."""
+  organizationHierarchies(includeInactive: Boolean): [OrganizationHierarchyEmployee!]!
+
+  """Phone number of the employee."""
+  phoneNumber: String
+  akordWorkerId: ID
+  dietAccountId: ID
+  dietConsumerId: ID
+  dietFacilityId: ID
+
+  """List of diet menus for this employee and facility."""
+  dietMenus(
+    """Date from. By default is `today`."""
+    dateFrom: DateTime
+
+    """Date to. By default is `date_from` + 5 days."""
+    dateTo: DateTime
+  ): [DietMenu!]!
+
+  """List of diet orders for this employee and facility."""
+  dietOrders(dateFrom: DateTime, dateTo: DateTime): [DietOrder!]!
+  scheduledSurgeries(after: String, before: String, filter: ScheduledSurgeryConnectionFilterInput, first: Int, last: Int, sortBy: ScheduledSurgeryConnectionSortBy): ScheduledSurgeryConnection!
+}
+
+type EmployeeForm {
+  employee: Employee!
+  employeeId: ID!
+  form: Form!
+  formId: ID!
+  id: ID!
+}
+
+type EmployeeFormPayload {
+  employeeForm: EmployeeForm!
+}
+
+type EmployeeImage {
+  employeeId: ID!
+  id: ID!
+  imageBase64: String!
+  imageHeight: Int!
+  imageWidth: Int!
+  size: EmployeeImageSize!
+}
+
+enum EmployeeImageSize {
+  """Large size (1024x1024)."""
+  LARGE
+
+  """Medium size (480x480)."""
+  MEDIUM
+
+  """Thumbnail size (128x128)."""
+  THUMB
+}
+
+type EmployeeUser {
+  domainLogin: String!
+  employee: Employee!
+  employeeId: ID!
+  id: ID!
+  akordId: Int
+}
+
+type EmployeeUserConnection {
+  """A list of edges."""
+  edges: [EmployeeUserEdge!]!
+
+  """A list of nodes."""
+  nodes: [EmployeeUser!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Employee Connection Filter"""
+input EmployeeUserConnectionFilterInput {
+  """
+  Filter Employees by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+}
+
+input EmployeeUserConnectionSortBy {
+  direction: SortDirection!
+  field: EmployeeUserConnectionSortByField!
+}
+
+enum EmployeeUserConnectionSortByField {
+  DOMAIN_NAME
+  FULL_NAME
+  ID
+}
+
+"""An edge in a connection."""
+type EmployeeUserEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: EmployeeUser!
+}
+
+type EmployeeWorkContract {
+  contractNumber: String!
+  employeeCard: EmployeeFacilityCard!
+  employeeCardId: ID!
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+  isActive: Boolean!
+  validFrom: NaiveDate
+  validTo: NaiveDate
+  workContractKind: WorkContractKind!
+  workContractKindId: ID!
+}
+
+"""
+Employment kinds.
+
+This is a list of employment kinds that are used to describe the employment of a employee.
+"""
+type EmploymentKind {
+  description: String
+  employmentKindSourceId: Int!
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+
+  """The time scope of the employment kind."""
+  scope: String
+
+  """Hours per one shift."""
+  shiftHours: String
+}
+
+enum ENUM_CMS_INTRANETLINK_TYPE {
+  aplikace
+  interni
+  externi
+}
+
+type Examination {
+  baseExamination: Examination
+  baseExaminationId: ID
+
+  """Duration of the Examination in minutes."""
+  duration: Int!
+  fictive: Boolean
+  filterInvisible: Boolean
+  forceSequence: Boolean
+  id: ID!
+  instructionPatient: String
+  instructionPersonnel: String
+  name: String!
+  receptionInvisible: Boolean
+  slotColor: String
+  statim: Boolean
+  workplace: Workplace!
+  workplaceId: ID!
+}
+
+type ExaminationConnection {
+  """A list of edges."""
+  edges: [ExaminationEdge!]!
+
+  """A list of nodes."""
+  nodes: [Examination!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input ExaminationConnectionSortBy {
+  direction: SortDirection!
+  field: ExaminationConnectionSortByField!
+}
+
+enum ExaminationConnectionSortByField {
+  NAME
+}
+
+"""An edge in a connection."""
+type ExaminationEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Examination!
+}
+
+type Facility {
+  code: String!
+  id: ID!
+  name: String!
+}
+
+type Form {
+  code: String!
+  consumer: FormConsumer!
+  description: String
+  id: ID!
+  kind: FormKind!
+  name: String!
+  title: String!
+
+  """Returns current version of the form."""
+  version: FormVersion
+  versions(includeInvalid: Boolean): [FormVersion!]!
+}
+
+type FormConnection {
+  """A list of edges."""
+  edges: [FormEdge!]!
+
+  """A list of nodes."""
+  nodes: [Form!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Form Connection Filter"""
+input FormConnectionFilterInput {
+  """
+  Filter Forms by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+}
+
+input FormConnectionSortBy {
+  direction: SortDirection!
+  field: FormConnectionSortByField!
+}
+
+enum FormConnectionSortByField {
+  CODE
+  ID
+  NAME
+  TITLE
+}
+
+enum FormConsumer {
+  PATIENT
+  STAFF
+}
+
+"""An edge in a connection."""
+type FormEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Form!
+}
+
+type FormFillSession {
+  departmentAkordId: Int
+  documentationAkordId: Int
+  formSubmission: FormSubmission!
+  formSubmissionId: ID!
+  id: ID!
+  stationAkordId: Int
+}
+
+type FormFillSessionPayload {
+  formFillSession: FormFillSession!
+}
+
+enum FormKind {
+  CONSENT
+  QUESTIONNAIRE
+}
+
+type FormPayload {
+  form: Form!
+}
+
+type FormResultBind {
+  akordVislBlobId: Int
+  formSubmissionId: ID!
+  id: ID!
+  resultKindId: ID!
+}
+
+type FormResultBindPayloadGql {
+  formResultBind: FormResultBind!
+}
+
+type FormResultKind {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+type FormResultKindPayloadGql {
+  formResultKind: FormResultKind!
+}
+
+type FormSubmission {
+  attachments: [FormSubmissionAttachment!]!
+  attachmentsCount: Int!
+  completedAt: DateTime
+  createdAt: DateTime!
+  dataJson: FormSubmissionData
+  fillSessions: [FormFillSession!]!
+  formId: ID!
+  formVersionId: ID!
+  id: ID!
+  isCompleted: Boolean!
+  patientId: ID!
+  updatedAt: DateTime!
+}
+
+type FormSubmissionAttachment {
+  dataBase64(asDataUrl: Boolean): String!
+  fileName: String!
+  formSubmission: FormSubmission!
+  formSubmissionId: ID!
+  id: ID!
+  mimeType: String!
+}
+
+type FormSubmissionAttachmentPayload {
+  formSubmissionAttachment: FormSubmissionAttachment!
+}
+
+type FormSubmissionConnection {
+  """A list of edges."""
+  edges: [FormSubmissionEdge!]!
+
+  """A list of nodes."""
+  nodes: [FormSubmission!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input FormSubmissionConnectionSortBy {
+  direction: SortDirection!
+  field: FormSubmissionConnectionSortByField!
+}
+
+enum FormSubmissionConnectionSortByField {
+  COMPLETED_AT
+  CREATED_AT
+  ID
+}
+
+scalar FormSubmissionData
+
+"""An edge in a connection."""
+type FormSubmissionEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: FormSubmission!
+}
+
+type FormSubmissionPayload {
+  formSubmission: FormSubmission!
+}
+
+type FormVersion {
+  description: String
+  form: Form!
+  formId: ID!
+  id: ID!
+  number: String!
+  validFrom: DateTime!
+  validTo: DateTime
+}
+
+type FormVersionPayload {
+  formVersion: FormVersion!
+}
+
+type Location {
+  ccCallingPrefix: String
+  commGroup: String
+  databaseMailProfile: String
+  description: String
+  einkUrl: String
+  email: String
+  emailBody: String
+  id: ID!
+  logo: String
+  name: String!
+  nameAlternative: String
+  shortcut: String
+}
+
+type Mutation {
+  createCmsAkesoNewsPost(
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsAkesoNewsPostInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsAkesoNewsPost
+  updateCmsAkesoNewsPost(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsAkesoNewsPostInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsAkesoNewsPost
+  deleteCmsAkesoNewsPost(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsDeleteMutationResponse
+  createCmsIntranetBenefit(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetBenefitInput!): CmsIntranetBenefit
+  updateCmsIntranetBenefit(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetBenefitInput!): CmsIntranetBenefit
+  deleteCmsIntranetBenefit(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetEducationCategory(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEducationCategoryInput!): CmsIntranetEducationCategory
+  updateCmsIntranetEducationCategory(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEducationCategoryInput!): CmsIntranetEducationCategory
+  deleteCmsIntranetEducationCategory(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetEducationInstruction(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEducationInstructionInput!): CmsIntranetEducationInstruction
+  updateCmsIntranetEducationInstruction(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEducationInstructionInput!): CmsIntranetEducationInstruction
+  deleteCmsIntranetEducationInstruction(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetEmployeeContact(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEmployeeContactInput!): CmsIntranetEmployeeContact
+  updateCmsIntranetEmployeeContact(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEmployeeContactInput!): CmsIntranetEmployeeContact
+  deleteCmsIntranetEmployeeContact(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetEvent(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEventInput!): CmsIntranetEvent
+  updateCmsIntranetEvent(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEventInput!): CmsIntranetEvent
+  deleteCmsIntranetEvent(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetEventReport(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEventReportInput!): CmsIntranetEventReport
+  updateCmsIntranetEventReport(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetEventReportInput!): CmsIntranetEventReport
+  deleteCmsIntranetEventReport(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetFaq(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetFaqInput!): CmsIntranetFaq
+  updateCmsIntranetFaq(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetFaqInput!): CmsIntranetFaq
+  deleteCmsIntranetFaq(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetLink(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetLinkInput!): CmsIntranetLink
+  updateCmsIntranetLink(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetLinkInput!): CmsIntranetLink
+  deleteCmsIntranetLink(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetLocation(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetLocationInput!): CmsIntranetLocation
+  updateCmsIntranetLocation(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetLocationInput!): CmsIntranetLocation
+  deleteCmsIntranetLocation(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetMagazineNea(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetMagazineNeaInput!): CmsIntranetMagazineNea
+  updateCmsIntranetMagazineNea(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetMagazineNeaInput!): CmsIntranetMagazineNea
+  deleteCmsIntranetMagazineNea(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetNewsItem(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetNewsItemInput!): CmsIntranetNewsItem
+  updateCmsIntranetNewsItem(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetNewsItemInput!): CmsIntranetNewsItem
+  deleteCmsIntranetNewsItem(documentId: ID!): CmsDeleteMutationResponse
+  createCmsIntranetRole(status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetRoleInput!): CmsIntranetRole
+  updateCmsIntranetRole(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsIntranetRoleInput!): CmsIntranetRole
+  deleteCmsIntranetRole(documentId: ID!): CmsDeleteMutationResponse
+  createCmsItBlogAbout(status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogAboutInput!): CmsItBlogAbout
+  updateCmsItBlogAbout(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogAboutInput!): CmsItBlogAbout
+  deleteCmsItBlogAbout(documentId: ID!): CmsDeleteMutationResponse
+  createCmsItBlogBanner(status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogBannerInput!): CmsItBlogBanner
+  updateCmsItBlogBanner(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogBannerInput!): CmsItBlogBanner
+  deleteCmsItBlogBanner(documentId: ID!): CmsDeleteMutationResponse
+  createCmsItBlogPost(status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogPostInput!): CmsItBlogPost
+  updateCmsItBlogPost(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogPostInput!): CmsItBlogPost
+  deleteCmsItBlogPost(documentId: ID!): CmsDeleteMutationResponse
+  createCmsItBlogTag(status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogTagInput!): CmsItBlogTag
+  updateCmsItBlogTag(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsItBlogTagInput!): CmsItBlogTag
+  deleteCmsItBlogTag(documentId: ID!): CmsDeleteMutationResponse
+  createCmsSalusEducationPost(
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusEducationPostInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationPost
+  updateCmsSalusEducationPost(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusEducationPostInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationPost
+  deleteCmsSalusEducationPost(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsDeleteMutationResponse
+  createCmsSalusEducationTag(
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusEducationTagInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationTag
+  updateCmsSalusEducationTag(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusEducationTagInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationTag
+  deleteCmsSalusEducationTag(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsDeleteMutationResponse
+  createCmsSalusFaq(
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusFaqInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusFaq
+  updateCmsSalusFaq(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+    data: CmsSalusFaqInput!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusFaq
+  deleteCmsSalusFaq(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsDeleteMutationResponse
+  createCmsSalusVzdelavaniVerifiedBy(status: CmsPublicationStatus = PUBLISHED, data: CmsSalusVzdelavaniVerifiedByInput!): CmsSalusVzdelavaniVerifiedBy
+  updateCmsSalusVzdelavaniVerifiedBy(documentId: ID!, status: CmsPublicationStatus = PUBLISHED, data: CmsSalusVzdelavaniVerifiedByInput!): CmsSalusVzdelavaniVerifiedBy
+  deleteCmsSalusVzdelavaniVerifiedBy(documentId: ID!): CmsDeleteMutationResponse
+  completeFormSubmission(input: CompleteFormSubmissionInput!): FormSubmissionPayload!
+  createEmployeeForm(input: CreateEmployeeFormInput!): EmployeeFormPayload!
+
+  """Create a new form."""
+  createForm(input: CreateFormInput!): FormPayload!
+  createFormFillSession(input: CreateFormFillSessionInput!): FormFillSessionPayload!
+  createFormResultBind(input: CreateFormResultBindInput!): FormResultBindPayloadGql!
+  createFormResultKind(input: CreateFormResultKindInput!): FormResultKindPayloadGql!
+  createFormSubmission(input: CreateFormSubmissionInput!): FormSubmissionPayload!
+  createFormSubmissionAttachment(input: CreateFormSubmissionAttachmentInput!): FormSubmissionAttachmentPayload!
+  createFormVersion(input: CreateFormVersionInput!): FormVersionPayload!
+
+  """Create a new Salus Patient Profile."""
+  createSalusPatientProfile(input: CreateSalusPatientProfileInput!): SalusPatientProfilePayload!
+
+  """Create a new Salus Patient Session."""
+  createSalusPatientSession(input: CreateSalusPatientSessionInput!): SalusPatientSessionPayload!
+
+  """Create a new Salus Verification Token."""
+  createSalusVerificationToken(input: CreateSalusVerificationTokenInput!): SalusVerificationTokenPayload!
+  createSironaEmployeeProfile(input: CreateSironaEmployeeProfileInput!): SironaEmployeeProfilePayload!
+  createSironaEmployeeProfileGrant(input: CreateSironaEmployeeProfileGrantInput!): SironaEmployeeProfileGrantPayload!
+  createSironaPermission(input: CreateSironaPermissionInput!): SironaPermissionPayload!
+  createSironaRole(input: CreateSironaRoleInput!): SironaRolePayload!
+  createSmenovkaEmployeeProfile(input: CreateSmenovkaEmployeeProfileInput!): SmenovkaEmployeeProfilePayload!
+  createSmenovkaEmployeeProfileGrant(input: CreateSmenovkaEmployeeProfileGrantInput!): SmenovkaEmployeeProfileGrantPayload!
+  createSmenovkaPermission(input: CreateSmenovkaPermissionInput!): SmenovkaPermissionPayload!
+  createSmenovkaRole(input: CreateSmenovkaRoleInput!): SmenovkaRolePayload!
+  createTabsyEmployeeProfile(input: CreateTabsyEmployeeProfileInput!): TabsyEmployeeProfilePayload!
+  createZapkaEmployeeProfile(input: CreateZapkaEmployeeProfileInput!): ZapkaEmployeeProfilePayload!
+  createZapkaEmployeeProfileGrant(input: CreateZapkaEmployeeProfileGrantInput!): ZapkaEmployeeProfileGrantPayload!
+  createZapkaPermission(input: CreateZapkaPermissionInput!): ZapkaPermissionPayload!
+  createZapkaRole(input: CreateZapkaRoleInput!): ZapkaRolePayload!
+  deactivateFormVersion(input: DeactivateFormVersionInput!): FormVersionPayload!
+  deactivateSironaEmployeeProfile(input: DeactivateSironaEmployeeProfileInput!): SironaEmployeeProfilePayload!
+  deactivateSmenovkaEmployeeProfile(input: DeactivateSmenovkaEmployeeProfileInput!): SmenovkaEmployeeProfilePayload!
+  deactivateZapkaEmployeeProfile(input: DeactivateZapkaEmployeeProfileInput!): ZapkaEmployeeProfilePayload!
+  deleteEmployeeForm(input: DeleteEmployeeFormInput!): EmployeeFormPayload!
+  deleteFormFillSession(input: UpdateFormFillSessionInput!): FormFillSessionPayload!
+  deleteFormResultBind(input: DeleteFormResultBindInput!): FormResultBindPayloadGql!
+  deleteFormResultKind(input: DeleteFormResultKindInput!): FormResultKindPayloadGql!
+  deleteFormSubmissionAttachment(input: DeleteFormSubmissionAttachmentInput!): FormSubmissionAttachmentPayload!
+
+  """Delete a Salus Patient Profile."""
+  deleteSalusPatientProfile(input: DeleteSalusPatientProfileInput!): SalusPatientProfilePayload!
+
+  """Delete a Salus Patient Session by session ID."""
+  deleteSalusPatientSession(input: DeleteSalusPatientSessionByIdInput!): SalusPatientSessionPayload!
+
+  """Delete a Salus Patient Session by session token."""
+  deleteSalusPatientSessionBySessionToken(input: DeleteSalusPatientSessionBySessionTokenInput!): SalusPatientSessionPayload!
+
+  """Delete the Salus Verification Token."""
+  deleteSalusVerificationToken(input: DeleteSalusVerificationTokenInput!): SalusVerificationTokenPayload!
+  deleteSironaEmployeeProfileGrant(input: DeleteSironaEmployeeProfileGrantInput!): SironaEmployeeProfileGrantPayload!
+  deleteSironaPermission(input: DeleteSironaPermissionInput!): SironaPermissionPayload!
+  deleteSironaRole(input: DeleteSironaRoleInput!): SironaRolePayload!
+  deleteSmenovkaEmployeeProfileGrant(input: DeleteSmenovkaEmployeeProfileGrantInput!): SmenovkaEmployeeProfileGrantPayload!
+  deleteSmenovkaPermission(input: DeleteSmenovkaPermissionInput!): SmenovkaPermissionPayload!
+  deleteSmenovkaRole(input: DeleteSmenovkaRoleInput!): SmenovkaRolePayload!
+  deleteTabsyEmployeeProfile(input: DeleteTabsyEmployeeProfileInput!): TabsyEmployeeProfilePayload!
+  deleteZapkaEmployeeProfileGrant(input: DeleteZapkaEmployeeProfileGrantInput!): ZapkaEmployeeProfileGrantPayload!
+  deleteZapkaPermission(input: DeleteZapkaPermissionInput!): ZapkaPermissionPayload!
+  deleteZapkaRole(input: DeleteZapkaRoleInput!): ZapkaRolePayload!
+  reactivateFormVersion(input: ReactivateFormVersionInput!): FormVersionPayload!
+  reactivateSironaEmployeeProfile(input: ReactivateSironaEmployeeProfileInput!): SironaEmployeeProfilePayload!
+  reactivateSmenovkaEmployeeProfile(input: ReactivateSmenovkaEmployeeProfileInput!): SmenovkaEmployeeProfilePayload!
+  reactivateZapkaEmployeeProfile(input: ReactivateZapkaEmployeeProfileInput!): ZapkaEmployeeProfilePayload!
+
+  """Update a form."""
+  updateForm(input: UpdateFormInput!): FormPayload!
+  updateFormFillSession(input: UpdateFormFillSessionInput!): FormFillSessionPayload!
+  updateFormResultBind(input: UpdateFormResultBindInput!): FormResultBindPayloadGql!
+  updateFormResultKind(input: UpdateFormResultKindInput!): FormResultKindPayloadGql!
+  updateFormSubmission(input: UpdateFormSubmissionInput!): FormSubmissionPayload!
+  updateFormSubmissionAttachment(input: UpdateFormSubmissionAttachmentInput!): FormSubmissionAttachmentPayload!
+  updateFormVersion(input: UpdateFormVersionInput!): FormVersionPayload!
+
+  """Update a Salus Patient Profile."""
+  updateSalusPatientProfile(input: UpdateSalusPatientProfileInput!): SalusPatientProfilePayload!
+
+  """Update a Salus Patient Session."""
+  updateSalusPatientSession(input: UpdateSalusPatientSessionInput!): SalusPatientSessionPayload!
+  updateSironaEmployeeProfile(input: UpdateSironaEmployeeProfileInput!): SironaEmployeeProfilePayload!
+  updateSironaEmployeeProfileGrant(input: UpdateSironaEmployeeProfileGrantInput!): SironaEmployeeProfileGrantPayload!
+  updateSironaPermission(input: UpdateSironaPermissionInput!): SironaPermissionPayload!
+  updateSironaRole(input: UpdateSironaRoleInput!): SironaRolePayload!
+  updateSmenovkaEmployeeProfile(input: UpdateSmenovkaEmployeeProfileInput!): SmenovkaEmployeeProfilePayload!
+  updateSmenovkaEmployeeProfileGrant(input: UpdateSmenovkaEmployeeProfileGrantInput!): SmenovkaEmployeeProfileGrantPayload!
+  updateSmenovkaPermission(input: UpdateSmenovkaPermissionInput!): SmenovkaPermissionPayload!
+  updateSmenovkaRole(input: UpdateSmenovkaRoleInput!): SmenovkaRolePayload!
+  updateZapkaEmployeeProfile(input: UpdateZapkaEmployeeProfileInput!): ZapkaEmployeeProfilePayload!
+  updateZapkaEmployeeProfileGrant(input: UpdateZapkaEmployeeProfileGrantInput!): ZapkaEmployeeProfileGrantPayload!
+  updateZapkaPermission(input: UpdateZapkaPermissionInput!): ZapkaPermissionPayload!
+  updateZapkaRole(input: UpdateZapkaRoleInput!): ZapkaRolePayload!
+  upsertFormsFromJson(input: UpsertFormsFromJsonInput!): [UpsertFormsFromJsonPayload!]!
+  upsertSironaPermissionsFromJson(input: UpsertSironaPermissionsFromJsonInput!): [UpsertSironaPermissionsFromJsonPayload!]!
+  upsertSironaRolesFromJson(input: UpsertSironaRolesFromJsonInput!): [UpsertSironaRolesFromJsonPayload!]!
+
+  """Use the Salus Verification Token."""
+  useSalusVerificationToken(input: UseSalusVerificationTokenInput!): SalusVerificationTokenPayload!
+
+  """Mark a Salus Patient Profile email as verified."""
+  verifySalusPatientProfileEmail(input: VerifySalusPatientProfileEmailInput!): SalusPatientProfilePayload!
+  createPatientFamilyMember(input: CreatePatientFamilyMemberInput!): PatientFamilyMemberPayload!
+
+  """
+  Creates an Patient image size set from original image (uploaded image by patient).
+  
+  Resizes original image to 3 dimensions.
+  
+  Payload contains `THUMB` version of the image.
+  """
+  createPatientImage(input: CreatePatientImageInput!): PatientImagePayload!
+  deletePatientFamilyMember(input: DeletePatientFamilyMemberInput!): PatientFamilyMemberPayload!
+
+  """
+  Removes Patient image size set.
+  
+  Payload contains `THUMB` version of the image.
+  """
+  deletePatientImage(input: DeletePatientImageInput!): PatientImagePayload!
+
+  """
+  Updates an Patient image size set from original image (uploaded image by patient).
+  
+  Resizes original image to 3 dimensions.
+  
+  Payload contains `THUMB` version of the image.
+  """
+  updatePatientImage(input: DeletePatientImageInput!): PatientImagePayload!
+}
+
+"""
+ISO 8601 calendar date without timezone.
+Format: %Y-%m-%d
+
+# Examples
+
+* `1994-11-13`
+* `2000-02-24`
+"""
+scalar NaiveDate
+
+"""
+ISO 8601 time without timezone.
+Allows for the nanosecond precision and optional leap second representation.
+Format: %H:%M:%S%.f
+
+# Examples
+
+* `08:59:60.123`
+"""
+scalar NaiveTime
+
+type Organization {
+  code: String!
+  id: ID!
+  name: String!
+}
+
+type OrganizationHierarchy {
+  costCenter: CostCenter
+  costCenterId: ID
+  employees(after: String, before: String, filter: OrganizationHierarchyEmployeeConnectionFilterInput, first: Int, last: Int, sortBy: OrganizationHierarchyEmployeeConnectionSortBy): OrganizationHierarchyEmployeeConnection!
+  facility: Facility
+  facilityId: ID
+  id: ID!
+  name: String!
+  organization: Organization
+  organizationId: ID
+  organizationSourceId: Int
+  parentId: ID
+}
+
+type OrganizationHierarchyEmployee {
+  contract(includeInactive: Boolean): EmployeeWorkContract
+  contractNumber: String!
+
+  """Returns the employee card of the employee."""
+  employeeCard: EmployeeFacilityCard!
+  employeeCardId: ID!
+  employmentKind: EmploymentKind
+  employmentKindId: ID
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+  ignoreOutOfRegistrations: Boolean!
+  isPlannable: Boolean!
+  isReportable: Boolean!
+  organizationHierarchy: OrganizationHierarchy!
+  organizationHierarchyId: ID!
+  relationType: String
+  shiftKind: ShiftKind
+  shiftKindId: ID
+  systemizationPosition: SystemizationPosition
+  systemizationPositionId: ID
+  validFrom: NaiveDate
+  validTo: NaiveDate
+}
+
+type OrganizationHierarchyEmployeeConnection {
+  """A list of edges."""
+  edges: [OrganizationHierarchyEmployeeEdge!]!
+
+  """A list of nodes."""
+  nodes: [OrganizationHierarchyEmployee!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input OrganizationHierarchyEmployeeConnectionFilterInput {
+  """
+  Filter Organization Hierarchy Employees by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+  systemizationPositionCategory: SystemizationPositionCategory
+}
+
+input OrganizationHierarchyEmployeeConnectionSortBy {
+  direction: SortDirection!
+  field: OrganizationHierarchyEmployeeConnectionSortByField!
+}
+
+enum OrganizationHierarchyEmployeeConnectionSortByField {
+  FULL_NAME
+  ID
+}
+
+"""An edge in a connection."""
+type OrganizationHierarchyEmployeeEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: OrganizationHierarchyEmployee!
+}
+
+"""Information about pagination in a connection"""
+type PageInfo {
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+}
+
+type Patient {
+  """Primary postal address of the patient."""
+  address: PatientPostAddress
+  akordId: Int
+  amosId: Int
+
+  """Patients AMOS appointments."""
+  appointments(after: String, before: String, first: Int, last: Int): SlotConnection
+
+  """Email address of the patient."""
+  emailAddress: String
+
+  """Identity card number (Číslo občanského průkazu)."""
+  idCardNumber: String
+
+  """Education degree of the patient."""
+  namePrefix: String
+
+  """Education degree of the patient."""
+  nameSuffix: String
+
+  """Phone number of the patient."""
+  phoneNumber: String
+
+  """Encoded {namePrefix} {firstName} {lastName} {nameSuffix}"""
+  veryFullName: String!
+  formSubmissions(after: String, before: String, first: Int, last: Int, sortBy: FormSubmissionConnectionSortBy): FormSubmissionConnection!
+
+  """Check if the patient has a Salus profile"""
+  hasSalusProfile: Boolean!
+  id: ID!
+  salusProfile: SalusPatientProfile
+
+  """Age of the patient"""
+  age: Int
+  birthDate: DateTime
+  birthLastName: String!
+  bloodType: String
+  deathDate: DateTime
+  disability: PatientDisability!
+
+  """Health insurance company number."""
+  insuranceCompanyNumber: Int
+
+  """Health insurance number."""
+  insuranceNumber: String!
+
+  """Rh factor of the blood."""
+  rhFactor: String
+
+  """Patient's sex."""
+  sex: PatientSex!
+
+  """Birth registration number (Rodné číslo)."""
+  birthRegistrationNumber: String!
+
+  """Combined as FullName - (BirthRegistrationNumber)"""
+  displayName: String!
+  familyMembers: [PatientFamilyMember!]!
+
+  """First name of the patient."""
+  firstName: String!
+
+  """Combined as LastName and FirstName"""
+  fullName: String!
+
+  """Returns `true` if patient has an image"""
+  hasImage: Boolean!
+
+  """Returs patient image"""
+  image(size: PatientImageSize): PatientImageGql
+  insuranceNumberId: String
+
+  """Last name of the patient."""
+  lastName: String!
+  mpiId: ID!
+}
+
+type PatientConnection {
+  """A list of edges."""
+  edges: [PatientEdge!]!
+
+  """A list of nodes."""
+  nodes: [Patient!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Patient Connection Filter"""
+input PatientConnectionFilterInput {
+  """
+  Filter Patients by search string.
+  The search string is tokenized by whitespace.
+  """
+  search: String
+}
+
+input PatientConnectionSortBy {
+  direction: SortDirection!
+  field: PatientConnectionSortByField!
+}
+
+enum PatientConnectionSortByField {
+  FULL_NAME
+  ID
+}
+
+type PatientDisability {
+  blind: Boolean!
+  deaf: Boolean!
+  immobile: Boolean!
+}
+
+"""An edge in a connection."""
+type PatientEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Patient!
+}
+
+type PatientFamilyMember {
+  id: ID!
+  memberPatient: Patient!
+
+  """Child / member patient id."""
+  memberPatientId: ID!
+  patient: Patient!
+
+  """Parent patient id."""
+  patientId: ID!
+}
+
+type PatientFamilyMemberPayload {
+  patientFamilyMember: PatientFamilyMember!
+}
+
+type PatientImageGql {
+  id: ID!
+
+  """Patient image JPEG binary encoded in Base64."""
+  imageBase64: String!
+
+  """Height of image in px."""
+  imageHeight: Int!
+
+  """Width of image in px."""
+  imageWidth: Int!
+
+  """Size of the image."""
+  size: PatientImageSize!
+}
+
+type PatientImagePayload {
+  patientImage: PatientImageGql!
+}
+
+enum PatientImageSize {
+  """Large size (1024x1024)."""
+  LARGE
+
+  """Medium size (480x480)."""
+  MEDIUM
+
+  """Thumbnail size (128x128)."""
+  THUMB
+}
+
+type PatientPostAddress {
+  buildingNumber: String
+  city: String
+  cityDistrict: String
+  country: String
+  district: String
+  full: String!
+  region: String
+  registrationBuildingNumber: String
+  street: String
+  zipCode: String
+}
+
+enum PatientSex {
+  FEMALE
+  MALE
+  UNSPECIFIED
+}
+
+type Query {
+  """Get a AMOS building by ID."""
+  building(
+    """Building ID"""
+    id: ID!
+  ): Building
+
+  """Get AMOS buildings connection."""
+  buildings(after: String, before: String, first: Int, last: Int, sortBy: BuildingConnectionSortBy): BuildingConnection!
+
+  """Get a AMOS doctor by ID."""
+  doctor(id: ID!): Doctor
+
+  """Get AMOS doctors connection."""
+  doctors(after: String, before: String, filter: DoctortConnectionFilterInput, first: Int, last: Int, sortBy: DoctorConnectionSortBy): DoctorConnection!
+
+  """Get a AMOS Examination by ID."""
+  examination(
+    """Examination ID"""
+    id: ID!
+  ): Examination
+
+  """Get AMOS Examinations connection."""
+  examinations(after: String, before: String, first: Int, last: Int, sortBy: ExaminationConnectionSortBy): ExaminationConnection!
+
+  """Get a AMOS Location by ID."""
+  location(
+    """Location ID"""
+    id: ID!
+  ): Location
+
+  """Get AMOS Locations list."""
+  locations: [Location!]!
+
+  """Get a AMOS Room by ID."""
+  room(
+    """Slot ID"""
+    id: ID!
+  ): Room
+
+  """Get AMOS Rooms connection."""
+  rooms(after: String, before: String, first: Int, last: Int, sortBy: RoomConnectionSortBy): RoomConnection!
+
+  """Get a AMOS Slot by ID."""
+  slot(
+    """Slot ID"""
+    id: ID!
+  ): Slot
+
+  """Get AMOS Slots connection."""
+  slots(after: String, before: String, filter: SlotConnectionFilterInput, first: Int, last: Int, sortBy: SlotConnectionSortBy): SlotConnection!
+
+  """Get a AMOS Slot by ID."""
+  workplace(
+    """Workplace ID"""
+    id: ID!
+  ): Workplace
+
+  """Get AMOS Slots connection."""
+  workplaces(after: String, before: String, first: Int, last: Int, sortBy: WorkplaceConnectionSortBy): WorkplaceConnection!
+  cmsAkesoNewsPost(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsAkesoNewsPost
+  cmsAkesoNewsPosts_connection(
+    filters: CmsAkesoNewsPostFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsAkesoNewsPostEntityResponseCollection
+  cmsAkesoNewsPosts(
+    filters: CmsAkesoNewsPostFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): [CmsAkesoNewsPost]!
+  cmsIntranetBenefit(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetBenefit
+  cmsIntranetBenefits_connection(filters: CmsIntranetBenefitFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetBenefitEntityResponseCollection
+  cmsIntranetBenefits(filters: CmsIntranetBenefitFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetBenefit]!
+  cmsIntranetEducationCategory(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetEducationCategory
+  cmsIntranetEducationCategories_connection(filters: CmsIntranetEducationCategoryFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetEducationCategoryEntityResponseCollection
+  cmsIntranetEducationCategories(filters: CmsIntranetEducationCategoryFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetEducationCategory]!
+  cmsIntranetEducationInstruction(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetEducationInstruction
+  cmsIntranetEducationInstructions_connection(filters: CmsIntranetEducationInstructionFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetEducationInstructionEntityResponseCollection
+  cmsIntranetEducationInstructions(filters: CmsIntranetEducationInstructionFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetEducationInstruction]!
+  cmsIntranetEmployeeContact(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetEmployeeContact
+  cmsIntranetEmployeeContacts_connection(filters: CmsIntranetEmployeeContactFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetEmployeeContactEntityResponseCollection
+  cmsIntranetEmployeeContacts(filters: CmsIntranetEmployeeContactFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetEmployeeContact]!
+  cmsIntranetEvent(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetEvent
+  cmsIntranetEvents_connection(filters: CmsIntranetEventFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetEventEntityResponseCollection
+  cmsIntranetEvents(filters: CmsIntranetEventFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetEvent]!
+  cmsIntranetEventReport(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetEventReport
+  cmsIntranetEventReports_connection(filters: CmsIntranetEventReportFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetEventReportEntityResponseCollection
+  cmsIntranetEventReports(filters: CmsIntranetEventReportFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetEventReport]!
+  cmsIntranetFaq(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetFaq
+  cmsIntranetFaqs_connection(filters: CmsIntranetFaqFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetFaqEntityResponseCollection
+  cmsIntranetFaqs(filters: CmsIntranetFaqFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetFaq]!
+  cmsIntranetLink(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetLink
+  cmsIntranetLinks_connection(filters: CmsIntranetLinkFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetLinkEntityResponseCollection
+  cmsIntranetLinks(filters: CmsIntranetLinkFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetLink]!
+  cmsIntranetLocation(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetLocation
+  cmsIntranetLocations_connection(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetLocationEntityResponseCollection
+  cmsIntranetLocations(filters: CmsIntranetLocationFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetLocation]!
+  cmsIntranetMagazineNea(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetMagazineNea
+  cmsIntranetMagazineNeas_connection(filters: CmsIntranetMagazineNeaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetMagazineNeaEntityResponseCollection
+  cmsIntranetMagazineNeas(filters: CmsIntranetMagazineNeaFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetMagazineNea]!
+  cmsIntranetNewsItem(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetNewsItem
+  cmsIntranetNews_connection(filters: CmsIntranetNewsItemFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetNewsItemEntityResponseCollection
+  cmsIntranetNews(filters: CmsIntranetNewsItemFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetNewsItem]!
+  cmsIntranetRole(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsIntranetRole
+  cmsIntranetRoles_connection(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsIntranetRoleEntityResponseCollection
+  cmsIntranetRoles(filters: CmsIntranetRoleFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsIntranetRole]!
+  cmsItBlogAbout(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsItBlogAbout
+  cmsItBlogAbouts_connection(filters: CmsItBlogAboutFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsItBlogAboutEntityResponseCollection
+  cmsItBlogAbouts(filters: CmsItBlogAboutFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsItBlogAbout]!
+  cmsItBlogBanner(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsItBlogBanner
+  cmsItBlogBanners_connection(filters: CmsItBlogBannerFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsItBlogBannerEntityResponseCollection
+  cmsItBlogBanners(filters: CmsItBlogBannerFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsItBlogBanner]!
+  cmsItBlogPost(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsItBlogPost
+  cmsItBlogPosts_connection(filters: CmsItBlogPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsItBlogPostEntityResponseCollection
+  cmsItBlogPosts(filters: CmsItBlogPostFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsItBlogPost]!
+  cmsItBlogTag(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsItBlogTag
+  cmsItBlogTags_connection(filters: CmsItBlogTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsItBlogTagEntityResponseCollection
+  cmsItBlogTags(filters: CmsItBlogTagFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsItBlogTag]!
+  cmsSalusEducationPost(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationPost
+  cmsSalusEducationPosts_connection(
+    filters: CmsSalusEducationPostFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationPostEntityResponseCollection
+  cmsSalusEducationPosts(
+    filters: CmsSalusEducationPostFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): [CmsSalusEducationPost]!
+  cmsSalusEducationTag(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationTag
+  cmsSalusEducationTags_connection(
+    filters: CmsSalusEducationTagFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusEducationTagEntityResponseCollection
+  cmsSalusEducationTags(
+    filters: CmsSalusEducationTagFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): [CmsSalusEducationTag]!
+  cmsSalusFaq(
+    documentId: ID!
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusFaq
+  cmsSalusFaqs_connection(
+    filters: CmsSalusFaqFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): CmsSalusFaqEntityResponseCollection
+  cmsSalusFaqs(
+    filters: CmsSalusFaqFiltersInput
+    pagination: CmsPaginationArg = {}
+    sort: [String] = []
+    status: CmsPublicationStatus = PUBLISHED
+
+    """The locale to use for the query"""
+    locale: CmsI18NLocaleCode
+  ): [CmsSalusFaq]!
+  cmsSalusVzdelavaniVerifiedBy(documentId: ID!, status: CmsPublicationStatus = PUBLISHED): CmsSalusVzdelavaniVerifiedBy
+  cmsSalusVzdelavaniVerifiedBies_connection(filters: CmsSalusVzdelavaniVerifiedByFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): CmsSalusVzdelavaniVerifiedByEntityResponseCollection
+  cmsSalusVzdelavaniVerifiedBies(filters: CmsSalusVzdelavaniVerifiedByFiltersInput, pagination: CmsPaginationArg = {}, sort: [String] = [], status: CmsPublicationStatus = PUBLISHED): [CmsSalusVzdelavaniVerifiedBy]!
+  costCenter(id: ID!): CostCenter
+  costCenters(facilityId: ID): [CostCenter!]!
+
+  """Get a Employee by ID or loginName or akordId"""
+  employee(
+    """Employee domainLogin name"""
+    domainLogin: String
+
+    """Employee ID"""
+    id: ID
+  ): Employee
+
+  """Kinds of employee education."""
+  employeeEducationKinds(facilityId: ID): [EmployeeEducationKind!]!
+
+  """Get a EmployeeUser by ID or domainLogin"""
+  employeeUser(
+    """Employee domainLogin"""
+    domainLogin: String
+
+    """EmployeeUser ID"""
+    id: ID
+  ): EmployeeUser
+
+  """Get EmployeeUsers connection"""
+  employeeUsers(after: String, before: String, filter: EmployeeUserConnectionFilterInput, first: Int, last: Int, sortBy: EmployeeUserConnectionSortBy): EmployeeUserConnection!
+
+  """Returns the employee work contract by ID."""
+  employeeWorkContract(id: ID!): EmployeeWorkContract
+
+  """Employees connection"""
+  employees(after: String, before: String, filter: EmployeeConnectionFilterInput, first: Int, last: Int, sortBy: EmployeeConnectionSortBy): EmployeeConnection!
+  employmentKind(id: ID!): EmploymentKind
+  employmentKinds(facilityId: ID): [EmploymentKind!]!
+  facilities: [Facility!]!
+  facility(
+    """Facility ID"""
+    id: ID!
+  ): Facility
+  organization(id: ID!): Organization
+
+  """Returns the organization hierarchy tree."""
+  organizationHierarchy(facilityId: ID): [OrganizationHierarchy!]!
+  organizationHierarchyEmployee(id: ID!): OrganizationHierarchyEmployee
+
+  """Returns connection of employees in the organization hierarchy."""
+  organizationHierarchyEmployees(after: String, before: String, filter: OrganizationHierarchyEmployeeConnectionFilterInput, first: Int, last: Int, organizationHierarchyId: ID!, sortBy: OrganizationHierarchyEmployeeConnectionSortBy): OrganizationHierarchyEmployeeConnection!
+
+  """Returns the organization hierarchy item by ID."""
+  organizationHierarchyItem(id: ID!): OrganizationHierarchy
+
+  """List of all organizations."""
+  organizations: [Organization!]!
+  shiftKind(id: ID!): ShiftKind
+  shiftKinds(facilityId: ID): [ShiftKind!]!
+
+  """Get a Systemization by ID."""
+  systemization(id: ID!): Systemization
+  systemizationPosition(id: ID!): SystemizationPosition
+  systemizationPositions(category: SystemizationPositionCategory, facilityId: ID): [SystemizationPosition!]!
+
+  """List of all employee systemization options."""
+  systemizations(facilityId: ID): [Systemization!]!
+  workContractKind(id: ID!): WorkContractKind
+  workContractKinds: [WorkContractKind!]!
+  employeeForm(id: ID!): EmployeeForm
+  form(id: ID!): Form
+  formFillSession(id: ID!): FormFillSession
+  formResultBind(id: ID!): FormResultBind
+  formResultKind(id: ID!): FormResultKind
+  formResultKinds: [FormResultKind!]!
+  formSubmission(id: ID!): FormSubmission
+  formSubmissionAttachment(id: ID!): FormSubmissionAttachment
+  formVersion(id: ID!): FormVersion
+  formVersions(formId: ID!, includeInvalid: Boolean): [FormVersion!]!
+  forms(after: String, before: String, filter: FormConnectionFilterInput, first: Int, last: Int, sortBy: FormConnectionSortBy): FormConnection!
+
+  """
+  Returns the Patient Profile for the given ID, email, or patient ID.
+  Only one of the parameters should be provided. Arguments precedence is ID, email, patientId.
+  """
+  salusPatientProfile(email: String, id: ID, patientId: ID): SalusPatientProfile
+
+  """Returns a connection of Patient Profiles."""
+  salusPatientProfiles(after: String, before: String, first: Int, last: Int, sortBy: SalusPatientProfileConnectionSortBy): SalusPatientProfileConnection!
+  salusPatientSession(id: ID, sessionToken: String): SalusPatientSession
+
+  """
+  Returns the employee profile for the given employee ID or ID of profile.
+  """
+  sironaEmployeeProfile(
+    """ID of the employee."""
+    employeeId: ID
+
+    """ID of the employee profile."""
+    id: ID
+  ): SironaEmployeeProfile
+
+  """Return Permission of Sirona by ID of the permission."""
+  sironaPermission(
+    """ID of the permission."""
+    id: ID!
+  ): SironaPermission
+
+  """Returns all permissions of Sirona."""
+  sironaPermissions: [SironaPermission!]!
+
+  """Sirona role by ID."""
+  sironaRole(code: String, id: ID): SironaRole
+
+  """List of all Sirona roles."""
+  sironaRoles: [SironaRole!]!
+
+  """
+  Returns the employee profile for the given employee ID or ID of profile.
+  """
+  smenovkaEmployeeProfile(
+    """ID of the employee."""
+    employeeId: ID
+
+    """ID of the employee profile."""
+    id: ID
+  ): SmenovkaEmployeeProfile
+
+  """Return Permissions of Smenovka by ID of the permission."""
+  smenovkaPermission(
+    """ID of the permission."""
+    id: ID!
+  ): SmenovkaPermission
+
+  """Returns all permissions of Smenovka."""
+  smenovkaPermissions: [SmenovkaPermission!]!
+
+  """Smenovka role by ID."""
+  smenovkaRole(code: String, id: ID): SmenovkaRole
+
+  """List of all Smenovka roles."""
+  smenovkaRoles: [SmenovkaRole!]!
+  tabsyEmployeeProfile(id: ID!): TabsyEmployeeProfile
+
+  """
+  Returns the employee profile for the given employee ID or ID of profile.
+  """
+  zapkaEmployeeProfile(
+    """ID of the employee."""
+    employeeId: ID
+
+    """ID of the employee profile."""
+    id: ID
+  ): ZapkaEmployeeProfile
+
+  """Return Permissions of Zapka by ID of the permission."""
+  zapkaPermission(
+    """ID of the permission."""
+    id: ID!
+  ): ZapkaPermission
+
+  """Returns all permissions of Zapka."""
+  zapkaPermissions: [ZapkaPermission!]!
+
+  """Zapka role by ID."""
+  zapkaRole(code: String, id: ID): ZapkaRole
+
+  """List of all Zapka roles."""
+  zapkaRoles: [ZapkaRole!]!
+  dietAccount(
+    """DietAccount ID"""
+    id: ID!
+  ): DietAccount
+  dietAccountTranaction(
+    """Diet account trans ID"""
+    id: ID!
+  ): DietAccountTransaction
+  dietAccountTransactionType(
+    """Diet account trans type ID"""
+    id: ID!
+  ): DietAccountTransactionType
+  dietAccountTransactionTypes: [DietAccountTransactionType!]!
+  dietAccountTransactions(after: String, before: String, filter: DietAccountTransactionConnectionFilterInput, first: Int, last: Int, sortBy: DietAccountTransactionConnectionSortBy): DietAccountTransactionConnection!
+  dietAccounts(after: String, before: String, filter: DietAccountConnectionFilterInput, first: Int, last: Int, sortBy: DietAccountConnectionSortBy): DietAccountConnection!
+  dietConsumer(
+    """Diet consumer ID"""
+    id: ID!
+  ): DietConsumer
+  dietConsumers(after: String, before: String, first: Int, last: Int, sortBy: DietConsumerConnectionSortBy): DietConsumerConnection!
+  dietFacilities: [DietFacility!]!
+  dietFacility(
+    """Diet Facility ID"""
+    id: ID!
+  ): DietFacility
+  dietFoodType(
+    """Diet FoodType ID"""
+    id: ID!
+  ): DietFoodType
+  dietFoodTypes(fullName: String, isValid: Boolean, shortName: String): [DietFoodType!]!
+  dietMenu(
+    """Diet menu ID"""
+    id: String!
+  ): DietMenu
+  dietMenus(after: String, before: String, filter: DietMenuConnectionFilterInput, first: Int, last: Int, sortBy: DietMenuConnectionSortBy): DietMenuConnection!
+  dietOrder(
+    """Diet order ID"""
+    id: ID!
+  ): DietOrder
+  dietOrders(after: String, before: String, filter: DietOrderConnectionFilterInput, first: Int, last: Int, sortBy: DietOrderConnectionSortBy): DietOrderConnection!
+  dietType(
+    """Diet Type ID"""
+    id: ID!
+  ): DietType
+  dietTypes(after: String, before: String, filter: DietTypeConnectionFilterInput, first: Int, last: Int, sortBy: DietTypeConnectionSortBy): DietTypeConnection!
+  dietWorker(
+    """Diet worker ID"""
+    id: ID!
+  ): DietWorker
+  dietWorkers(dietFacilityId: ID, firstName: String, lastName: String, personalNumber: String): [DietWorker!]!
+  patientByAkordId(akordId: Int!): Patient
+  patient(
+    """Patient ID"""
+    id: ID!
+  ): Patient
+  patientByInsuranceNumber(insuranceNumberId: String): Patient
+  patientFamilyMembers(
+    """Patient ID"""
+    patientId: ID!
+  ): [PatientFamilyMember!]!
+  patients(after: String, before: String, filter: PatientConnectionFilterInput, first: Int, last: Int, sortBy: PatientConnectionSortBy): PatientConnection!
+}
+
+input ReactivateFormVersionInput {
+  id: ID!
+}
+
+input ReactivateSironaEmployeeProfileInput {
+  id: ID!
+}
+
+input ReactivateSmenovkaEmployeeProfileInput {
+  id: ID!
+}
+
+input ReactivateZapkaEmployeeProfileInput {
+  id: ID!
+}
+
+type Room {
+  building: Building
+  buildingId: ID
+  capacity: Int!
+  description: String
+  floor: Int!
+  id: ID!
+  number: String!
+  roomType: Int
+  shortcut: String
+}
+
+type RoomConnection {
+  """A list of edges."""
+  edges: [RoomEdge!]!
+
+  """A list of nodes."""
+  nodes: [Room!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input RoomConnectionSortBy {
+  direction: SortDirection!
+  field: RoomConnectionSortByField!
+}
+
+enum RoomConnectionSortByField {
+  NUMBER
+}
+
+"""An edge in a connection."""
+type RoomEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Room!
+}
+
+type SalusPatientProfile {
+  email: String!
+  emailVerified: DateTime
+  id: ID!
+  name: String!
+  patient: Patient!
+  patientId: ID!
+}
+
+type SalusPatientProfileConnection {
+  """A list of edges."""
+  edges: [SalusPatientProfileEdge!]!
+
+  """A list of nodes."""
+  nodes: [SalusPatientProfile!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input SalusPatientProfileConnectionSortBy {
+  direction: SortDirection!
+  field: SalusPatientProfileConnectionSortByField!
+}
+
+enum SalusPatientProfileConnectionSortByField {
+  NAME
+}
+
+"""An edge in a connection."""
+type SalusPatientProfileEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: SalusPatientProfile!
+}
+
+type SalusPatientProfilePayload {
+  salusPatientProfile: SalusPatientProfile!
+}
+
+type SalusPatientSession {
+  createdAt: DateTime!
+  expiresAt: DateTime!
+  id: ID!
+  patientProfileId: ID!
+  sessionToken: String!
+  updatedAt: DateTime!
+}
+
+type SalusPatientSessionPayload {
+  salusPatientSession: SalusPatientSession!
+}
+
+type SalusVerificationToken {
+  expires: DateTime!
+  identifier: String!
+  token: String!
+}
+
+type SalusVerificationTokenPayload {
+  salusVerificationToken: SalusVerificationToken!
+}
+
+type ScheduledSurgery {
+  """Code of surgery diagnosis."""
+  diagnosisCode: String
+
+  """Description of surgery diagnosis."""
+  diagnosisDescription: String
+
+  """Scheduled surgery ID"""
+  id: ID!
+
+  """Date of surgery schedule."""
+  surgeryDate: DateTime!
+}
+
+type ScheduledSurgeryConnection {
+  """A list of edges."""
+  edges: [ScheduledSurgeryEdge!]!
+
+  """A list of nodes."""
+  nodes: [ScheduledSurgery!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input ScheduledSurgeryConnectionFilterInput {
+  dateFrom: DateTime
+}
+
+input ScheduledSurgeryConnectionSortBy {
+  direction: SortDirection!
+  field: ScheduledSurgeryConnectionSortByField!
+}
+
+enum ScheduledSurgeryConnectionSortByField {
+  SURGERY_DATE
+}
+
+"""An edge in a connection."""
+type ScheduledSurgeryEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: ScheduledSurgery!
+}
+
+type ShiftKind {
+  category: String
+  code: String!
+  days: Int!
+  facilityId: ID!
+  hours: String!
+  id: ID!
+  parentId: ID
+  shiftKindSourceId: Int!
+}
+
+"""Employee Profile in Sirona."""
+type SironaEmployeeProfile {
+  deactivatedAt: DateTime
+  defaultFacility: Facility!
+  defaultFacilityId: ID!
+  email: String!
+  employeeId: ID!
+  grants: [SironaEmployeeProfileGrant!]!
+  id: ID!
+
+  """`true` if the profile is active."""
+  isActive: Boolean!
+}
+
+type SironaEmployeeProfileGrant {
+  employeeProfileId: ID!
+  grant: String!
+  id: ID!
+  profile: SironaEmployeeProfile!
+}
+
+type SironaEmployeeProfileGrantPayload {
+  sironaEmployeeProfileGrant: SironaEmployeeProfileGrant!
+}
+
+type SironaEmployeeProfilePayload {
+  sironaEmployeeProfile: SironaEmployeeProfile!
+}
+
+type SironaPermission {
+  code: String!
+  description: String
+
+  """Available facilities for this permission."""
+  facilities: [Facility!]!
+  id: ID!
+  name: String!
+
+  """Available roles for this permission."""
+  roles: [SironaRole!]!
+}
+
+type SironaPermissionPayload {
+  sironaPermission: SironaPermission!
+}
+
+type SironaRole {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+type SironaRolePayload {
+  sironaRole: SironaRole!
+}
+
+type Slot {
+  arrivalTime: DateTime
+  callTime: DateTime
+  dateFrom: DateTime!
+  dateOfChange: DateTime
+  dateTo: DateTime!
+  departureTime: DateTime
+  description: String
+  doctor: Doctor
+  doctorId: ID
+  duration: Int!
+  examination: Examination
+  examinationId: ID
+  gender: Int!
+  id: ID!
+  location: Location
+  locationId: ID
+  patient: Patient
+  patientType: Int!
+  previousSlot: Slot
+  previousSlotId: ID
+  priority: Int!
+  reservationUntil: DateTime
+  room: Room
+  roomId: ID
+  ruleId: Int
+  slotColor: String
+  slotType: Boolean!
+  statim: Boolean
+  status: Int
+  sync: Int
+  ticket: Int
+  ticketTime: DateTime
+  userId: Int
+  variability: Int!
+  workplace: Workplace
+  workplaceId: ID
+}
+
+type SlotConnection {
+  """A list of edges."""
+  edges: [SlotEdge!]!
+
+  """A list of nodes."""
+  nodes: [Slot!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+"""Slot connection filter."""
+input SlotConnectionFilterInput {
+  """Filter by patient GQL ID."""
+  patientId: ID
+}
+
+input SlotConnectionSortBy {
+  direction: SortDirection!
+  field: SlotConnectionSortByField!
+}
+
+enum SlotConnectionSortByField {
+  DATE_FROM
+}
+
+"""An edge in a connection."""
+type SlotEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Slot!
+}
+
+"""Employee Profile in Smenovka."""
+type SmenovkaEmployeeProfile {
+  deactivatedAt: DateTime
+  email: String!
+  employeeId: ID!
+  grants: [SmenovkaEmployeeProfileGrant!]!
+  id: ID!
+
+  """`true` if the profile is active."""
+  isActive: Boolean!
+}
+
+type SmenovkaEmployeeProfileGrant {
+  employeeProfileId: ID!
+  grant: String!
+  id: ID!
+  profile: SmenovkaEmployeeProfile!
+}
+
+type SmenovkaEmployeeProfileGrantPayload {
+  smenovkaEmployeeProfileGrant: SmenovkaEmployeeProfileGrant!
+}
+
+type SmenovkaEmployeeProfilePayload {
+  smenovkaEmployeeProfile: SmenovkaEmployeeProfile!
+}
+
+type SmenovkaPermission {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+
+  """Available roles for this feature."""
+  roles: [SmenovkaRole!]!
+}
+
+type SmenovkaPermissionPayload {
+  smenovkaPermission: SmenovkaPermission!
+}
+
+type SmenovkaRole {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+type SmenovkaRolePayload {
+  smenovkaRole: SmenovkaRole!
+}
+
+"""Specifies the direction for sorting."""
+enum SortDirection {
+  """Sort in ascending order."""
+  ASC
+
+  """Sort in descending order."""
+  DESC
+}
+
+type Systemization {
+  facility: Facility!
+  facilityId: ID!
+  grouping: Int!
+  groupingType: Int!
+  id: ID!
+  name: String!
+}
+
+type SystemizationPosition {
+  category: SystemizationPositionCategory!
+  facility: Facility!
+  facilityId: ID!
+  id: ID!
+  name: String!
+}
+
+enum SystemizationPositionCategory {
+  ADMINISTRATIVE
+  DOCTORS
+  NZP
+  OTHER
+  RADIOLOGY_ASSISTANT
+  SZP
+}
+
+type TabsyEmployeeProfile {
+  employeeId: ID!
+  id: ID!
+}
+
+type TabsyEmployeeProfilePayload {
+  tabsyEmployeeProfile: TabsyEmployeeProfile!
+}
+
+input UpdateFormFillSessionInput {
+  departmentAkordId: Int
+  documentationAkordId: Int
+  id: ID!
+  stationAkordId: Int
+}
+
+input UpdateFormInput {
+  code: String!
+  consumer: FormConsumer!
+  description: String
+  id: ID!
+  kind: FormKind!
+  name: String!
+  title: String!
+}
+
+input UpdateFormResultBindInput {
+  akordVislBlobId: Int
+  formSubmissionId: ID!
+  id: ID!
+  resultKindId: ID!
+}
+
+input UpdateFormResultKindInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+input UpdateFormSubmissionAttachmentInput {
+  dataBase64: String!
+  fileName: String!
+  id: ID!
+  mimeType: String!
+}
+
+input UpdateFormSubmissionInput {
+  dataJson: FormSubmissionData
+  id: ID!
+  isComplete: Boolean
+}
+
+input UpdateFormVersionInput {
+  description: String
+  id: ID!
+  validFrom: DateTime
+  validTo: DateTime
+}
+
+input UpdateSalusPatientProfileInput {
+  email: String!
+  emailVerified: DateTime
+  id: ID!
+  name: String!
+}
+
+input UpdateSalusPatientSessionInput {
+  expiresAt: DateTime
+  id: ID!
+  patientProfileId: ID
+  sessionToken: String
+}
+
+input UpdateSironaEmployeeProfileGrantInput {
+  grant: String!
+  id: ID!
+}
+
+input UpdateSironaEmployeeProfileInput {
+  defaultFacilityId: ID!
+  email: String!
+  id: ID!
+}
+
+input UpdateSironaPermissionInput {
+  code: String
+  description: String
+  facilities: [ID!]
+  id: ID!
+  name: String
+  roles: [ID!]
+}
+
+input UpdateSironaRoleInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+input UpdateSmenovkaEmployeeProfileGrantInput {
+  grant: String!
+  id: ID!
+}
+
+input UpdateSmenovkaEmployeeProfileInput {
+  email: String!
+  id: ID!
+}
+
+input UpdateSmenovkaPermissionInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+input UpdateSmenovkaRoleInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+input UpdateZapkaEmployeeProfileGrantInput {
+  grant: String!
+  id: ID!
+}
+
+input UpdateZapkaEmployeeProfileInput {
+  email: String!
+  id: ID!
+}
+
+input UpdateZapkaPermissionInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+input UpdateZapkaRoleInput {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+scalar UpsertFormsFromJsonData
+
+input UpsertFormsFromJsonInput {
+  json: UpsertFormsFromJsonData!
+}
+
+type UpsertFormsFromJsonPayload {
+  form: Form!
+  formVersion: FormVersion
+  wasFormInserted: Boolean!
+  wasFormUpdated: Boolean!
+  wasFormVersionInserted: Boolean!
+}
+
+scalar UpsertSironaPermissionsFromJsonData
+
+input UpsertSironaPermissionsFromJsonInput {
+  json: UpsertSironaPermissionsFromJsonData!
+}
+
+type UpsertSironaPermissionsFromJsonPayload {
+  sironaPermission: SironaPermission!
+  wasInserted: Boolean!
+  wasUpdated: Boolean!
+}
+
+scalar UpsertSironaRolesFromJsonData
+
+input UpsertSironaRolesFromJsonInput {
+  json: UpsertSironaRolesFromJsonData!
+}
+
+type UpsertSironaRolesFromJsonPayload {
+  sironaRole: SironaRole!
+  wasInserted: Boolean!
+  wasUpdated: Boolean!
+}
+
+input UseSalusVerificationTokenInput {
+  identifier: String!
+  token: String!
+}
+
+input VerifySalusPatientProfileEmailInput {
+  id: ID!
+}
+
+type WorkContractKind {
+  id: ID!
+  name: String!
+  order: Int!
+
+  """Type of the contract."""
+  type: WorkContractKindType!
+}
+
+enum WorkContractKindType {
+  DPC
+  DPP
+  HPP
+  ICO
+  OTHER
+}
+
+type Workplace {
+  description: String
+  expertise: String
+  icp: String
+  id: ID!
+  instruction: String
+  location: Location
+  locationId: ID!
+  name: String!
+  preGeneratedDays: Int
+  preOrderMode: Int
+  shortcut: String
+  slotColor: String
+  timeFrom: NaiveTime
+  timeTo: NaiveTime
+}
+
+type WorkplaceConnection {
+  """A list of edges."""
+  edges: [WorkplaceEdge!]!
+
+  """A list of nodes."""
+  nodes: [Workplace!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """Total result set count"""
+  totalCount: Int!
+}
+
+input WorkplaceConnectionSortBy {
+  direction: SortDirection!
+  field: WorkplaceConnectionSortByField!
+}
+
+enum WorkplaceConnectionSortByField {
+  NAME
+}
+
+"""An edge in a connection."""
+type WorkplaceEdge {
+  """A cursor for use in pagination"""
+  cursor: String!
+
+  """The item at the end of the edge"""
+  node: Workplace!
+}
+
+"""Employee Profile in Zapka."""
+type ZapkaEmployeeProfile {
+  deactivatedAt: DateTime
+  email: String!
+  employeeId: ID!
+  grants: [ZapkaEmployeeProfileGrant!]!
+  id: ID!
+
+  """`true` if the profile is active."""
+  isActive: Boolean!
+}
+
+type ZapkaEmployeeProfileGrant {
+  employeeProfileId: ID!
+  grant: String!
+  id: ID!
+  profile: ZapkaEmployeeProfile!
+}
+
+type ZapkaEmployeeProfileGrantPayload {
+  zapkaEmployeeProfileGrant: ZapkaEmployeeProfileGrant!
+}
+
+type ZapkaEmployeeProfilePayload {
+  zapkaEmployeeProfile: ZapkaEmployeeProfile!
+}
+
+type ZapkaPermission {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+
+  """Available roles for this feature."""
+  roles: [ZapkaRole!]!
+}
+
+type ZapkaPermissionPayload {
+  zapkaPermission: ZapkaPermission!
+}
+
+type ZapkaRole {
+  code: String!
+  description: String
+  id: ID!
+  name: String!
+}
+
+type ZapkaRolePayload {
+  zapkaRole: ZapkaRole!
+}

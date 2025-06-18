@@ -1,0 +1,32 @@
+:root {
+  --a-facility-cdr: 211 64% 37%; /* #225e9d */
+  --a-facility-ap: 196 100% 40%; /* #0098ce */
+  --a-facility-dps: 0 0% 0%; /* #000000 */
+  --a-facility-ms: 3 67% 46%; /* #c33027 */
+  --a-facility-nh: 196 100% 40%; /* #0098ce */
+  --a-facility-rnb: 211 64% 37%; /* #225e9d */
+}
+
+.facility-cdr {
+  --a-color-app-nav-heading: var(--a-facility-cdr);
+}
+
+.facility-ap {
+  --a-color-app-nav-heading: var(--a-facility-ap);
+}
+
+.facility-dps {
+  --a-color-app-nav-heading: var(--a-facility-dps);
+}
+
+.facility-ms {
+  --a-color-app-nav-heading: var(--a-facility-ms);
+}
+
+.facility-nh {
+  --a-color-app-nav-heading: var(--a-facility-nh);
+}
+
+.facility-rnb {
+  --a-color-app-nav-heading: var(--a-facility-rnb);
+}

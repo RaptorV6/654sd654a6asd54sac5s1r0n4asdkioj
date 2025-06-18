@@ -1,0 +1,82 @@
+{
+  "files.eol": "\n",
+  "editor.tabSize": 2,
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "javascript.suggestionActions.enabled": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "editor.unicodeHighlight.invisibleCharacters": false,
+    "editor.wordWrap": "off",
+    "editor.rulers": [80],
+    "togglequotes.chars": ["\"", "'", "`"]
+  },
+  "[postcss]": {
+    "editor.suggest.insertMode": "replace",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  },
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma",
+    "editor.formatOnSave": true
+  },
+  "[typescript]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.format": "explicit",
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.rulers": [120]
+  },
+  "[typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.format": "explicit",
+      "source.fixAll.eslint": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.rulers": [120]
+  },
+  "css.lint.unknownAtRules": "ignore",
+  // "i18n-ally.localesPaths": [
+  //   "src/i18n",
+  //   "src/i18n/messages"
+  // ]
+  "i18n-ally.localesPaths": [
+    "i18n/item1",
+    "i18n/item2",
+  ],
+  "i18n-ally.namespace": true,
+  "i18n-ally.pathMatcher": "apps/{namespaces}/i18n/messages/{locale}.{ext}",
+  "[typescript][typescriptreact]": {
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll.format": "explicit",
+      "source.fixAll.eslint": "explicit"
+    }
+  },
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#09360F",
+    "titleBar.activeBackground": "#0D4B15",
+    "titleBar.activeForeground": "#F1FDF3"
+  },
+  "json.schemas": [
+    {
+      "fileMatch": [
+        ".ncurc",
+        ".ncurc.json",
+      ],
+      "url": "https://raw.githubusercontent.com/raineorshine/npm-check-updates/main/src/types/RunOptions.json"
+    }
+  ]
+}

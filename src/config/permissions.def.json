@@ -1,0 +1,61 @@
+[
+  {
+    "code": "INTERNS_AMB_EXPECTATION",
+    "name": "Expektace pacienta",
+    "description": "Expektace pacienta na ambulaci Interního oddělení",
+    "facilities": [
+      "RNB",
+      "NH"
+    ],
+    "roles": [
+      "DOCTOR",
+      "NURSE"
+    ]
+  },
+  {
+    "code": "PALLIATIVE_CARE",
+    "name": "Paliativní péče",
+    "description": "Evidence Oddělení paliativní péče",
+    "facilities": [
+      "RNB",
+      "NH"
+    ],
+    "roles": [
+      "CHAPLAIN",
+      "DOCTOR",
+      "NURSE",
+      "PSYCHOLOGIST",
+      "SOCIAL_WORKER",
+      "SPIRITUAL_ASSISTANT",
+      "THERAPIST"
+    ]
+  },
+  {
+    "code": "SURGERY_ADMISSION",
+    "name": "Chirurgický příjem",
+    "description": "Předoperační příjem pacienta",
+    "facilities": [
+      "RNB",
+      "NH"
+    ],
+    "roles": [
+      "DOCTOR",
+      "NURSE"
+    ]
+  },
+  {
+    "code": "SURGERY_PROCEDURES",
+    "name": "Chyrurgické postupy",
+    "description": "Testovací prostředí pro chirurgické postupy",
+    "facilities": [
+      "RNB",
+      "NH"
+    ],
+    "roles": [
+      "ADMINISTRATIVE",
+      "DISPATCHER",
+      "DOCTOR",
+      "NURSE"
+    ]
+  }
+]

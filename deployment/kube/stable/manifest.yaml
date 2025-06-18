@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: production-sirona
+  namespace: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: production-sirona
+  template:
+    metadata:
+      labels:
+        app: production-sirona
+    spec:
+      containers:
+      - name: production-sirona
+        image: gitlab.akesoapp.cz:5050/dev/akeso-online/sirona:latest
+        envFrom:
+        - secretRef: 
+            name: production-sirona-env-secret        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: gitlab-docker-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: production-sirona
+  namespace: development
+spec:
+  selector:
+    app: production-sirona
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

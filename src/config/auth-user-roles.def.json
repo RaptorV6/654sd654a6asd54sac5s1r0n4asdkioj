@@ -1,0 +1,87 @@
+[
+  {
+    "code": "ADMINISTRATIVE",
+    "description": "Administrativní pracovník",
+    "name": "Administrativní pracovník"
+  },
+  {
+    "code": "CHAPLAIN",
+    "description": "Kaplan",
+    "name": "Kaplan"
+  },
+  {
+    "code": "DISPATCHER",
+    "description": "Dispečer",
+    "name": "Dispečer"
+  },
+  {
+    "code": "DOCTOR",
+    "description": "Lékař",
+    "name": "Lékař"
+  },
+  {
+    "code": "HEAD_OF_DEPARTMENT",
+    "description": "Vedoucí oddělení, nebo primář oddělení",
+    "name": "Primář"
+  },
+  {
+    "code": "MAINTENER",
+    "description": "Údržbář",
+    "name": "Údržbář"
+  },
+  {
+    "code": "NONE",
+    "description": "Nikdo",
+    "name": "Nikdo"
+  },
+  {
+    "code": "NURSE",
+    "description": "Sestra",
+    "name": "Sestra"
+  },
+  {
+    "code": "PRINCIPAL",
+    "description": "Ředitel",
+    "name": "Ředitel"
+  },
+  {
+    "code": "PSYCHOLOGIST",
+    "description": "Psycholog",
+    "name": "Psycholog"
+  },
+  {
+    "code": "RADIOLOGIST",
+    "description": "Radiolog",
+    "name": "Radiolog"
+  },
+  {
+    "code": "RADIOLOGY_ASSISTANT",
+    "description": "Radiologický asistent",
+    "name": "Radiologický asistent"
+  },
+  {
+    "code": "SANITARIAN",
+    "description": "Sanitář",
+    "name": "Sanitář"
+  },
+  {
+    "code": "SOCIAL_WORKER",
+    "description": "Sociální pracovník",
+    "name": "Sociální pracovník"
+  },
+  {
+    "code": "SPIRITUAL_ASSISTANT",
+    "description": "Duchovní asistent",
+    "name": "Duchovní asistent"
+  },
+  {
+    "code": "SYSTEM",
+    "description": "Systém",
+    "name": "Systém"
+  },
+  {
+    "code": "THERAPIST",
+    "description": "Terapeut",
+    "name": "Terapeut"
+  }
+]

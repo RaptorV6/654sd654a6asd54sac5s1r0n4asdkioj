@@ -1,0 +1,147 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.sqlite"
+}
+
+// Helper table only for dev
+model ApplicationFormApplicant {
+  applicationFormId String           @id
+  application       ApplicationForm?
+  ambulance         String           @default("")
+  fullName          String           @default("")
+  icp               String           @default("")
+  specialization    String           @default("")
+}
+
+model ApplicationForm {
+  id                   String                   @id
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  number               String
+  patientId            String
+  procedureId          String?
+  procedure            Procedure?               @relation(fields: [procedureId], references: [id])
+  titleText            String                   @default("")
+  text                 String                   @default("")
+  anamnesis            String                   @default("")
+  diagnosis            String                   @default("")
+  message              String                   @default("")
+  reasonForRequest     String                   @default("")
+  requestedExamination String                   @default("")
+  specialRequirement   String                   @default("")
+  pdfBase64            String?
+  applicant            ApplicationFormApplicant @relation(fields: [id], references: [applicationFormId])
+}
+
+model PatientSalusAccount {
+  id        String @id
+  patientId String @unique
+}
+
+model PatientMedicalTest {
+  id          String   @id
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  patientId   String
+  kind        String
+  procedureId String
+  // Serialized JSON object of test result
+  result      String?
+
+  @@unique([patientId, kind, procedureId])
+}
+
+model Procedure {
+  id                 String                          @id
+  createdAt          DateTime                        @default(now())
+  updatedAt          DateTime                        @updatedAt
+  patientId          String
+  kind               String
+  step               String                          @default("01.01")
+  diagnosisConfirmed ProcedureDiagnosisConfirmation?
+  surgery            ProcedureSurgery?
+  asa                Int?
+  applicationForms   ApplicationForm[]
+  tasks              ProcedureTask[]
+  todoTasks          TodoTaskOnProcedure[]
+}
+
+model ProcedureDiagnosisConfirmation {
+  procedureId String    @id
+  procedure   Procedure @relation(fields: [procedureId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      Boolean
+  confirmedAt DateTime
+  confirmedBy String
+}
+
+model ProcedureSurgery {
+  procedureId     String    @id
+  procedure       Procedure @relation(fields: [procedureId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  name            String
+  date            DateTime
+  dateIsConfirmed Boolean   @default(false)
+}
+
+model ProcedureTask {
+  id                    String    @id
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  procedureId           String
+  procedure             Procedure @relation(fields: [procedureId], references: [id])
+  taskKind              String
+  taskLabel             String
+  ranking               Int
+  procedureStep         String
+  responsible           String
+  // Positive or negarive number of days from `dueOffsetDeterminator`
+  dueOffsetDays         Int
+  // `dueOffsetDeterminator` can be enum of "creation" | "surgeryDate" | "prevStepDue" 
+  dueOffsetDeterminator String
+  dueDate               DateTime
+  doneAt                DateTime?
+  doneBy                String?
+  doneByPatient         Boolean?
+  // Serializovany JSON object s vysledkem
+  result                String?
+  // ID of form submission
+  formSubmitionId       String?
+  patientMedicalTestId  String?
+  applicationFormId     String?
+  outpatientReportId    String?
+}
+
+model TodoTask {
+  id                  String                @id @default(cuid())
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  title               String
+  subTitle            String?
+  dueDate             DateTime?
+  dueByUser           String?
+  dueByDepartment     String?
+  dueByDepartmentRole String?
+  dueByPatient        String?
+  doneAt              DateTime?
+  href                String?
+  procedures          TodoTaskOnProcedure[]
+}
+
+model TodoTaskOnProcedure {
+  todoTaskId  String
+  todoTask    TodoTask  @relation(fields: [todoTaskId], references: [id])
+  procedureId String
+  procedure   Procedure @relation(fields: [procedureId], references: [id])
+
+  @@id([todoTaskId, procedureId])
+}

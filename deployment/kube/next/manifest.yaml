@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: next-sirona
+  namespace: development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: next-sirona
+  template:
+    metadata:
+      labels:
+        app: next-sirona
+    spec:
+      containers:
+      - name: next-sirona
+        image: gitlab.akesoapp.cz:5050/dev/akeso-online/sirona:next
+        envFrom:
+        - secretRef: 
+            name: next-sirona-env-secret        
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+      imagePullSecrets:
+      - name: gitlab-docker-secret
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: next-sirona
+  namespace: development
+spec:
+  selector:
+    app: next-sirona
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: ClusterIP

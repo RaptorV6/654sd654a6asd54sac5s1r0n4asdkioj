@@ -1,0 +1,117 @@
+@import url(https://fonts.googleapis.com/css?family=Open+Sans);
+
+html {
+  padding: 0;
+}
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  padding: 0;
+}
+
+h1 {
+  font-weight: bolder;
+  font-size: 18px;
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-weight: bolder;
+  font-size: 16px;
+  margin-bottom: 0.25rem;
+}
+
+.pagebreak-after {
+  page-break-after: always;
+}
+
+.pagebreak-avoid { 
+  page-break-inside: avoid;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1 1 0%;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.mt-16 {
+  margin-top: 4rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-accent {
+  color: #1c72d8;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
+.space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(0.25rem * 1);
+  /* margin-bottom: calc(0.25rem * 0); */
+}
+
+p {
+  text-align: justify;
+}
+
+ul > li {
+  font-size: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+table th {
+  background-color: rgba(28, 113, 217, 0.3);
+  margin: 0;
+  padding: 2px 4px;
+  font-weight: bolder;
+}
+
+table td {
+  margin: 0;
+  padding: 2px 4px;
+}
+
+table.bordered th, table.bordered td {
+  border: 1px solid black;
+}

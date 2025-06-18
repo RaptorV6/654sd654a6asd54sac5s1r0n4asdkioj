@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json.schemastore.org/web-manifest-combined.json",
+  "name": "Sirona",
+  "short_name": "Sirona",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fff",
+  "description": "Sirona - Akeso hospital appliaction."
+}

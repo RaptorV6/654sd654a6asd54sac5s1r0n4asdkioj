@@ -1,0 +1,5 @@
+[install]
+exact = true
+
+[install.scopes]
+"@akeso" = { token = "$GITLAB_NPM_TOKEN", url = "https://gitlab.akesoapp.cz/api/v4/packages/npm/" }

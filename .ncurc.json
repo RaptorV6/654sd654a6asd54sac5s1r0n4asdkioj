@@ -1,0 +1,3 @@
+{
+  "reject": ["@auth/core", "@akeso/*", "eslint"]
+}

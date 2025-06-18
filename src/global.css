@@ -1,0 +1,365 @@
+/**
+ * Tailwind CSS imports
+ * View the full documentation at https://tailwindcss.com
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-display: swap;
+  font-family: "Gotham Rounded";
+  src: url(/_fonts/gotham-rounded-bold.woff);
+  font-weight: bold;
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Gotham Rounded";
+  src: url(/_fonts/gotham-rounded-book.woff);
+  font-weight: normal;
+}
+
+@font-face {
+  font-display: swap;
+  font-family: "Gotham Rounded";
+  src: url(/_fonts/gotham-rounded-light.woff);
+  font-weight: 100;
+}
+
+html {
+  @apply m-0 h-full;
+  font-family:
+    "Gotham Rounded",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Helvetica Neue",
+    Arial,
+    "Noto Sans",
+    sans-serif;
+}
+
+/* @media (min-width: 1024px) {
+  html {
+    font-size: 14px;
+  }
+} */
+
+body {
+  @apply m-0 h-full bg-app-surface-background text-base font-normal leading-normal text-app-text-base;
+}
+
+textarea {
+  field-sizing: content;
+  min-height: 4rem;
+}
+
+@layer base {
+  :root {
+    --a-color-app-active-base: 180 12% 97%; /* #f6f8f8 */
+    --a-color-app-border-base: 210 18% 87%; /* #d8dee4 */
+    --a-color-app-border-hover: 203 11% 45%; /* #667680 */
+    --a-color-app-border-strong: 206 14% 77%; /* #bcc5cc */
+    --a-color-app-header-base: 180 12% 97%; /* #f6f8f8 */
+    --a-color-app-icon-base: 203 11% 45%; /* #667680 */
+    --a-color-app-icon-hover: 223 67% 14%; /* #0c1a3d */
+    --a-color-app-nav-heading: 200 14% 61%; /* #8fa1aa */
+    --a-color-app-nav-heading-text: 0 0% 100%; /* #ffffff */
+    --a-color-app-nav-hover: 180 12% 97%; /* #f6f8f8 */
+    --a-color-app-nav-surface: 0 0% 100%; /* #ffffff */
+    --a-color-app-overlay: 144, 152, 152, 0.4; /* rgba */
+    --a-color-app-surface-background: 180 11% 98%; /* #fafbfb */
+    --a-color-app-surface-base: 0 0% 100%; /* #ffffff */
+    --a-color-app-surface-lowered: 216 11% 91%; /* #e6e8eb */
+    --a-color-app-surface-raised: 180 11% 98%; /* #fafbfb */
+    --a-color-app-text-base: 223 67% 14%; /* #0c1a3d */
+    --a-color-app-text-link: 225 58% 49%; /* #3559c7 */
+    --a-color-app-text-strong: 222 68% 5%; /* #040915 */
+    --a-color-app-text-weak: 201 16% 25%; /* #36434a */
+    --a-color-app-text-weaker: 203 11% 45%; /* #667680 */
+    --a-color-app-text-weakest: 203 9% 72%; /* #b2babf */
+
+    --a-color-accent-base: 213 77% 50%; /* 500 #1c72d8 */
+    --a-color-accent-hover: 213 77% 40%; /* 600 #165bad */
+    --a-color-accent-weak: 213 71% 80%; /* 200 #a4c7ef */
+    --a-color-accent-weaker: 213 71% 95%; /* 50 #e9f1fb */
+    --a-color-accent-border-base: 213 77% 40%; /* 600 #165bad */
+    --a-color-accent-border-strong: 213 77% 20%; /* 800 #0b2e56 */
+    --a-color-accent-text-base: 213 77% 30%; /* 700 #114482 */
+    --a-color-accent-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-accent-text-strong: 213 77% 5%; /* 900 #030c17 */
+    --a-color-accent-50: 213 71% 95%; /* 50 #e9f1fb */
+    --a-color-accent-100: 213 71% 90%; /* 100 #d2e3f7 */
+    --a-color-accent-200: 213 71% 80%; /* 200 #a4c7ef */
+    --a-color-accent-300: 213 71% 70%; /* 300 #77aae8 */
+    --a-color-accent-400: 213 71% 60%; /* 400 #498ee0 */
+    --a-color-accent-500: 213 77% 50%; /* 500 #1c72d8 */
+    --a-color-accent-600: 213 77% 40%; /* 600 #165bad */
+    --a-color-accent-700: 213 77% 30%; /* 700 #114482 */
+    --a-color-accent-800: 213 77% 20%; /* 800 #0b2e56 */
+    --a-color-accent-900: 213 77% 10%; /* 900 #06172b */
+    --a-color-accent-950: 213 77% 5%; /* 950 #030c17 */
+
+    --a-color-danger-base: 10 71% 48%; /* 500 #d24023 */
+    --a-color-danger-hover: 10 71% 38%; /* 600 #a8331c */
+    --a-color-danger-weak: 10 66% 79%; /* 200 #edb3a7 */
+    --a-color-danger-weaker: 10 66% 95%; /* 50 #fbedea */
+    --a-color-danger-border-base: 10 71% 38%; /* 600 #a8331c */
+    --a-color-danger-border-strong: 10 71% 19%; /* 800 #541a0e */
+    --a-color-danger-text-base: 10 71% 29%; /* 700 #7e2615 */
+    --a-color-danger-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-danger-text-strong: 10 71% 10%; /* 900 #2a0d07 */
+    --a-color-danger-50: 10 66% 95%; /* 50 #fbedea */
+    --a-color-danger-100: 10 66% 90%; /* 100 #f6d9d3 */
+    --a-color-danger-200: 10 66% 79%; /* 200 #edb3a7 */
+    --a-color-danger-300: 10 66% 69%; /* 300 #e48c7b */
+    --a-color-danger-400: 10 66% 58%; /* 400 #db664f */
+    --a-color-danger-500: 10 71% 48%; /* 500 #d24023 */
+    --a-color-danger-600: 10 71% 38%; /* 600 #a8331c */
+    --a-color-danger-700: 10 71% 29%; /* 700 #7e2615 */
+    --a-color-danger-800: 10 71% 19%; /* 800 #541a0e */
+    --a-color-danger-900: 10 71% 10%; /* 900 #2a0d07 */
+    --a-color-danger-950: 10 71% 5%; /* 950 #160704 */
+
+    --a-color-error-text-base: 10 71% 48%; /* #d24023 */
+
+    --a-color-highlight-base: 272 51% 50%; /* 500 #8e4ec6 */
+    --a-color-highlight-hover: 272 43% 40%; /* 600 #723e9e */
+    --a-color-highlight-weak: 272 51% 80%; /* 200 #d2b8e8 */
+    --a-color-highlight-weaker: 272 51% 95%; /* 50 #f3ecf9 */
+    --a-color-highlight-border-base: 272 43% 40%; /* 600 #723e9e */
+    --a-color-highlight-border-strong: 272 43% 20%; /* 800 #391f4f */
+    --a-color-highlight-text-base: 272 43% 30%; /* 700 #552f77 */
+    --a-color-highlight-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-highlight-text-strong: 272 43% 10%; /* 900 #1c1028 */
+    --a-color-highlight-50: 272 51% 95%; /* 50 #f3ecf9 */
+    --a-color-highlight-100: 272 51% 90%; /* 100 #e8dcf4 */
+    --a-color-highlight-200: 272 51% 80%; /* 200 #d2b8e8 */
+    --a-color-highlight-300: 272 51% 70%; /* 300 #bb95dd */
+    --a-color-highlight-400: 272 51% 60%; /* 400 #a571d1 */
+    --a-color-highlight-500: 272 51% 50%; /* 500 #8e4ec6 */
+    --a-color-highlight-600: 272 43% 40%; /* 600 #723e9e */
+    --a-color-highlight-700: 272 43% 30%; /* 700 #552f77 */
+    --a-color-highlight-800: 272 43% 20%; /* 800 #391f4f */
+    --a-color-highlight-900: 272 43% 10%; /* 900 #1c1028 */
+    --a-color-highlight-950: 272 43% 5%; /* 950 #0d0712 */
+
+    --a-color-info-base: 189 94% 50%; /* 500 #06b6d4 */
+    --a-color-info-hover: 200 90% 40%; /* 600 #0a85c2 */
+    --a-color-info-weak: 200 90% 80%; /* 200 #9edbfa */
+    --a-color-info-weaker: 200 90% 95%; /* 50 #e7f6fe */
+    --a-color-info-border-base: 200 90% 40%; /* 600 #0a85c2 */
+    --a-color-info-border-strong: 200 90% 20%; /* 800 #054261 */
+    --a-color-info-text-base: 200 90% 30%; /* 700 #086391 */
+    --a-color-info-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-info-text-strong: 200 90% 10%; /* 900 #032130 */
+    --a-color-info-50: 200 90% 95%; /* 50 #e7f6fe */
+    --a-color-info-100: 200 90% 90%; /* 100 #cfedfc */
+    --a-color-info-200: 200 90% 80%; /* 200 #9edbfa */
+    --a-color-info-300: 200 90% 70%; /* 300 #6ec9f7 */
+    --a-color-info-400: 200 90% 60%; /* 400 #3db8f5 */
+    --a-color-info-500: 200 90% 50%; /* 500 #0da6f2 */
+    --a-color-info-600: 200 90% 40%; /* 600 #0a85c2 */
+    --a-color-info-700: 200 90% 30%; /* 700 #086391 */
+    --a-color-info-800: 200 90% 20%; /* 800 #054261 */
+    --a-color-info-900: 200 90% 10%; /* 900 #032130 */
+    --a-color-info-950: 200 90% 5%; /* 950 #011118 */
+
+    --a-color-neutral-base: 0 0% 45%; /* 500 #737373 */
+    --a-color-neutral-hover: 240 5% 34%; /* 600 #52525b */
+    --a-color-neutral-weak: 0 0% 90%; /* 200 #e5e5e5 */
+    --a-color-neutral-weaker: 0 0% 98%; /* 50 #fafafa */
+    --a-color-neutral-border-base: 240 5% 34%; /* 600 #52525b */
+    --a-color-neutral-border-strong: 0 0% 15%; /* 800 #262626 */
+    --a-color-neutral-text-base: 0 0% 25%; /* 700 #404040 */
+    --a-color-neutral-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-neutral-text-strong: 0 0% 9%; /* 900 #171717 */
+
+    --a-color-progress-base: 190 100% 30%; /* 500 #007f99 */
+    --a-color-progress-hover: 190 100% 24%; /* 600 #00667a */
+    --a-color-progress-weak: 190 43% 72%; /* 200 #99ccd6 */
+    --a-color-progress-weaker: 192 44% 92%; /* 50 #e2f0f4 */
+    --a-color-progress-border-base: 190 100% 24%; /* 600 #00667a */
+    --a-color-progress-border-strong: 190 100% 12%; /* 800 #00333d */
+    --a-color-progress-text-base: 190 100% 18%; /* 700 #004c5c */
+    --a-color-progress-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-progress-text-strong: 192 100% 6%; /* 900 #00191f */
+    --a-color-progress-50: 192 44% 92%; /* 50 #e2f0f4 */
+    --a-color-progress-100: 192 44% 86%; /* 100 #cce5eb */
+    --a-color-progress-200: 190 43% 72%; /* 200 #99ccd6 */
+    --a-color-progress-300: 190 43% 58%; /* 300 #66b2c2 */
+    --a-color-progress-400: 190 54% 44%; /* 400 #3399ad */
+    --a-color-progress-500: 190 100% 30%; /* 500 #007f99 */
+    --a-color-progress-600: 190 100% 24%; /* 600 #00667a */
+    --a-color-progress-700: 190 100% 18%; /* 700 #004c5c */
+    --a-color-progress-800: 190 100% 12%; /* 800 #00333d */
+    --a-color-progress-900: 192 100% 6%; /* 900 #00191f */
+    --a-color-progress-950: 192 100% 3%; /* 950 #000c0f */
+
+    --a-color-success-base: 133 64% 32%; /* 500 #1d8633 */
+    --a-color-success-hover: 133 65% 25%; /* 600 #176b29 */
+    --a-color-success-weak: 131 30% 73%; /* 200 #a5cfad */
+    --a-color-success-weaker: 131 30% 92%; /* 50 #e4f1e7 */
+    --a-color-success-border-base: 133 65% 25%; /* 600 #176b29 */
+    --a-color-success-border-strong: 131 64% 13%; /* 800 #0c3614 */
+    --a-color-success-text-base: 133 65% 19%; /* 700 #11501f */
+    --a-color-success-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-success-text-strong: 131 64% 6%; /* 900 #061b0a */
+    --a-color-success-50: 131 30% 92%; /* 50 #e4f1e7 */
+    --a-color-success-100: 131 30% 86%; /* 100 #d2e7d6 */
+    --a-color-success-200: 131 30% 73%; /* 200 #a5cfad */
+    --a-color-success-300: 133 30% 59%; /* 300 #77b685 */
+    --a-color-success-400: 133 36% 45%; /* 400 #4a9e5c */
+    --a-color-success-500: 133 64% 32%; /* 500 #1d8633 */
+    --a-color-success-600: 133 65% 25%; /* 600 #176b29 */
+    --a-color-success-700: 133 65% 19%; /* 700 #11501f */
+    --a-color-success-800: 131 64% 13%; /* 800 #0c3614 */
+    --a-color-success-900: 131 64% 6%; /* 900 #061b0a */
+    --a-color-success-950: 131 64% 3%; /* 950 #030d05 */
+
+    --a-color-warning-base: 44 90% 66%; /* 500 #f6cd5a */
+    --a-color-warning-hover: 44 52% 53%; /* 600 #c5a448 */
+    --a-color-warning-weak: 45 89% 85%; /* 200 #fbebbd */
+    --a-color-warning-weaker: 45 89% 95%; /* 50 #fef8e7 */
+    --a-color-warning-border-base: 44 52% 53%; /* 600 #c5a448 */
+    --a-color-warning-border-strong: 45 46% 26%; /* 800 #625224 */
+    --a-color-warning-text-base: 44 47% 40%; /* 700 #947b36 */
+    --a-color-warning-text-contrast: 0 0% 100%; /* #ffffff */
+    --a-color-warning-text-strong: 45 46% 26%; /* 800 #625224 */
+    --a-color-warning-50: 45 89% 95%; /* 50 #fef8e7 */
+    --a-color-warning-100: 45 89% 90%; /* 100 #fdf5de */
+    --a-color-warning-200: 45 89% 85%; /* 200 #fbebbd */
+    --a-color-warning-300: 44 90% 80%; /* 300 #fae19c */
+    --a-color-warning-400: 44 90% 73%; /* 400 #f8d77b */
+    --a-color-warning-500: 44 90% 66%; /* 500 #f6cd5a */
+    --a-color-warning-600: 44 52% 53%; /* 600 #c5a448 */
+    --a-color-warning-700: 44 47% 40%; /* 700 #947b36 */
+    --a-color-warning-800: 45 46% 26%; /* 800 #625224 */
+    --a-color-warning-900: 45 46% 13%; /* 900 #312912 */
+    --a-color-warning-950: 45 46% 6%; /* 950 #161308 */
+  }
+
+  /* TODO: doplnit barvy pro vetsi kontrast.
+  @media (prefers-contrast: more) {
+    :root {
+    }
+  }
+  */
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --a-color-app-active-base: 222 12% 17%; /* #262930 */
+      --a-color-app-border-base: 217 12% 21%; /* #2f343c */
+      --a-color-app-border-hover: 220 7% 59%; /* #8f949e */
+      --a-color-app-border-strong: 218 12% 27%; /* #3d434d */
+      --a-color-app-header-base: 222 12% 17%; /* #262930 */
+      --a-color-app-icon-base: 220 7% 59%; /* #8f949e */
+      --a-color-app-icon-hover: 220 5% 88%; /* #dedfe1 */
+      --a-color-app-nav-heading: 0 0% 61%; /* #9b9b9b */
+      --a-color-app-nav-heading-text: 0 0% 100%; /* #ffffff */
+      --a-color-app-nav-hover: 219 14% 20%; /* #2c313a */
+      --a-color-app-nav-surface: 222 12% 17%; /* #262930 */
+      --a-color-app-overlay: 9, 10, 12, 0.5; /* rgba */
+      --a-color-app-surface-background: 218 14% 11%; /* #181b20 */
+      --a-color-app-surface-base: 218 12% 13%; /* #1d2025 */
+      --a-color-app-surface-lowered: 200 7% 18%; /* #2b2f31 */
+      --a-color-app-surface-raised: 220 12% 15%; /* #22252b */
+      --a-color-app-text-base: 220 5% 88%; /* #dedfe1 */
+      --a-color-app-text-link: 225 88% 66%; /* #5c82f5 */
+      --a-color-app-text-strong: 0 0% 100%; /* #ffffff */
+      --a-color-app-text-weak: 220 5% 88%; /* #dedfe1 */
+      --a-color-app-text-weaker: 220 7% 59%; /* #8f949e */
+      --a-color-app-text-weakest: 222 7% 36%; /* #555962 */
+
+      --a-color-accent-base: 213 77% 30%; /* 700 #114482 */
+      --a-color-accent-hover: 213 77% 40%; /* 600 #165bad */
+      --a-color-accent-weak: 213 77% 10%; /* 900 #06172b */
+      --a-color-accent-weaker: 213 77% 5%; /* 950 #030c17 */
+      --a-color-accent-border-base: 213 71% 70%; /* 300 #77aae8 */
+      --a-color-accent-border-strong: 213 71% 90%; /* 100 #d2e3f7 */
+      --a-color-accent-text-base: 213 71% 60%; /* 400 #498ee0 */
+      --a-color-accent-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-accent-text-strong: 213 71% 95%; /* 50 #e9f1fb */
+
+      --a-color-danger-base: 10 71% 29%; /* 700 #7e2615 */
+      --a-color-danger-hover: 10 71% 38%; /* 600 #a8331c */
+      --a-color-danger-weak: 10 71% 10%; /* 900 #2a0d07 */
+      --a-color-danger-weaker: 10 71% 5%; /* 950 #160704 */
+      --a-color-danger-border-base: 10 66% 69%; /* 300 #e48c7b */
+      --a-color-danger-border-strong: 10 66% 90%; /* 100 #f6d9d3 */
+      --a-color-danger-text-base: 10 66% 58%; /* 400 #db664f */
+      --a-color-danger-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-danger-text-strong: 10 66% 95%; /* 50 #fbedea */
+
+      --a-color-error-text-base: 10 75% 45%; /* #cb3a1d */
+
+      --a-color-highlight-base: 272 43% 30%; /* 700 #552f77 */
+      --a-color-highlight-hover: 272 43% 40%; /* 600 #723e9e */
+      --a-color-highlight-weak: 272 43% 10%; /* 900 #1c1028 */
+      --a-color-highlight-weaker: 272 43% 5%; /* 950 #0d0712 */
+      --a-color-highlight-border-base: 272 51% 70%; /* 300 #bb95dd */
+      --a-color-highlight-border-strong: 272 51% 90%; /* 100 #e8dcf4 */
+      --a-color-highlight-text-base: 272 51% 60%; /* 400 #a571d1 */
+      --a-color-highlight-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-highlight-text-strong: 272 51% 95%; /* 50 #f3ecf9 */
+
+      --a-color-info-base: 200 90% 30%; /* 700 #086391 */
+      --a-color-info-hover: 200 90% 40%; /* 600 #0a85c2 */
+      --a-color-info-weak: 200 90% 10%; /* 900 #032130 */
+      --a-color-info-weaker: 200 90% 5%; /* 950 #011118 */
+      --a-color-info-border-base: 200 90% 70%; /* 300 #6ec9f7 */
+      --a-color-info-border-strong: 200 90% 90%; /* 100 #cfedfc */
+      --a-color-info-text-base: 200 90% 60%; /* 400 #3db8f5 */
+      --a-color-info-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-info-text-strong: 200 90% 95%; /* 50 #e7f6fe */
+
+      --a-color-neutral-base: 0 0% 25%; /* 700 #404040 */
+      --a-color-neutral-hover: 0 0% 32%; /* 600 #525252 */
+      --a-color-neutral-weak: 0 0% 9%; /* 900 #171717 */
+      --a-color-neutral-weaker: 0 0% 4%; /* 950 #0a0a0a */
+      --a-color-neutral-border-base: 0 0% 83%; /* 300 #d4d4d4 */
+      --a-color-neutral-border-strong: 0 0% 96%; /* 100 #f5f5f5 */
+      --a-color-neutral-text-base: 0 0% 64%; /* 400 #a3a3a3 */
+      --a-color-neutral-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-neutral-text-strong: 0 0% 98%; /* 50 #fafafa */
+
+      --a-color-progress-base: 190 100% 18%; /* 700 #004c5c */
+      --a-color-progress-hover: 190 100% 24%; /* 600 #00667a */
+      --a-color-progress-weak: 192 100% 6%; /* 900 #00191f */
+      --a-color-progress-weaker: 192 100% 3%; /* 950 #000c0f */
+      --a-color-progress-border-base: 190 43% 58%; /* 300 #66b2c2 */
+      --a-color-progress-border-strong: 192 44% 86%; /* 100 #cce5eb */
+      --a-color-progress-text-base: 190 54% 44%; /* 400 #3399ad */
+      --a-color-progress-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-progress-text-strong: 192 44% 92%; /* 50 #e2f0f4 */
+
+      --a-color-success-base: 133 65% 19%; /* 700 #11501f */
+      --a-color-success-hover: 133 65% 25%; /* 600 #176b29 */
+      --a-color-success-weak: 131 64% 6%; /* 900 #061b0a */
+      --a-color-success-weaker: 131 64% 3%; /* 950 #030d05 */
+      --a-color-success-border-base: 133 30% 59%; /* 300 #77b685 */
+      --a-color-success-border-strong: 131 30% 86%; /* 100 #d2e7d6 */
+      --a-color-success-text-base: 133 36% 45%; /* 400 #4a9e5c */
+      --a-color-success-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-success-text-strong: 131 30% 92%; /* 50 #e4f1e7 */
+
+      --a-color-warning-base: 44 47% 40%; /* 700 #947b36 */
+      --a-color-warning-hover: 44 52% 53%; /* 600 #c5a448 */
+      --a-color-warning-weak: 45 46% 13%; /* 900 #312912 */
+      --a-color-warning-weaker: 45 46% 6%; /* 950 #161308 */
+      --a-color-warning-border-base: 44 90% 80%; /* 300 #fae19c */
+      --a-color-warning-border-strong: 45 89% 90%; /* 100 #fdf5de */
+      --a-color-warning-text-base: 44 90% 73%; /* 400 #f8d77b */
+      --a-color-warning-text-contrast: 0 0% 100%; /* #ffffff */
+      --a-color-warning-text-strong: 45 89% 95%; /* 50 #fef8e7 */
+    }
+  }
+
+  /* TODO: doplnit barvy pro dark mode a vetsi kontast
+  @media (prefers-color-scheme: dark) and (prefers-contrast: more) {
+    :root {
+    }
+  }
+  */
+}
