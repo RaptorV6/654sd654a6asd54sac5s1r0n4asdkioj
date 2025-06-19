@@ -25,7 +25,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, ti
   const isDialogOpen = useSignal(false);
   const timeFormatter = new Intl.DateTimeFormat("cs", { hourCycle: "h23", timeStyle: "short" });
 
-  // Vypočítáme pozici v procentech
+  // Pozice v procentech - flexibilní layout
   const totalMinutes = (timeHourTo - timeHourFrom) * 60;
   const startMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
   const endMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
@@ -35,7 +35,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, ti
 
   const salInfo = getSalInfo(event.sal);
 
-  // Styling podle typu události - úklidy a pauzy vždy šedé
   const isUtilityEvent =
     event.typ === "uklid" || event.typ === "pauza" || event.title.includes("ÚS") || event.title.includes("OBĚDOVÁ");
 
@@ -45,7 +44,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, ti
   return (
     <>
       <div
-        class="group absolute bottom-2 top-2 z-10 cursor-pointer rounded-md border-2 p-2 text-xs transition-all hover:z-20 hover:shadow-lg"
+        class="group absolute bottom-1 top-1 z-10 cursor-pointer rounded border p-1 text-xs transition-all hover:z-20 hover:shadow-lg"
         onClick$={() => {
           isDialogOpen.value = true;
         }}
@@ -73,10 +72,10 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(({ event, ti
         </div>
 
         <div class="overflow-hidden font-semibold leading-tight text-black">{event.title}</div>
-        <div class="mt-1 text-[0.6rem] opacity-75">
+        <div class="mt-1 text-[10px] opacity-75">
           {timeFormatter.format(event.dateFrom)} - {timeFormatter.format(event.dateTo)}
         </div>
-        {event.operator && <div class="mt-1 overflow-hidden text-[0.6rem] opacity-75">{event.operator}</div>}
+        {event.operator && <div class="overflow-hidden text-[10px] opacity-75">{event.operator}</div>}
       </div>
 
       <Dialog bind:show={isDialogOpen}>

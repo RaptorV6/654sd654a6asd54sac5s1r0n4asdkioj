@@ -21,13 +21,35 @@ export const OjpCalendarHeader = component$<OjpCalendarHeaderProps>(({ weekStart
       </div>
 
       <div class="flex items-center gap-2">
-        <Button severity="accent" size="sm" title="Aktuální týden" type="button">
+        <Button
+          onClick$={() => {
+            // TODO: Navigate to current week
+          }}
+          severity="accent"
+          size="sm"
+          title="Aktuální týden"
+          type="button"
+        >
           Dnes
         </Button>
-        <Button size="sm" title="Předchozí týden" type="button">
+        <Button
+          onClick$={() => {
+            // TODO: Navigate to previous week
+          }}
+          size="sm"
+          title="Předchozí týden"
+          type="button"
+        >
           ← Předchozí
         </Button>
-        <Button size="sm" title="Následující týden" type="button">
+        <Button
+          onClick$={() => {
+            // TODO: Navigate to next week
+          }}
+          size="sm"
+          title="Následující týden"
+          type="button"
+        >
           Následující →
         </Button>
       </div>
