@@ -2,7 +2,7 @@ import { component$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSalInfo } from "./_mock-events";
 
-import { OjpEventComponent } from "./ojp-event-component";
+import { getSalInfo } from "./_mock-events";
 
 type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
@@ -14,115 +14,141 @@ type OjpHorizontalCalendarProps = {
 };
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
-  ({ dates, events, saly, timeHourFrom, timeHourTo, times }) => {
+  ({ dates, events, saly, timeHourFrom, times }) => {
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
-    const timeFormatter = new Intl.DateTimeFormat("cs", { hour: "2-digit", hourCycle: "h23" });
+
+    // ŠIRŠÍ sloupečky - aby se minuty vešly!
+    const slotWidth = 24; // px na 5-minutový slot
+    const totalSlots = times.length * 12; // 12 slotů na hodinu
+    const salsWidth = 140;
+
+    // Vytvořím řádky pro každý den a sál
+    const rows = dates.flatMap((date, dayIndex) =>
+      saly.map((sal, salIndex) => ({
+        date,
+        dayIndex,
+        dayName: dayNames[dayIndex] || dayNames[0],
+        isFirstSalInDay: salIndex === 0,
+        key: `${dayIndex}-${sal.name}`,
+        sal,
+      })),
+    );
 
     return (
-      <div class="flex h-full flex-col">
-        {dates.map((date, dayIndex) => {
-          const dayName = dayNames[dayIndex] || dayNames[0];
-          const dayEvents = events.filter((event) => event.dateFrom.toDateString() === date.date.toDateString());
+      <div class="flex h-full flex-col overflow-auto">
+        {/* Sticky header s hodinami */}
+        <div class="sticky top-0 z-30 border-b bg-white">
+          {/* Hodiny - každá hodina má 12 × 24px = 288px */}
+          <div
+            class="grid"
+            style={`grid-template-columns: ${salsWidth}px repeat(${times.length}, ${12 * slotWidth}px);`}
+          >
+            <div class="border-r-2 border-gray-400 bg-gray-100 p-2 text-center text-sm font-bold">Den / Sál</div>
+            {times.map((time) => (
+              <div
+                class="border-r border-gray-300 bg-gray-50 p-2 text-center text-lg font-semibold"
+                key={`hour-${time.time.getHours()}`}
+              >
+                {String(time.time.getHours()).padStart(2, "0")}
+              </div>
+            ))}
+          </div>
 
-          return (
-            <div class="flex-1 border-b border-gray-300" key={`day-${dayIndex}`}>
-              {/* Header dne */}
-              <div class="sticky top-0 z-20 bg-gradient-to-r from-blue-600 to-blue-700 p-2 text-white">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <span class="text-lg font-bold">{dayName}</span>
-                    <span class="ml-2 text-sm opacity-90">
-                      {date.date.toLocaleDateString("cs-CZ", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </span>
-                  </div>
-                  <div class="text-sm">{dayEvents.length} událostí</div>
+          {/* Minuty - každý slot má fixní šířku 24px */}
+          <div
+            class="grid text-xs"
+            style={`grid-template-columns: ${salsWidth}px repeat(${totalSlots}, ${slotWidth}px);`}
+          >
+            <div class="border-r-2 border-gray-400 bg-gray-50"></div>
+            {times.flatMap((time) =>
+              Array.from({ length: 12 }, (_, i) => (
+                <div
+                  class="border-r border-gray-200 bg-gray-50 py-1 text-center text-gray-600"
+                  key={`minute-${time.time.getHours()}-${i * 5}`}
+                  style={`width: ${slotWidth}px;`}
+                >
+                  {String(i * 5).padStart(2, "0")}
                 </div>
-              </div>
+              )),
+            )}
+          </div>
+        </div>
 
-              {/* Časová osa */}
-              <div class="sticky top-[3.5rem] z-10 flex border-b bg-white">
-                <div class="w-48 border-r-2 border-gray-400 bg-gray-100 p-2 text-sm font-bold">Sály / Čas</div>
-                {times.map((time, idx) => (
-                  <div
-                    class="min-w-24 flex-1 border-r border-gray-300 bg-gray-50 p-2 text-center text-sm font-semibold"
-                    key={`time-${idx}`}
-                  >
-                    {timeFormatter.format(time.time)}
+        {/* Řádky pro sály */}
+        <div class="divide-y divide-gray-200">
+          {rows.map((row) => {
+            const rowEvents = events.filter(
+              (event) => event.dateFrom.toDateString() === row.date.date.toDateString() && event.sal === row.sal.name,
+            );
+
+            return (
+              <div
+                class={`grid min-h-12 ${row.isFirstSalInDay ? "border-t-2 border-blue-200" : ""}`}
+                key={row.key}
+                style={`grid-template-columns: ${salsWidth}px repeat(${totalSlots}, ${slotWidth}px);`}
+              >
+                {/* Název sálu */}
+                <div
+                  class="flex items-center justify-center border-r-2 border-gray-300 p-2 text-xs"
+                  style={`background-color: ${row.sal.bgColor}; color: ${row.sal.color};`}
+                >
+                  <div class="text-center">
+                    {row.isFirstSalInDay && <div class="mb-1 font-bold text-gray-800">{row.dayName}</div>}
+                    <div class="font-semibold">{row.sal.displayName}</div>
+                    <div class="text-xs opacity-75">{row.sal.vykony} výkonů</div>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {/* 5-minutové intervaly */}
-              <div class="sticky top-[6rem] z-10 flex border-b bg-white text-xs">
-                <div class="w-48 border-r-2 border-gray-400 bg-gray-50"></div>
-                {times.map((time, hourIdx) => (
-                  <div class="flex min-w-24 flex-1" key={`intervals-${hourIdx}`}>
-                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minutes) => (
-                      <div
-                        class="flex-1 border-r border-gray-200 bg-gray-50 p-1 text-center"
-                        key={`interval-${hourIdx}-${minutes}`}
-                      >
-                        {minutes.toString().padStart(2, "0")}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
+                {/* Grid sloty pro časy - každý slot má fixní šířku */}
+                {Array.from({ length: totalSlots }, (_, slotIndex) => {
+                  const slotHour = Math.floor(slotIndex / 12) + timeHourFrom;
+                  const slotMinute = (slotIndex % 12) * 5;
 
-              {/* Sály a události */}
-              <div class="divide-y divide-gray-200">
-                {saly.map((sal, salIndex) => {
-                  const salEvents = dayEvents.filter((event) => event.sal === sal.name);
+                  // Najdi událost pro tento slot
+                  const eventInSlot = rowEvents.find((event) => {
+                    const eventStartHour = event.dateFrom.getHours();
+                    const eventStartMinute = event.dateFrom.getMinutes();
+                    const eventEndHour = event.dateTo.getHours();
+                    const eventEndMinute = event.dateTo.getMinutes();
+
+                    const slotTime = slotHour * 60 + slotMinute;
+                    const eventStart = eventStartHour * 60 + eventStartMinute;
+                    const eventEnd = eventEndHour * 60 + eventEndMinute;
+
+                    return slotTime >= eventStart && slotTime < eventEnd;
+                  });
+
+                  // Zobraz událost pouze na začátku
+                  const shouldShowEvent =
+                    eventInSlot &&
+                    eventInSlot.dateFrom.getHours() === slotHour &&
+                    eventInSlot.dateFrom.getMinutes() === slotMinute;
 
                   return (
-                    <div class="flex min-h-16 hover:bg-gray-50" key={`sal-${dayIndex}-${salIndex}`}>
-                      {/* Sál info */}
-                      <div
-                        class="flex w-48 flex-col justify-center border-r-2 border-gray-300 p-3"
-                        style={`background-color: ${sal.bgColor}; color: ${sal.color};`}
-                      >
-                        <div class="font-bold">{sal.displayName}</div>
-                        <div class="text-xs opacity-75">{sal.vykony} výkonů</div>
-                        <div class="text-xs opacity-75">{sal.uhrada.toLocaleString()} Kč</div>
-                      </div>
-
-                      {/* Časová oblast pro události */}
-                      <div class="relative flex-1">
-                        {/* Grid pozadí */}
-                        <div class="absolute inset-0 flex">
-                          {times.map((_, hourIdx) => (
-                            <div class="flex min-w-24 flex-1" key={`bg-hour-${hourIdx}`}>
-                              {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((minutes, minIdx) => (
-                                <div
-                                  class={`flex-1 border-r ${minIdx === 11 ? "border-gray-400" : "border-gray-200"}`}
-                                  key={`bg-${hourIdx}-${minIdx}`}
-                                ></div>
-                              ))}
-                            </div>
-                          ))}
+                    <div
+                      class="relative border-r border-gray-200"
+                      key={`slot-${slotIndex}`}
+                      style={`width: ${slotWidth}px;`}
+                    >
+                      {shouldShowEvent && (
+                        <div
+                          class="absolute inset-0 z-10 flex cursor-pointer items-center justify-center rounded border p-1 text-xs font-semibold"
+                          style={`
+                            background-color: ${eventInSlot.typ === "uklid" || eventInSlot.typ === "pauza" ? "#e5e7eb" : getSalInfo(eventInSlot.sal).bgColor};
+                            border-color: ${eventInSlot.typ === "uklid" || eventInSlot.typ === "pauza" ? "#9ca3af" : getSalInfo(eventInSlot.sal).color};
+                            grid-column-end: span ${Math.ceil(eventInSlot.duration / 5)};
+                          `}
+                        >
+                          {eventInSlot.title}
                         </div>
-
-                        {/* Events */}
-                        {salEvents.map((event) => (
-                          <OjpEventComponent
-                            event={event}
-                            key={event.id}
-                            timeHourFrom={timeHourFrom}
-                            timeHourTo={timeHourTo}
-                          />
-                        ))}
-                      </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   },
