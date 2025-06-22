@@ -25,8 +25,7 @@ export const useOjpPlanningData = routeLoader$(async () => {
     return { date };
   });
 
-  // Vytvoření časových slotů (7:00 - 21:00, po 5 minutách)
-  const times = Array.from({ length: 14 }, (_, i) => {
+  const times = Array.from({ length: 15 }, (_, i) => {
     const hour = 7 + i;
     return { time: new Date(2000, 0, 1, hour, 0) };
   });

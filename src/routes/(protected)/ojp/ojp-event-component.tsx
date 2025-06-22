@@ -31,11 +31,12 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
-    // Přepočet na intervaly
+    // Přepočet na pozici v px (včetně offset pro sloupec se sály)
+    const salsWidth = 140;
     const startInterval = startTotalMinutes / intervalMinutes;
     const endInterval = endTotalMinutes / intervalMinutes;
 
-    const leftPx = startInterval * intervalWidth;
+    const leftPx = salsWidth + startInterval * intervalWidth;
     const widthPx = (endInterval - startInterval) * intervalWidth;
 
     const salInfo = getSalInfo(event.sal);
@@ -53,12 +54,12 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             isDialogOpen.value = true;
           }}
           style={`
-          left: ${leftPx}px;
-          width: ${widthPx}px;
-          background-color: ${backgroundColor};
-          border-color: ${borderColor};
-          color: #000;
-        `}
+            left: ${leftPx}px;
+            width: ${widthPx}px;
+            background-color: ${backgroundColor};
+            border-color: ${borderColor};
+            color: #000;
+          `}
         >
           <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
             <Button

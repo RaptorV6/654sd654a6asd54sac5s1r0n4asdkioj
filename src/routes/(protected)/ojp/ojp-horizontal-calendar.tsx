@@ -2,7 +2,7 @@ import { component$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSalInfo } from "./_mock-events";
 
-import { getSalInfo } from "./_mock-events";
+import { OjpEventComponent } from "./ojp-event-component";
 
 type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
@@ -12,6 +12,10 @@ type OjpHorizontalCalendarProps = {
   timeHourTo: number;
   times: { time: Date }[];
 };
+
+type StructureItem =
+  | { date: Date; dayIndex: number; dayName: string; type: "day" }
+  | { date: Date; dayIndex: number; sal: OjpSalInfo; type: "sal" };
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
   ({ dates, events, saly, timeHourFrom, times }) => {
@@ -23,10 +27,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const rowHeight = 40; // px - jednotná výška všech řádků
 
     // Vytvoříme strukturu: den → sály
-    const structure: Array<
-      | { date: Date; dayIndex: number; dayName: string; type: "day" }
-      | { date: Date; dayIndex: number; sal: OjpSalInfo; type: "sal" }
-    > = [];
+    const structure: StructureItem[] = [];
 
     dates.forEach((date, dayIndex) => {
       // Přidáme řádek pro den
@@ -65,7 +66,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                 class="flex items-center justify-center border-r border-gray-300 bg-gray-50 text-lg font-semibold"
                 key={`hour-${time.time.getHours()}`}
               >
-                {String(time.time.getHours()).padStart(2, "0")}
+                {String(time.time.getHours()).padStart(2, "0")}:00
               </div>
             ))}
           </div>
@@ -91,7 +92,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
         {/* Řádky pro dny a sály */}
         <div>
-          {structure.map((item) => {
+          {structure.map((item: StructureItem) => {
             if (item.type === "day") {
               // Řádek pro den
               return (
@@ -117,7 +118,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
               return (
                 <div
-                  class="grid border-b border-gray-200"
+                  class="relative grid border-b border-gray-200"
                   key={`sal-${item.dayIndex}-${item.sal.name}`}
                   style={`grid-template-columns: ${salsWidth}px repeat(${totalSlots}, ${slotWidth}px); height: ${rowHeight}px;`}
                 >
@@ -133,47 +134,20 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                   </div>
 
                   {/* Grid sloty pro časy */}
-                  {Array.from({ length: totalSlots }, (_, slotIndex) => {
-                    const slotHour = Math.floor(slotIndex / 12) + timeHourFrom;
-                    const slotMinute = (slotIndex % 12) * 5;
+                  {Array.from({ length: totalSlots }, (_, slotIndex) => (
+                    <div class="border-r border-gray-200" key={`slot-${slotIndex}`}></div>
+                  ))}
 
-                    // Najdi událost pro tento slot
-                    const eventInSlot = rowEvents.find((event) => {
-                      const eventStartHour = event.dateFrom.getHours();
-                      const eventStartMinute = event.dateFrom.getMinutes();
-                      const eventEndHour = event.dateTo.getHours();
-                      const eventEndMinute = event.dateTo.getMinutes();
-
-                      const slotTime = slotHour * 60 + slotMinute;
-                      const eventStart = eventStartHour * 60 + eventStartMinute;
-                      const eventEnd = eventEndHour * 60 + eventEndMinute;
-
-                      return slotTime >= eventStart && slotTime < eventEnd;
-                    });
-
-                    // Zobraz událost pouze na začátku
-                    const shouldShowEvent =
-                      eventInSlot &&
-                      eventInSlot.dateFrom.getHours() === slotHour &&
-                      eventInSlot.dateFrom.getMinutes() === slotMinute;
-
-                    return (
-                      <div class="relative border-r border-gray-200" key={`slot-${slotIndex}`}>
-                        {shouldShowEvent && (
-                          <div
-                            class="absolute inset-1 z-10 flex cursor-pointer items-center justify-center rounded border text-xs font-semibold"
-                            style={`
-                              background-color: ${eventInSlot.typ === "uklid" || eventInSlot.typ === "pauza" ? "#e5e7eb" : getSalInfo(eventInSlot.sal).bgColor};
-                              border-color: ${eventInSlot.typ === "uklid" || eventInSlot.typ === "pauza" ? "#9ca3af" : getSalInfo(eventInSlot.sal).color};
-                              grid-column-end: span ${Math.ceil(eventInSlot.duration / 5)};
-                            `}
-                          >
-                            {eventInSlot.title}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                  {/* Události jako absolutně pozicované elementy */}
+                  {rowEvents.map((event) => (
+                    <OjpEventComponent
+                      event={event}
+                      intervalMinutes={5}
+                      intervalWidth={slotWidth}
+                      key={event.id}
+                      timeHourFrom={timeHourFrom}
+                    />
+                  ))}
                 </div>
               );
             }
