@@ -18,7 +18,7 @@ export type OjpEvent = {
   poznamka?: string;
   sal: OjpSal;
   title: string;
-  typ: "operace" | "pauza" | "uklid";
+  typ: "operace" | "pauza" | "svatek" | "uklid";
   uhrada?: number;
   vykony?: number;
 };
@@ -62,7 +62,7 @@ export const _mock_ojp_events: OjpEvent[] = splitCsv(csvText, mockDataSourceCols
     poznamka: row.poznamka || undefined,
     sal: row.sal as OjpSal,
     title: row.title,
-    typ: row.typ as "operace" | "pauza" | "uklid",
+    typ: row.typ as "operace" | "pauza" | "svatek" | "uklid",
   };
 }) satisfies OjpEvent[];
 

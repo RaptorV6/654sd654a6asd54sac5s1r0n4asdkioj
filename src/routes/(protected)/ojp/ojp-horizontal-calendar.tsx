@@ -102,24 +102,22 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
             <div style={`min-width: ${totalGridWidth}px;`}>
               {structure.map((item: StructureItem) => {
                 if (item.type === "day") {
-                  // Řádek pro den
+                  // Řádek pro den - použij jednoduchou 2-sloupcovou strukturu
                   return (
                     <div
                       class="grid border-b border-gray-300 bg-gradient-to-r from-blue-600 to-blue-700 text-white"
                       key={`day-${item.dayIndex}`}
-                      style={`grid-template-columns: ${minutesGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
+                      style={`grid-template-columns: ${salsWidth}px 1fr; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
                     >
                       <div class="flex items-center justify-center border-r-2 border-blue-400 font-bold">
                         {item.dayName} {item.date.toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit" })}
                       </div>
-                      {/* Prázdné sloty pro časy */}
-                      {Array.from({ length: totalSlots }, (_, slotIndex) => (
-                        <div class="border-r border-blue-400" key={`day-slot-${slotIndex}`}></div>
-                      ))}
+                      {/* Jeden velký sloupec pro celý čas */}
+                      <div class="border-r border-blue-400"></div>
                     </div>
                   );
                 } else {
-                  // Řádek pro sál
+                  // Řádek pro sál - zůstává s minutovým členěním
                   const rowEvents = events.filter(
                     (event) =>
                       event.dateFrom.toDateString() === item.date.toDateString() && event.sal === item.sal.name,

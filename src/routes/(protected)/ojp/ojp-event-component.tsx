@@ -40,11 +40,31 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     const widthPx = (endInterval - startInterval) * intervalWidth;
 
     const salInfo = getSalInfo(event.sal);
-    const isUtilityEvent =
-      event.typ === "uklid" || event.typ === "pauza" || event.title.includes("ÚS") || event.title.includes("OBĚDOVÁ");
 
-    const backgroundColor = isUtilityEvent ? "#e5e7eb" : salInfo.bgColor;
-    const borderColor = isUtilityEvent ? "#9ca3af" : salInfo.color;
+    // Logika pro různé typy událostí
+    let backgroundColor: string;
+    let borderColor: string;
+    let textColor: string = "#000";
+
+    if (event.typ === "svatek") {
+      // Svátky - šedé podbarvení
+      backgroundColor = "#e5e7eb";
+      borderColor = "#9ca3af";
+      textColor = "#374151";
+    } else if (
+      event.typ === "uklid" ||
+      event.typ === "pauza" ||
+      event.title.includes("ÚS") ||
+      event.title.includes("OBĚDOVÁ")
+    ) {
+      // Úklid a pauzy
+      backgroundColor = "#e5e7eb";
+      borderColor = "#9ca3af";
+    } else {
+      // Normální operace
+      backgroundColor = salInfo.bgColor;
+      borderColor = salInfo.color;
+    }
 
     return (
       <>
@@ -58,7 +78,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             width: ${widthPx}px;
             background-color: ${backgroundColor};
             border-color: ${borderColor};
-            color: #000;
+            color: ${textColor};
           `}
         >
           <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -108,15 +128,17 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             >
               Zavřít
             </Button>
-            <Button
-              onClick$={() => {
-                isDialogOpen.value = false;
-              }}
-              severity="accent"
-              type="button"
-            >
-              Upravit
-            </Button>
+            {event.typ !== "svatek" && (
+              <Button
+                onClick$={() => {
+                  isDialogOpen.value = false;
+                }}
+                severity="accent"
+                type="button"
+              >
+                Upravit
+              </Button>
+            )}
           </DialogFooter>
         </Dialog>
       </>
