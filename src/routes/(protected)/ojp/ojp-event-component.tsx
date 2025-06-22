@@ -19,11 +19,13 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
+  scrollLeft: number;
   timeHourFrom: number;
+  viewportWidth: number;
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, timeHourFrom }) => {
+  ({ event, intervalMinutes, intervalWidth, scrollLeft, timeHourFrom, viewportWidth }) => {
     const isDialogOpen = useSignal(false);
     const timeFormatter = new Intl.DateTimeFormat("cs", { hourCycle: "h23", timeStyle: "short" });
 
@@ -66,6 +68,32 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       borderColor = salInfo.color;
     }
 
+    // NOVÁ LOGIKA pro dynamické pozicování textu
+    const isLongEvent = widthPx > viewportWidth * 0.6; // Pokud je událost delší než 60% viewportu
+    let textTransform = "";
+
+    if (isLongEvent) {
+      // Vypočítej, kde by měl být text relativně k události
+      const eventStart = leftPx;
+      const eventEnd = leftPx + widthPx;
+      const viewportStart = scrollLeft + salsWidth; // Přičti šířku sloupce sálů
+      const viewportEnd = scrollLeft + viewportWidth;
+
+      // Pokud je událost částečně nebo úplně viditelná
+      if (eventEnd > viewportStart && eventStart < viewportEnd) {
+        // Najdi střed viditelné části události
+        const visibleStart = Math.max(eventStart, viewportStart);
+        const visibleEnd = Math.min(eventEnd, viewportEnd);
+        const visibleCenter = (visibleStart + visibleEnd) / 2;
+
+        // Pozicuj text na střed viditelné části
+        const textOffset = visibleCenter - eventStart;
+        const relativeOffset = textOffset - widthPx / 2; // Offset od původního středu
+
+        textTransform = `translateX(${relativeOffset}px)`;
+      }
+    }
+
     return (
       <>
         <div
@@ -97,7 +125,12 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             </Button>
           </div>
 
-          <div class="overflow-hidden text-center leading-tight">{event.title}</div>
+          <div
+            class="overflow-hidden text-center leading-tight"
+            style={textTransform ? `transform: ${textTransform};` : ""}
+          >
+            {event.title}
+          </div>
         </div>
 
         <Dialog bind:show={isDialogOpen}>
