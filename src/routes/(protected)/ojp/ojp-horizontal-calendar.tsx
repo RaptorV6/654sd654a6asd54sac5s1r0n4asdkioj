@@ -1,4 +1,4 @@
-import { component$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSalInfo } from "./_mock-events";
 
@@ -25,6 +25,25 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const totalSlots = times.length * 12; // 12 slotů na hodinu
     const salsWidth = 140;
     const rowHeight = 40; // px - jednotná výška všech řádků
+
+    // Tracking scroll pozice
+    const scrollContainerRef = useSignal<HTMLDivElement>();
+    const scrollLeft = useSignal(0);
+    const viewportWidth = useSignal(800);
+
+    // Update viewport width when container changes
+    useTask$(({ track }) => {
+      track(() => scrollContainerRef.value);
+      if (scrollContainerRef.value) {
+        viewportWidth.value = scrollContainerRef.value.clientWidth;
+      }
+    });
+
+    // Handle scroll
+    const handleScroll = $((e: Event) => {
+      const target = e.target as HTMLDivElement;
+      scrollLeft.value = target.scrollLeft;
+    });
 
     // Vypočítej celkovou šířku gridu
     const totalGridWidth = salsWidth + totalSlots * slotWidth;
@@ -57,7 +76,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     return (
       <div class="flex h-full flex-col">
         {/* Kontejner pro horizontální scroll */}
-        <div class="flex-1 overflow-auto">
+        <div class="flex-1 overflow-auto" onScroll$={handleScroll} ref={scrollContainerRef}>
           <div style={`min-width: ${totalGridWidth}px; width: 100%;`}>
             {/* Sticky header s hodinami */}
             <div class="sticky top-0 z-30 border-b bg-white">
@@ -152,7 +171,9 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                           intervalMinutes={5}
                           intervalWidth={slotWidth}
                           key={event.id}
+                          scrollLeft={scrollLeft.value}
                           timeHourFrom={timeHourFrom}
+                          viewportWidth={viewportWidth.value}
                         />
                       ))}
                     </div>
