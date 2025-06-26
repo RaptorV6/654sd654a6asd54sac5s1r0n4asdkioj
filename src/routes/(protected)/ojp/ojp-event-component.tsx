@@ -1,3 +1,6 @@
+// src/routes/(protected)/ojp/ojp-event-component.tsx
+import type { Signal } from "@builder.io/qwik";
+
 import {
   Button,
   ButtonLabelIcon,
@@ -19,13 +22,14 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
+  onEventChange: Signal<number>;
   scrollLeft: number;
   timeHourFrom: number;
   viewportWidth: number;
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, scrollLeft, timeHourFrom, viewportWidth }) => {
+  ({ event, intervalMinutes, intervalWidth, onEventChange, scrollLeft, timeHourFrom, viewportWidth }) => {
     const isDialogOpen = useSignal(false);
     const timeFormatter = new Intl.DateTimeFormat("cs", { hourCycle: "h23", timeStyle: "short" });
 
@@ -115,7 +119,8 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
               class="rounded p-0.5 hover:bg-white hover:bg-opacity-50"
               onClick$={(e: any) => {
                 e.stopPropagation();
-                isDialogOpen.value = true;
+                // Pro edit trigger - použijeme negative signal
+                onEventChange.value = -Number(event.id);
               }}
               size="xs"
               type="button"
@@ -165,6 +170,8 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
               <Button
                 onClick$={() => {
                   isDialogOpen.value = false;
+                  // Pro edit trigger - použijeme negative signal
+                  onEventChange.value = -Number(event.id);
                 }}
                 severity="accent"
                 type="button"

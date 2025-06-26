@@ -1,12 +1,17 @@
+// src/routes/(protected)/ojp/ojp-horizontal-calendar.tsx
+import type { Signal } from "@builder.io/qwik";
+
 import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
 
-import type { OjpEventPositioned, OjpSalInfo } from "./_mock-events";
+import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
 
 import { OjpEventComponent } from "./ojp-event-component";
 
 type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
   events: OjpEventPositioned[];
+  newEventTrigger: Signal<{ dateTime: Date; sal: OjpSal } | null>;
+  onEventChange: Signal<number>;
   saly: OjpSalInfo[];
   timeHourFrom: number;
   timeHourTo: number;
@@ -18,7 +23,7 @@ type StructureItem =
   | { date: Date; dayIndex: number; sal: OjpSalInfo; type: "sal" };
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
-  ({ dates, events, saly, timeHourFrom, times }) => {
+  ({ dates, events, newEventTrigger, onEventChange, saly, timeHourFrom, times }) => {
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
     const slotWidth = 24; // px na 5-minutový slot
@@ -45,16 +50,16 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       scrollLeft.value = target.scrollLeft;
     });
 
-    // Vypočítej celkovou šířku gridu
+    // Vypočítaj celkovou šířku gridu
     const totalGridWidth = salsWidth + totalSlots * slotWidth;
     const hoursGridTemplate = `${salsWidth}px repeat(${times.length}, ${12 * slotWidth}px)`;
     const minutesGridTemplate = `${salsWidth}px repeat(${totalSlots}, ${slotWidth}px)`;
 
-    // Vytvoříme strukturu: den → sály
+    // Vytvoríme strukturu: den → sály
     const structure: StructureItem[] = [];
 
     dates.forEach((date, dayIndex) => {
-      // Přidáme řádek pro den
+      // Přidáme řádok pre den
       structure.push({
         date: date.date,
         dayIndex,
@@ -62,7 +67,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
         type: "day",
       });
 
-      // Přidáme řádky pro sály tohoto dne
+      // Přidáme řádky pre sály tohto dña
       saly.forEach((sal) => {
         structure.push({
           date: date.date,
@@ -75,7 +80,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
     return (
       <div class="flex h-full flex-col">
-        {/* Kontejner pro horizontální scroll */}
+        {/* Kontajner pre horizontálny scroll */}
         <div class="flex-1 overflow-auto" onScroll$={handleScroll} ref={scrollContainerRef}>
           <div style={`min-width: ${totalGridWidth}px; width: 100%;`}>
             {/* Sticky header s hodinami */}
@@ -131,7 +136,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       <div class="flex items-center justify-center border-r-2 border-blue-400 font-bold">
                         {item.dayName} {item.date.toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit" })}
                       </div>
-                      {/* Jeden velký sloupec pro celý čas */}
+                      {/* Jeden veľký sloupec pre celý čas */}
                       <div class="border-r border-blue-400"></div>
                     </div>
                   );
@@ -159,18 +164,34 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                         </div>
                       </div>
 
-                      {/* Grid sloty pro časy */}
+                      {/* Grid sloty pre časy - s onClick handlerom */}
                       {Array.from({ length: totalSlots }, (_, slotIndex) => (
-                        <div class="border-r border-gray-200" key={`slot-${slotIndex}`}></div>
+                        <div
+                          class="cursor-pointer border-r border-gray-200 hover:bg-blue-100 hover:bg-opacity-50"
+                          key={`slot-${slotIndex}`}
+                          onClick$={() => {
+                            const minutesFromStart = slotIndex * 5;
+                            const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
+                            const minutes = minutesFromStart % 60;
+
+                            const newDateTime = new Date(item.date);
+                            newDateTime.setHours(hours, minutes, 0, 0);
+
+                            // Trigger new event pomocí signal
+                            newEventTrigger.value = { dateTime: newDateTime, sal: item.sal.name };
+                          }}
+                          title="Klikněte pro přidání události"
+                        ></div>
                       ))}
 
-                      {/* Události jako absolutně pozicované elementy */}
+                      {/* Události jako absolútne pozicované elementy */}
                       {rowEvents.map((event) => (
                         <OjpEventComponent
                           event={event}
                           intervalMinutes={5}
                           intervalWidth={slotWidth}
                           key={event.id}
+                          onEventChange={onEventChange}
                           scrollLeft={scrollLeft.value}
                           timeHourFrom={timeHourFrom}
                           viewportWidth={viewportWidth.value}

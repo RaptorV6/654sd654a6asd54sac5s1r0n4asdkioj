@@ -1,3 +1,4 @@
+// src/routes/(protected)/ojp/_loaders.ts
 import { routeLoader$ } from "@builder.io/qwik-city";
 
 import { calendarEventsPosition } from "~/lib/calendar/calendar-events-position";
@@ -30,8 +31,8 @@ export const useOjpPlanningData = routeLoader$(async () => {
     return { time: new Date(2000, 0, 1, hour, 0) };
   });
 
-  // Filtrování událostí pro aktuální týden
-  const weekEvents = _mock_ojp_events.filter((event) => event.dateFrom >= weekStart && event.dateFrom <= weekEnd);
+  // Filtrování událostí pro aktuální týden - POZOR: čteme aktuální stav mock dat
+  const weekEvents = [..._mock_ojp_events].filter((event) => event.dateFrom >= weekStart && event.dateFrom <= weekEnd);
 
   const eventsWithPosition = calendarEventsPosition(weekEvents);
 
