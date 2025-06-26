@@ -1,38 +1,76 @@
 // src/routes/(protected)/ojp/ojp-planning-calendar.tsx
 import { Card } from "@akeso/ui-components";
 import { component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
+import { useLocation } from "@builder.io/qwik-city";
 
 import type { OjpEvent, OjpSal } from "./_mock-events";
 
 import { useOjpPlanningData } from "./_loaders";
-import { _mock_ojp_events } from "./_mock-events";
+import { serverGetOjpEvents } from "./_server-actions";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
 import { OjpEventModal } from "./ojp-event-modal";
 import { OjpHorizontalCalendar } from "./ojp-horizontal-calendar";
 
 export const OjpPlanningCalendar = component$(() => {
-  const data = useOjpPlanningData().value;
+  const initialData = useOjpPlanningData().value;
+  const location = useLocation();
 
-  // Modály state
+  // Modal state
   const showEventModal = useSignal(false);
-  const eventModalMode = useSignal<"edit" | "new">("new");
+  const eventModalMode = useSignal<"edit" | "new" | "view">("new");
   const selectedEvent = useSignal<OjpEvent | undefined>();
   const newEventData = useStore<{ dateTime?: Date; sal?: OjpSal }>({});
 
-  // Refresh trigger - positive = new, negative = edit with ID
+  // Data state - začínáme s loader daty, pak refreshujeme
+  const currentData = useStore(initialData);
+
+  // Refresh trigger - positive = view, negative = edit, 0 = refresh
   const eventChangeTrigger = useSignal(0);
 
   // Trigger pro nové události
   const newEventTrigger = useSignal<{ dateTime: Date; sal: OjpSal } | null>(null);
 
-  // Watch for edit triggers (negative numbers)
-  useTask$(({ track }) => {
+  // Refresh dat po změnách
+  useTask$(async ({ track }) => {
     const trigger = track(() => eventChangeTrigger.value);
+
+    // Při refreshi (trigger změna) načteme fresh data ze serveru
+    if (trigger !== 0 && Math.abs(trigger) !== trigger) {
+      try {
+        const freshEvents = await serverGetOjpEvents();
+        // Filtrujeme pro aktuální týden
+        const weekEvents = freshEvents.filter(
+          (event) =>
+            event.dateFrom >= currentData.weekStart &&
+            event.dateFrom <= new Date(currentData.weekStart.getTime() + 4 * 24 * 60 * 60 * 1000),
+        );
+
+        // Aktualizujeme pozice
+        const { calendarEventsPosition } = await import("~/lib/calendar/calendar-events-position");
+        const eventsWithPosition = calendarEventsPosition(weekEvents);
+
+        currentData.events = eventsWithPosition;
+      } catch (error) {
+        console.error("Error refreshing events:", error);
+      }
+    }
+
+    // Handle view/edit triggers
     if (trigger < 0) {
+      // Edit mode - negative numbers
       const eventId = String(Math.abs(trigger));
-      const event = _mock_ojp_events.find((e) => e.id === eventId);
+      const event = currentData.events.find((e) => e.id === eventId);
       if (event) {
         eventModalMode.value = "edit";
+        selectedEvent.value = event;
+        showEventModal.value = true;
+      }
+    } else if (trigger > 0) {
+      // View mode - positive numbers
+      const eventId = String(trigger);
+      const event = currentData.events.find((e) => e.id === eventId);
+      if (event) {
+        eventModalMode.value = "view";
         selectedEvent.value = event;
         showEventModal.value = true;
       }
@@ -53,20 +91,29 @@ export const OjpPlanningCalendar = component$(() => {
     }
   });
 
+  // Při route změně obnovíme data
+  useTask$(({ track }) => {
+    track(() => location.isNavigating);
+    if (!location.isNavigating) {
+      // Route dokončena, můžeme refreshnout
+      eventChangeTrigger.value = 0;
+    }
+  });
+
   return (
     <Card class="flex h-[calc(100vh-12rem)] flex-col">
-      <OjpCalendarHeader weekStart={data.weekStart} />
+      <OjpCalendarHeader weekStart={currentData.weekStart} />
       <div class="flex-1 overflow-auto">
         <OjpHorizontalCalendar
-          dates={data.dates}
-          events={data.events}
-          key={eventChangeTrigger.value} // Force refresh when events change
+          dates={currentData.dates}
+          events={currentData.events}
+          key={`calendar-${Math.abs(eventChangeTrigger.value)}`} // Force refresh when events change
           newEventTrigger={newEventTrigger}
           onEventChange={eventChangeTrigger}
-          saly={data.saly}
-          timeHourFrom={data.calendarHourFrom}
-          timeHourTo={data.calendarHourTo}
-          times={data.times}
+          saly={currentData.saly}
+          timeHourFrom={currentData.calendarHourFrom}
+          timeHourTo={currentData.calendarHourTo}
+          times={currentData.times}
         />
       </div>
 
