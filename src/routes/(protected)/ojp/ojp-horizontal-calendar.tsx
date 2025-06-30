@@ -11,7 +11,7 @@ type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
   events: OjpEventPositioned[];
   newEventTrigger: Signal<{ dateTime: Date; sal: OjpSal } | null>;
-  onEventChange: Signal<number>;
+  onDataChange: Signal<number>;
   saly: OjpSalInfo[];
   timeHourFrom: number;
   timeHourTo: number;
@@ -23,7 +23,7 @@ type StructureItem =
   | { date: Date; dayIndex: number; sal: OjpSalInfo; type: "sal" };
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
-  ({ dates, events, newEventTrigger, onEventChange, saly, timeHourFrom, times }) => {
+  ({ dates, events, newEventTrigger, onDataChange, saly, timeHourFrom, times }) => {
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
     const slotWidth = 24; // px na 5-minutový slot
@@ -206,7 +206,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                           intervalMinutes={5}
                           intervalWidth={slotWidth}
                           key={event.id}
-                          onEventChange={onEventChange}
+                          onDataChange={onDataChange}
                           scrollLeft={scrollLeft.value}
                           timeHourFrom={timeHourFrom}
                           viewportWidth={viewportWidth.value}

@@ -2,26 +2,31 @@
 import type { Signal } from "@builder.io/qwik";
 
 import { Button, ButtonLabelIcon } from "@akeso/ui-components";
-import { component$ } from "@builder.io/qwik";
+import { component$, useSignal } from "@builder.io/qwik";
 
 import { EditIcon } from "~/components/icons-outline";
 
 import type { OjpEventPositioned } from "./_mock-events";
 
 import { getSalInfo } from "./_mock-events";
+import { OjpEventModal } from "./ojp-event-modal";
 
 type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
-  onEventChange: Signal<number>;
+  onDataChange: Signal<number>; // Pro refresh po save/delete
   scrollLeft: number;
   timeHourFrom: number;
   viewportWidth: number;
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, onEventChange, scrollLeft, timeHourFrom, viewportWidth }) => {
+  ({ event, intervalMinutes, intervalWidth, onDataChange, scrollLeft, timeHourFrom, viewportWidth }) => {
+    // Vlastní modal signály - jako v CDR!
+    const showEventModal = useSignal(false);
+    const eventModalMode = useSignal<"edit" | "view">("view");
+
     // Pozicování v 5-minutových intervalech
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
@@ -42,7 +47,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     let textColor: string = "#000";
 
     if (event.typ === "svatek") {
-      // Svátky - šedé podbarvení
       backgroundColor = "#e5e7eb";
       borderColor = "#9ca3af";
       textColor = "#374151";
@@ -52,11 +56,9 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       event.title.includes("ÚS") ||
       event.title.includes("OBĚDOVÁ")
     ) {
-      // Úklid a pauzy
       backgroundColor = "#e5e7eb";
       borderColor = "#9ca3af";
     } else {
-      // Normální operace
       backgroundColor = salInfo.bgColor;
       borderColor = salInfo.color;
     }
@@ -82,44 +84,56 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     }
 
     return (
-      <div
-        class="group absolute bottom-1 top-1 z-10 flex cursor-pointer items-center justify-center rounded border p-1 text-xs font-semibold transition-all hover:z-20 hover:shadow-lg"
-        onClick$={() => {
-          // Trigger view modal s pozitivním číslem
-          onEventChange.value = Number(event.id);
-        }}
-        style={`
-          left: ${leftPx}px;
-          width: ${widthPx}px;
-          background-color: ${backgroundColor};
-          border-color: ${borderColor};
-          color: ${textColor};
-        `}
-      >
-        <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
-          <Button
-            aria-label="Editovat"
-            class="rounded p-0.5 hover:bg-white hover:bg-opacity-50"
-            onClick$={(e: any) => {
-              e.stopPropagation();
-              // Pro edit trigger - použijeme negative signal
-              onEventChange.value = -Number(event.id);
-            }}
-            size="xs"
-            type="button"
+      <>
+        <div
+          class="group absolute bottom-1 top-1 z-10 flex cursor-pointer items-center justify-center rounded border p-1 text-xs font-semibold transition-all hover:z-20 hover:shadow-lg"
+          onClick$={() => {
+            // PŘÍMÝ modal - jako v CDR!
+            eventModalMode.value = "view";
+            showEventModal.value = true;
+          }}
+          style={`
+            left: ${leftPx}px;
+            width: ${widthPx}px;
+            background-color: ${backgroundColor};
+            border-color: ${borderColor};
+            color: ${textColor};
+          `}
+        >
+          <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <Button
+              aria-label="Editovat"
+              class="rounded p-0.5 hover:bg-white hover:bg-opacity-50"
+              onClick$={(e: any) => {
+                e.stopPropagation();
+                // Edit mode
+                eventModalMode.value = "edit";
+                showEventModal.value = true;
+              }}
+              size="xs"
+              type="button"
+            >
+              <ButtonLabelIcon as={EditIcon} standalone />
+              <span class="sr-only">Editovat událost</span>
+            </Button>
+          </div>
+
+          <div
+            class="overflow-hidden text-center leading-tight"
+            style={textTransform ? `transform: ${textTransform};` : ""}
           >
-            <ButtonLabelIcon as={EditIcon} standalone />
-            <span class="sr-only">Editovat událost</span>
-          </Button>
+            {event.title}
+          </div>
         </div>
 
-        <div
-          class="overflow-hidden text-center leading-tight"
-          style={textTransform ? `transform: ${textTransform};` : ""}
-        >
-          {event.title}
-        </div>
-      </div>
+        {/* Vlastní modal - jako v CDR! */}
+        <OjpEventModal
+          bind:show={showEventModal}
+          event={event}
+          mode={eventModalMode.value}
+          onEventChange={onDataChange}
+        />
+      </>
     );
   },
 );
