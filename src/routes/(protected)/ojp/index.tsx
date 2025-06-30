@@ -7,10 +7,11 @@ import { PageBreadcrumbsCurrent } from "~/components/page-breadcrumbs-current";
 import { PageHeader } from "~/components/page-header";
 import { PageHeaderActions } from "~/components/page-header-actions";
 import { PageHeaderTitle } from "~/components/page-header-title";
+export { getWeekEvents, useOjpPlanningData } from "./_loaders";
 
 import { OjpPlanningCalendar } from "./ojp-planning-calendar";
 
-export { useOjpPlanningData } from "./_loaders";
+export { useAddOjpEventAction, useDeleteOjpEventAction, useUpdateOjpEventAction } from "./_actions";
 
 const pageTitle = "OJP - Plánování operačních sálů";
 

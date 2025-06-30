@@ -3,8 +3,7 @@ import { routeLoader$ } from "@builder.io/qwik-city";
 
 import { calendarEventsPosition } from "~/lib/calendar/calendar-events-position";
 
-import { OJP_SALY } from "./_mock-events";
-import { serverGetOjpEvents } from "./_server-actions";
+import { _mock_ojp_events, OJP_SALY } from "./_mock-events";
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -19,9 +18,8 @@ function startOfWeek(date: Date): Date {
 export const useOjpPlanningData = routeLoader$(async () => {
   const weekStart = startOfWeek(new Date());
   const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 4); // Pouze pracovní dny Po-Pá
+  weekEnd.setDate(weekStart.getDate() + 4);
 
-  // Vytvoření dat pro kalendář
   const dates = Array.from({ length: 5 }, (_, i) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + i);
@@ -33,21 +31,21 @@ export const useOjpPlanningData = routeLoader$(async () => {
     return { time: new Date(2000, 0, 1, hour, 0) };
   });
 
-  // Načtení událostí ze serveru (CSV)
-  const allEvents = await serverGetOjpEvents();
-
-  // Filtrování událostí pro aktuální týden
-  const weekEvents = allEvents.filter((event) => event.dateFrom >= weekStart && event.dateFrom <= weekEnd);
-
-  const eventsWithPosition = calendarEventsPosition(weekEvents);
-
   return {
     calendarHourFrom: 7,
     calendarHourTo: 21,
     dates,
-    events: eventsWithPosition,
     saly: OJP_SALY,
     times,
     weekStart,
   };
 });
+
+// Nová funkce pro získání událostí
+export function getWeekEvents(weekStart: Date) {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 4);
+
+  const weekEvents = _mock_ojp_events.filter((event) => event.dateFrom >= weekStart && event.dateFrom <= weekEnd);
+  return calendarEventsPosition(weekEvents);
+}

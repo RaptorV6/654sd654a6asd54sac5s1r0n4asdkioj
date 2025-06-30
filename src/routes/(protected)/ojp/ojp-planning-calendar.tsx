@@ -4,45 +4,38 @@ import { component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import type { OjpSal } from "./_mock-events";
 
-import { useOjpPlanningData } from "./_loaders";
-import { serverGetOjpEvents } from "./_server-actions";
+import { useAddOjpEventAction, useDeleteOjpEventAction, useUpdateOjpEventAction } from "./_actions";
+import { getWeekEvents, useOjpPlanningData } from "./_loaders";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
 import { OjpEventModal } from "./ojp-event-modal";
 import { OjpHorizontalCalendar } from "./ojp-horizontal-calendar";
 
 export const OjpPlanningCalendar = component$(() => {
-  const initialData = useOjpPlanningData().value;
+  const staticData = useOjpPlanningData().value;
+
+  // Actions pro sledování změn
+  const addAction = useAddOjpEventAction();
+  const updateAction = useUpdateOjpEventAction();
+  const deleteAction = useDeleteOjpEventAction();
+
+  // Reaktivní data
+  const eventsSignal = useSignal(getWeekEvents(staticData.weekStart));
 
   // Modal state pro nové události
   const showNewEventModal = useSignal(false);
   const newEventData = useStore<{ dateTime?: Date; sal?: OjpSal }>({});
 
-  // Data state a triggery
-  const refreshDataTrigger = useSignal(0);
+  // Trigger pro nové události z double click
   const newEventTrigger = useSignal<{ dateTime: Date; sal: OjpSal } | null>(null);
-  const currentData = useStore(initialData);
 
-  // Refresh dat po změnách
-  useTask$(async ({ track }) => {
-    const refreshValue = track(() => refreshDataTrigger.value);
+  // Watch for action changes and refresh events
+  useTask$(({ track }) => {
+    track(() => addAction.value);
+    track(() => updateAction.value);
+    track(() => deleteAction.value);
 
-    if (refreshValue > 0) {
-      try {
-        const freshEvents = await serverGetOjpEvents();
-        const weekEnd = new Date(currentData.weekStart);
-        weekEnd.setDate(currentData.weekStart.getDate() + 4);
-
-        const weekEvents = freshEvents.filter(
-          (event) => event.dateFrom >= currentData.weekStart && event.dateFrom <= weekEnd,
-        );
-
-        const { calendarEventsPosition } = await import("~/lib/calendar/calendar-events-position");
-        const eventsWithPosition = calendarEventsPosition(weekEvents);
-        currentData.events = eventsWithPosition;
-      } catch (error) {
-        console.error("Error refreshing events:", error);
-      }
-    }
+    // Refresh events after any action
+    eventsSignal.value = getWeekEvents(staticData.weekStart);
   });
 
   // Watch for new event triggers
@@ -59,28 +52,26 @@ export const OjpPlanningCalendar = component$(() => {
 
   return (
     <Card class="flex h-[calc(100vh-12rem)] flex-col">
-      <OjpCalendarHeader weekStart={currentData.weekStart} />
+      <OjpCalendarHeader weekStart={staticData.weekStart} />
 
       <div class="flex-1 overflow-auto">
         <OjpHorizontalCalendar
-          dates={currentData.dates}
-          events={currentData.events}
+          dates={staticData.dates}
+          events={eventsSignal.value}
           newEventTrigger={newEventTrigger}
-          onDataChange={refreshDataTrigger}
-          saly={currentData.saly}
-          timeHourFrom={currentData.calendarHourFrom}
-          timeHourTo={currentData.calendarHourTo}
-          times={currentData.times}
+          saly={staticData.saly}
+          timeHourFrom={staticData.calendarHourFrom}
+          timeHourTo={staticData.calendarHourTo}
+          times={staticData.times}
         />
       </div>
 
-      {/* Modal jen pro nové události */}
+      {/* Modal pro nové události */}
       <OjpEventModal
         bind:show={showNewEventModal}
         initialDateTime={newEventData.dateTime}
         initialSal={newEventData.sal}
         mode="new"
-        onEventChange={refreshDataTrigger}
       />
     </Card>
   );

@@ -1,6 +1,3 @@
-// src/routes/(protected)/ojp/ojp-event-component.tsx
-import type { Signal } from "@builder.io/qwik";
-
 import { Button, ButtonLabelIcon } from "@akeso/ui-components";
 import { component$, useSignal } from "@builder.io/qwik";
 
@@ -15,14 +12,13 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
-  onDataChange: Signal<number>; // Pro refresh po save/delete
   scrollLeft: number;
   timeHourFrom: number;
   viewportWidth: number;
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, onDataChange, scrollLeft, timeHourFrom, viewportWidth }) => {
+  ({ event, intervalMinutes, intervalWidth, scrollLeft, timeHourFrom, viewportWidth }) => {
     // Vlastní modal signály - jako v CDR!
     const showEventModal = useSignal(false);
     const eventModalMode = useSignal<"edit" | "view">("view");
@@ -93,12 +89,12 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             showEventModal.value = true;
           }}
           style={`
-            left: ${leftPx}px;
-            width: ${widthPx}px;
-            background-color: ${backgroundColor};
-            border-color: ${borderColor};
-            color: ${textColor};
-          `}
+           left: ${leftPx}px;
+           width: ${widthPx}px;
+           background-color: ${backgroundColor};
+           border-color: ${borderColor};
+           color: ${textColor};
+         `}
         >
           <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
@@ -126,13 +122,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           </div>
         </div>
 
-        {/* Vlastní modal - jako v CDR! */}
-        <OjpEventModal
-          bind:show={showEventModal}
-          event={event}
-          mode={eventModalMode.value}
-          onEventChange={onDataChange}
-        />
+        <OjpEventModal bind:show={showEventModal} event={event} mode={eventModalMode.value} />
       </>
     );
   },
