@@ -50,7 +50,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       scrollLeft.value = target.scrollLeft;
     });
 
-    // Vypočítaj celkovou šířku gridu
+    // Vypočítej celkovou šířku gridu
     const totalGridWidth = salsWidth + totalSlots * slotWidth;
     const hoursGridTemplate = `${salsWidth}px repeat(${times.length}, ${12 * slotWidth}px)`;
     const minutesGridTemplate = `${salsWidth}px repeat(${totalSlots}, ${slotWidth}px)`;
@@ -76,6 +76,27 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           type: "sal",
         });
       });
+    });
+
+    // Funkce pro výpočet počtu výkonů pro sál v daný den
+    const getVykonyCount = (date: Date, salName: OjpSal): number => {
+      return events.filter(
+        (event) =>
+          event.dateFrom.toDateString() === date.toDateString() && event.sal === salName && event.typ === "operace",
+      ).length;
+    };
+
+    // Double click handler pro přidání události
+    const handleSlotDoubleClick = $((date: Date, sal: OjpSal, slotIndex: number) => {
+      const minutesFromStart = slotIndex * 5;
+      const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
+      const minutes = minutesFromStart % 60;
+
+      const newDateTime = new Date(date);
+      newDateTime.setHours(hours, minutes, 0, 0);
+
+      // Trigger new event pomocí signal
+      newEventTrigger.value = { dateTime: newDateTime, sal };
     });
 
     return (
@@ -147,6 +168,8 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       event.dateFrom.toDateString() === item.date.toDateString() && event.sal === item.sal.name,
                   );
 
+                  const vykonyCount = getVykonyCount(item.date, item.sal.name);
+
                   return (
                     <div
                       class="relative grid border-b border-gray-200"
@@ -160,27 +183,19 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       >
                         <div class="text-center">
                           <div class="font-semibold">{item.sal.displayName}</div>
-                          <div class="text-xs opacity-75">{item.sal.vykony} výkonů</div>
+                          <div class="text-xs opacity-75">{vykonyCount} výkonů</div>
                         </div>
                       </div>
 
-                      {/* Grid sloty pre časy - s onClick handlerom */}
+                      {/* Grid sloty pre časy - s double click handlerom */}
                       {Array.from({ length: totalSlots }, (_, slotIndex) => (
                         <div
                           class="cursor-pointer border-r border-gray-200 hover:bg-blue-100 hover:bg-opacity-50"
                           key={`slot-${slotIndex}`}
-                          onClick$={() => {
-                            const minutesFromStart = slotIndex * 5;
-                            const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
-                            const minutes = minutesFromStart % 60;
-
-                            const newDateTime = new Date(item.date);
-                            newDateTime.setHours(hours, minutes, 0, 0);
-
-                            // Trigger new event pomocí signal
-                            newEventTrigger.value = { dateTime: newDateTime, sal: item.sal.name };
+                          onDblClick$={() => {
+                            handleSlotDoubleClick(item.date, item.sal.name, slotIndex);
                           }}
-                          title="Klikněte pro přidání události"
+                          title="Poklepejte pro přidání události"
                         ></div>
                       ))}
 

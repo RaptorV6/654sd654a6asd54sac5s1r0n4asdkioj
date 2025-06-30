@@ -256,11 +256,13 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       <Dialog bind:show={showSig}>
         <DialogHeader>{getModalTitle()}</DialogHeader>
         <DialogBody>
-          <div class="space-y-4">
-            {errorMessage.message && <div class="rounded bg-red-100 p-3 text-red-700">{errorMessage.message}</div>}
+          <div class="space-y-6">
+            {errorMessage.message && (
+              <div class="rounded border border-red-400 bg-red-100 p-3 text-red-700">{errorMessage.message}</div>
+            )}
 
             {isLoading.value && (
-              <div class="rounded bg-blue-100 p-3 text-blue-700">
+              <div class="rounded border border-blue-400 bg-blue-100 p-3 text-blue-700">
                 {currentMode.value === "edit" ? "Ukládám změny..." : isNewEvent ? "Přidávám událost..." : "Načítám..."}
               </div>
             )}
@@ -280,7 +282,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                     <PreviewText label="Začátek" value={timeFormatter.format(event.dateFrom)} />
                     <PreviewText label="Konec" value={timeFormatter.format(event.dateTo)} />
                     <PreviewText label="Doba trvání" value={`${event.duration} min`} />
-                    {event.operator && <PreviewText label="Operatér" value={event.operator} />}
+                    {event.operator && <PreviewText label="Operátor" value={event.operator} />}
                   </div>
                   {event.poznamka && (
                     <div class="mt-4">
@@ -291,9 +293,9 @@ export const OjpEventModal = component$<OjpEventModalProps>(
               </Card>
             )}
 
-            {/* Edit/New mód - formulář - zde zůstává stejný kód jako předtím */}
+            {/* Edit/New mód - formulář */}
             {!isReadonly && (
-              <>
+              <div class="form-styles space-y-6">
                 {/* Základní informace */}
                 <Card>
                   <CardHeader>
@@ -301,7 +303,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   </CardHeader>
                   <CardBody>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Sál *</label>
                         <select
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -320,7 +322,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                         </select>
                       </div>
 
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Typ *</label>
                         <select
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -341,7 +343,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Datum *</label>
                         <input
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -355,7 +357,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                         />
                       </div>
 
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Čas od *</label>
                         <input
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -369,7 +371,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                         />
                       </div>
 
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Čas do *</label>
                         <input
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -394,7 +396,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                     </CardHeader>
                     <CardBody>
                       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div class="form-styles">
+                        <div>
                           <label class="block text-sm font-medium text-gray-700">Operační výkon</label>
                           <select
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -414,8 +416,8 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                           </select>
                         </div>
 
-                        <div class="form-styles">
-                          <label class="block text-sm font-medium text-gray-700">Operatér</label>
+                        <div>
+                          <label class="block text-sm font-medium text-gray-700">Příjmení (Operátor)</label>
                           <select
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                             disabled={isLoading.value}
@@ -444,8 +446,8 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                       <CardHeaderTitle>Jiné aktivity</CardHeaderTitle>
                     </CardHeader>
                     <CardBody>
-                      <div class="form-styles">
-                        <label class="block text-sm font-medium text-gray-700">Typ aktivity</label>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700">Jiné</label>
                         <select
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
                           disabled={isLoading.value}
@@ -473,7 +475,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   </CardHeader>
                   <CardBody>
                     <div class="space-y-4">
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Název události</label>
                         <input
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -487,7 +489,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                         />
                       </div>
 
-                      <div class="form-styles">
+                      <div>
                         <label class="block text-sm font-medium text-gray-700">Poznámka</label>
                         <textarea
                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
@@ -502,7 +504,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                     </div>
                   </CardBody>
                 </Card>
-              </>
+              </div>
             )}
           </div>
         </DialogBody>
