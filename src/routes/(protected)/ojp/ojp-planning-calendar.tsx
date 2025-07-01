@@ -35,7 +35,10 @@ export const OjpPlanningCalendar = component$(() => {
   const eventsSignal = useSignal(getWeekEvents(staticData.weekStart));
 
   const showNewEventModal = useSignal(false);
-  const newEventData = useStore<{ dateTime?: Date; sal?: OjpSal }>({});
+  const newEventData = useStore<{
+    dateTime?: Date;
+    sal?: OjpSal;
+  }>({});
 
   const newEventTrigger = useSignal<{ dateTime: Date; sal: OjpSal } | null>(null);
 
@@ -65,6 +68,9 @@ export const OjpPlanningCalendar = component$(() => {
 
     if (addResult?.success || updateResult?.success || deleteResult?.success) {
       eventsSignal.value = getWeekEvents(currentWeekStart.value);
+      showNewEventModal.value = false;
+      newEventData.dateTime = undefined;
+      newEventData.sal = undefined;
     }
   });
 
@@ -73,6 +79,7 @@ export const OjpPlanningCalendar = component$(() => {
     if (trigger) {
       newEventData.dateTime = trigger.dateTime;
       newEventData.sal = trigger.sal;
+
       showNewEventModal.value = true;
       newEventTrigger.value = null;
     }
@@ -111,12 +118,7 @@ export const OjpPlanningCalendar = component$(() => {
         />
       </div>
 
-      <OjpEventModal
-        bind:show={showNewEventModal}
-        initialDateTime={newEventData.dateTime}
-        initialSal={newEventData.sal}
-        mode="new"
-      />
+      <OjpEventModal bind:show={showNewEventModal} initialData={newEventData} mode="new" />
     </Card>
   );
 });
