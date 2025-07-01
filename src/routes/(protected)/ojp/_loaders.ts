@@ -1,4 +1,3 @@
-// src/routes/(protected)/ojp/_loaders.ts
 import { routeLoader$ } from "@builder.io/qwik-city";
 
 import { calendarEventsPosition } from "~/lib/calendar/calendar-events-position";

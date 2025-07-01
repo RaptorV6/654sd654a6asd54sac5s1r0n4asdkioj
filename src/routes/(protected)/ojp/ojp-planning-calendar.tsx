@@ -1,6 +1,5 @@
-// src/routes/(protected)/ojp/ojp-planning-calendar.tsx
 import { Card } from "@akeso/ui-components";
-import { component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import type { OjpSal } from "./_mock-events";
 
@@ -10,56 +9,99 @@ import { OjpCalendarHeader } from "./ojp-calendar-header";
 import { OjpEventModal } from "./ojp-event-modal";
 import { OjpHorizontalCalendar } from "./ojp-horizontal-calendar";
 
+function startOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day + 6) % 7;
+  d.setDate(d.getDate() - diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addWeeks(date: Date, weeks: number): Date {
+  const result = new Date(date);
+  result.setDate(date.getDate() + weeks * 7);
+  return result;
+}
+
 export const OjpPlanningCalendar = component$(() => {
   const staticData = useOjpPlanningData().value;
 
-  // Actions pro sledování změn
   const addAction = useAddOjpEventAction();
   const updateAction = useUpdateOjpEventAction();
   const deleteAction = useDeleteOjpEventAction();
 
-  // Reaktivní data - inicializace s aktuálními daty
+  const currentWeekStart = useSignal(staticData.weekStart);
   const eventsSignal = useSignal(getWeekEvents(staticData.weekStart));
 
-  // Modal state pro nové události
   const showNewEventModal = useSignal(false);
   const newEventData = useStore<{ dateTime?: Date; sal?: OjpSal }>({});
 
-  // Trigger pro nové události z double click
   const newEventTrigger = useSignal<{ dateTime: Date; sal: OjpSal } | null>(null);
 
-  // Watch for action changes and refresh events
+  const dates = useSignal(
+    Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(currentWeekStart.value);
+      date.setDate(currentWeekStart.value.getDate() + i);
+      return { date };
+    }),
+  );
+
+  useTask$(({ track }) => {
+    const weekStart = track(() => currentWeekStart.value);
+    eventsSignal.value = getWeekEvents(weekStart);
+
+    dates.value = Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + i);
+      return { date };
+    });
+  });
+
   useTask$(({ track }) => {
     const addResult = track(() => addAction.value);
     const updateResult = track(() => updateAction.value);
     const deleteResult = track(() => deleteAction.value);
 
-    // Refresh events after any successful action
     if (addResult?.success || updateResult?.success || deleteResult?.success) {
-      // Znovu načteme události pro aktuální týden
-      eventsSignal.value = getWeekEvents(staticData.weekStart);
+      eventsSignal.value = getWeekEvents(currentWeekStart.value);
     }
   });
 
-  // Watch for new event triggers
   useTask$(({ track }) => {
     const trigger = track(() => newEventTrigger.value);
     if (trigger) {
       newEventData.dateTime = trigger.dateTime;
       newEventData.sal = trigger.sal;
       showNewEventModal.value = true;
-      // Reset trigger
       newEventTrigger.value = null;
     }
   });
 
+  const handlePrevWeek = $(() => {
+    currentWeekStart.value = addWeeks(currentWeekStart.value, -1);
+  });
+
+  const handleNextWeek = $(() => {
+    currentWeekStart.value = addWeeks(currentWeekStart.value, 1);
+  });
+
+  const handleToday = $(() => {
+    currentWeekStart.value = startOfWeek(new Date());
+  });
+
   return (
     <Card class="flex h-[calc(100vh-12rem)] flex-col">
-      <OjpCalendarHeader weekStart={staticData.weekStart} />
+      <OjpCalendarHeader
+        onNextWeek$={handleNextWeek}
+        onPrevWeek$={handlePrevWeek}
+        onToday$={handleToday}
+        weekStart={currentWeekStart.value}
+      />
 
       <div class="flex-1 overflow-auto">
         <OjpHorizontalCalendar
-          dates={staticData.dates}
+          dates={dates.value}
           events={eventsSignal.value}
           newEventTrigger={newEventTrigger}
           saly={staticData.saly}
@@ -69,7 +111,6 @@ export const OjpPlanningCalendar = component$(() => {
         />
       </div>
 
-      {/* Modal pro nové události */}
       <OjpEventModal
         bind:show={showNewEventModal}
         initialDateTime={newEventData.dateTime}
