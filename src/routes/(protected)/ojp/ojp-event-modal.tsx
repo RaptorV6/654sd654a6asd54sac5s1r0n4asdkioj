@@ -74,14 +74,20 @@ export const OjpEventModal = component$<OjpEventModalProps>(
           setValue(formStore, "poznamka", event.poznamka || "");
         } else if (modalState.mode === "new") {
           // Nová událost
+          const startDt = initialDateTime
+            ? new Date(initialDateTime)
+            : (() => {
+                const d = new Date();
+                d.setHours(8, 0, 0, 0);
+                return d;
+              })();
+          const endDt = new Date(startDt);
+          endDt.setHours(startDt.getHours() + 1);
+
           setValue(formStore, "sal", initialSal || "BEZOVY");
-          setValue(
-            formStore,
-            "datum",
-            initialDateTime?.toISOString().split("T")[0] || new Date().toISOString().split("T")[0],
-          );
-          setValue(formStore, "casOd", initialDateTime?.toTimeString().slice(0, 5) || "08:00");
-          setValue(formStore, "casDo", "09:00");
+          setValue(formStore, "datum", startDt.toISOString().split("T")[0]);
+          setValue(formStore, "casOd", startDt.toTimeString().slice(0, 5));
+          setValue(formStore, "casDo", endDt.toTimeString().slice(0, 5));
           setValue(formStore, "title", "");
           setValue(formStore, "typ", "operace");
           setValue(formStore, "operator", "");
