@@ -1,4 +1,3 @@
-// src/routes/(protected)/ojp/_mock-events.ts
 import type { CalendarEventPosition } from "~/lib/calendar/calendar-events-position";
 
 import { splitCsv } from "~/lib/mock-client-helpers";
