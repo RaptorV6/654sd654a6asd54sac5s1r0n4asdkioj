@@ -19,7 +19,7 @@ type OjpEventComponentProps = {
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
   ({ event, intervalMinutes, intervalWidth, scrollLeft, timeHourFrom, viewportWidth }) => {
-    // Vlastní modal signály - jako v CDR!
+    // Modal signály
     const showEventModal = useSignal(false);
     const eventModalMode = useSignal<"edit" | "view">("view");
 
@@ -84,7 +84,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
         <div
           class="group absolute bottom-1 top-1 z-10 flex cursor-pointer items-center justify-center rounded border p-1 text-xs font-semibold transition-all hover:z-20 hover:shadow-lg"
           onClick$={() => {
-            // PŘÍMÝ modal - jako v CDR!
             eventModalMode.value = "view";
             showEventModal.value = true;
           }}
@@ -102,7 +101,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
               class="rounded p-0.5 hover:bg-white hover:bg-opacity-50"
               onClick$={(e: any) => {
                 e.stopPropagation();
-                // Edit mode
                 eventModalMode.value = "edit";
                 showEventModal.value = true;
               }}

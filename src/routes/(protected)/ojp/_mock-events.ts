@@ -106,14 +106,20 @@ export function getSalInfo(salName: OjpSal): OjpSalInfo {
 
 export function getDenFromDate(date: Date): OjpDen {
   const dayIndex = date.getDay();
-  const dayMap: OjpDen[] = ["NEDELE", "PONDELI", "UTERY", "STREDA", "CTVRTEK", "PATEK", "SOBOTA"] as any;
-  return dayMap[dayIndex] || "PONDELI";
+  const dayMap: Record<number, OjpDen> = {
+    1: "PONDELI",
+    2: "UTERY",
+    3: "STREDA",
+    4: "CTVRTEK",
+    5: "PATEK",
+  };
+  return dayMap[dayIndex] ?? "PONDELI"; // Změna || na ??
 }
 
-// CRUD operácie
+// CRUD operácie - zachované pre kompatibilitu
 export function addOjpEvent(eventData: Omit<OjpEvent, "duration" | "id">): OjpEvent {
   const duration = (eventData.dateTo.getTime() - eventData.dateFrom.getTime()) / (1000 * 60);
-  const newId = String(_mock_ojp_events.length + 1);
+  const newId = String(Date.now());
 
   const newEvent: OjpEvent = {
     ...eventData,

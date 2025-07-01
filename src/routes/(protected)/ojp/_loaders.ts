@@ -14,11 +14,19 @@ function startOfWeek(date: Date): Date {
   return d;
 }
 
+function endOfWeek(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = (day + 6) % 7;
+  d.setDate(d.getDate() - diff + 4); // +4 pro pátek
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
 // eslint-disable-next-line qwik/loader-location
 export const useOjpPlanningData = routeLoader$(async () => {
   const weekStart = startOfWeek(new Date());
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 4);
+  const weekEnd = endOfWeek(new Date());
 
   const dates = Array.from({ length: 5 }, (_, i) => {
     const date = new Date(weekStart);
@@ -37,15 +45,21 @@ export const useOjpPlanningData = routeLoader$(async () => {
     dates,
     saly: OJP_SALY,
     times,
+    weekEnd,
     weekStart,
   };
 });
 
-// Nová funkce pro získání událostí
+// Vylepšená funkce pro získání událostí
 export function getWeekEvents(weekStart: Date) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekStart.getDate() + 4);
+  weekEnd.setHours(23, 59, 59, 999);
 
-  const weekEvents = _mock_ojp_events.filter((event) => event.dateFrom >= weekStart && event.dateFrom <= weekEnd);
+  const weekEvents = _mock_ojp_events.filter((event) => {
+    const eventDate = new Date(event.dateFrom);
+    return eventDate >= weekStart && eventDate <= weekEnd;
+  });
+
   return calendarEventsPosition(weekEvents);
 }

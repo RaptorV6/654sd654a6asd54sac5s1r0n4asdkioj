@@ -18,7 +18,7 @@ export const OjpPlanningCalendar = component$(() => {
   const updateAction = useUpdateOjpEventAction();
   const deleteAction = useDeleteOjpEventAction();
 
-  // Reaktivní data
+  // Reaktivní data - inicializace s aktuálními daty
   const eventsSignal = useSignal(getWeekEvents(staticData.weekStart));
 
   // Modal state pro nové události
@@ -30,12 +30,15 @@ export const OjpPlanningCalendar = component$(() => {
 
   // Watch for action changes and refresh events
   useTask$(({ track }) => {
-    track(() => addAction.value);
-    track(() => updateAction.value);
-    track(() => deleteAction.value);
+    const addResult = track(() => addAction.value);
+    const updateResult = track(() => updateAction.value);
+    const deleteResult = track(() => deleteAction.value);
 
-    // Refresh events after any action
-    eventsSignal.value = getWeekEvents(staticData.weekStart);
+    // Refresh events after any successful action
+    if (addResult?.success || updateResult?.success || deleteResult?.success) {
+      // Znovu načteme události pro aktuální týden
+      eventsSignal.value = getWeekEvents(staticData.weekStart);
+    }
   });
 
   // Watch for new event triggers
