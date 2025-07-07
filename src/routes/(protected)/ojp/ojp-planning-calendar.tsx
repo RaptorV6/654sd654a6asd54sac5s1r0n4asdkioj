@@ -3,7 +3,6 @@ import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import type { OjpSal } from "./_mock-events";
 
-import { useAddOjpEventAction, useDeleteOjpEventAction, useUpdateOjpEventAction } from "./_actions";
 import { getWeekEvents, useOjpPlanningData } from "./_loaders";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
 import { OjpEventModal } from "./ojp-event-modal";
@@ -27,14 +26,14 @@ function addWeeks(date: Date, weeks: number): Date {
 export const OjpPlanningCalendar = component$(() => {
   const staticData = useOjpPlanningData().value;
 
-  const addAction = useAddOjpEventAction();
-  const updateAction = useUpdateOjpEventAction();
-  const deleteAction = useDeleteOjpEventAction();
-
   const currentWeekStart = useSignal(staticData.weekStart);
   const eventsSignal = useSignal(getWeekEvents(staticData.weekStart));
+  const refreshTrigger = useSignal(0);
 
   const showNewEventModal = useSignal(false);
+  const showEditEventModal = useSignal(false);
+  const selectedEvent = useSignal<any>(null);
+
   const newEventData = useStore<{
     dateTime?: Date;
     sal?: OjpSal;
@@ -50,8 +49,11 @@ export const OjpPlanningCalendar = component$(() => {
     }),
   );
 
+  // Refresh events when week changes or refresh triggered
   useTask$(({ track }) => {
     const weekStart = track(() => currentWeekStart.value);
+    track(() => refreshTrigger.value);
+
     eventsSignal.value = getWeekEvents(weekStart);
 
     dates.value = Array.from({ length: 5 }, (_, i) => {
@@ -61,19 +63,7 @@ export const OjpPlanningCalendar = component$(() => {
     });
   });
 
-  useTask$(({ track }) => {
-    const addResult = track(() => addAction.value);
-    const updateResult = track(() => updateAction.value);
-    const deleteResult = track(() => deleteAction.value);
-
-    if (addResult?.success || updateResult?.success || deleteResult?.success) {
-      eventsSignal.value = getWeekEvents(currentWeekStart.value);
-      showNewEventModal.value = false;
-      newEventData.dateTime = undefined;
-      newEventData.sal = undefined;
-    }
-  });
-
+  // Handle new event trigger
   useTask$(({ track }) => {
     const trigger = track(() => newEventTrigger.value);
     if (trigger) {
@@ -97,6 +87,11 @@ export const OjpPlanningCalendar = component$(() => {
     currentWeekStart.value = startOfWeek(new Date());
   });
 
+  const handleEventClick = $((event: any) => {
+    selectedEvent.value = event;
+    showEditEventModal.value = true;
+  });
+
   return (
     <Card class="flex h-[calc(100vh-12rem)] flex-col">
       <OjpCalendarHeader
@@ -111,6 +106,7 @@ export const OjpPlanningCalendar = component$(() => {
           dates={dates.value}
           events={eventsSignal.value}
           newEventTrigger={newEventTrigger}
+          onEventClick$={handleEventClick}
           saly={staticData.saly}
           timeHourFrom={staticData.calendarHourFrom}
           timeHourTo={staticData.calendarHourTo}
@@ -118,7 +114,19 @@ export const OjpPlanningCalendar = component$(() => {
         />
       </div>
 
-      <OjpEventModal bind:show={showNewEventModal} initialData={newEventData} mode="new" />
+      <OjpEventModal
+        bind:show={showNewEventModal}
+        initialData={newEventData}
+        mode="new"
+        refreshTrigger={refreshTrigger}
+      />
+
+      <OjpEventModal
+        bind:show={showEditEventModal}
+        event={selectedEvent.value}
+        mode="view"
+        refreshTrigger={refreshTrigger}
+      />
     </Card>
   );
 });

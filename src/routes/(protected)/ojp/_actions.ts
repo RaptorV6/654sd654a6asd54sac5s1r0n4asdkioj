@@ -1,9 +1,9 @@
-import { routeAction$, valibot$ } from "@builder.io/qwik-city";
+/* eslint-disable no-console */
+import { server$ } from "@builder.io/qwik-city";
 import * as v from "valibot";
 
 import type { OjpSal } from "./_mock-events";
 
-import { writeCsvToFile } from "./_csv-server";
 import { _mock_ojp_events, getDenFromDate } from "./_mock-events";
 
 const OjpEventSchema = v.object({
@@ -17,6 +17,7 @@ const OjpEventSchema = v.object({
   typ: v.pipe(v.string(), v.nonEmpty()),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const OjpEventUpdateSchema = v.intersect([
   OjpEventSchema,
   v.object({
@@ -27,9 +28,10 @@ const OjpEventUpdateSchema = v.intersect([
 export type OjpEventFormData = v.InferInput<typeof OjpEventSchema>;
 export type OjpEventUpdateData = v.InferInput<typeof OjpEventUpdateSchema>;
 
-// eslint-disable-next-line qwik/loader-location
-export const useAddOjpEventAction = routeAction$(async (values) => {
+export const addOjpEvent = server$(async (values: OjpEventFormData) => {
   try {
+    console.log("Adding event:", values); // Debug log
+
     const [hodinyOd, minutyOd] = values.casOd.split(":").map(Number);
     const [hodinyDo, minutyDo] = values.casDo.split(":").map(Number);
 
@@ -44,7 +46,7 @@ export const useAddOjpEventAction = routeAction$(async (values) => {
     }
 
     const duration = (dateTo.getTime() - dateFrom.getTime()) / (1000 * 60);
-    const newId = String(Date.now()); // Použijeme timestamp pro unikátní ID
+    const newId = String(Date.now());
 
     const newEvent = {
       dateFrom,
@@ -59,21 +61,17 @@ export const useAddOjpEventAction = routeAction$(async (values) => {
       typ: values.typ as any,
     };
 
-    // Přidáme do in-memory pole
     _mock_ojp_events.push(newEvent);
-
-    // Uložíme do CSV
-    await writeCsvToFile(_mock_ojp_events);
+    console.log("Event added, total events:", _mock_ojp_events.length); // Debug log
 
     return { event: newEvent, success: true };
   } catch (error) {
     console.error("Add event error:", error);
     return { failed: true, message: "Nastala chyba při přidávání události" };
   }
-}, valibot$(OjpEventSchema));
+});
 
-// eslint-disable-next-line qwik/loader-location
-export const useUpdateOjpEventAction = routeAction$(async (values) => {
+export const updateOjpEvent = server$(async (values: { id: string } & OjpEventFormData) => {
   try {
     const eventIndex = _mock_ojp_events.findIndex((event) => event.id === values.id);
 
@@ -111,36 +109,26 @@ export const useUpdateOjpEventAction = routeAction$(async (values) => {
 
     _mock_ojp_events[eventIndex] = updatedEvent;
 
-    // Uložíme do CSV
-    await writeCsvToFile(_mock_ojp_events);
-
     return { event: updatedEvent, success: true };
   } catch (error) {
     console.error("Update event error:", error);
     return { failed: true, message: "Nastala chyba při aktualizaci události" };
   }
-}, valibot$(OjpEventUpdateSchema));
+});
 
-// eslint-disable-next-line qwik/loader-location
-export const useDeleteOjpEventAction = routeAction$(
-  async (values) => {
-    try {
-      const eventIndex = _mock_ojp_events.findIndex((event) => event.id === values.id);
+export const deleteOjpEvent = server$(async (values: { id: string }) => {
+  try {
+    const eventIndex = _mock_ojp_events.findIndex((event) => event.id === values.id);
 
-      if (eventIndex === -1) {
-        return { failed: true, message: "Událost nebyla nalezena" };
-      }
-
-      _mock_ojp_events.splice(eventIndex, 1);
-
-      // Uložíme do CSV
-      await writeCsvToFile(_mock_ojp_events);
-
-      return { success: true };
-    } catch (error) {
-      console.error("Delete event error:", error);
-      return { failed: true, message: "Nastala chyba při mazání události" };
+    if (eventIndex === -1) {
+      return { failed: true, message: "Událost nebyla nalezena" };
     }
-  },
-  valibot$(v.object({ id: v.string() })),
-);
+
+    _mock_ojp_events.splice(eventIndex, 1);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delete event error:", error);
+    return { failed: true, message: "Nastala chyba při mazání události" };
+  }
+});
