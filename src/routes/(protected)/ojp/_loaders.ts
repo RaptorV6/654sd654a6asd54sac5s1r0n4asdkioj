@@ -49,15 +49,24 @@ export const useOjpPlanningData = routeLoader$(async () => {
   };
 });
 
-// Vylepšená funkce pro získání událostí
 export function getWeekEvents(weekStart: Date) {
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 4);
+  const weekStartCopy = new Date(weekStart);
+  weekStartCopy.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStartCopy);
+  weekEnd.setDate(weekStartCopy.getDate() + 6);
   weekEnd.setHours(23, 59, 59, 999);
 
   const weekEvents = _mock_ojp_events.filter((event) => {
+    // KONTROLA validity před použitím
+    if (!(event.dateFrom instanceof Date) || isNaN(event.dateFrom.getTime())) {
+      return false;
+    }
+
     const eventDate = new Date(event.dateFrom);
-    return eventDate >= weekStart && eventDate <= weekEnd;
+    const isInRange = eventDate >= weekStartCopy && eventDate <= weekEnd;
+
+    return isInRange;
   });
 
   return calendarEventsPosition(weekEvents);

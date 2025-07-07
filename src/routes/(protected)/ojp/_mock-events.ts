@@ -1,8 +1,6 @@
 import type { CalendarEventPosition } from "~/lib/calendar/calendar-events-position";
 
-import { splitCsv } from "~/lib/mock-client-helpers";
-
-import eventsCsv from "./events.csv?raw";
+/* import eventsCsv from "./events.csv?raw"; */
 
 export type OjpSal = "BEZOVY" | "BILY" | "MODRY" | "ORANZOVY" | "RUZOVY" | "SEPTICKY" | "ZELENY";
 
@@ -77,10 +75,10 @@ export const OJP_JINE = [
   { id: "technicka_pauza", name: "Technická pauza" },
 ];
 
-const mockDataSourceCols = ["id", "den", "sal", "df", "dt", "title", "typ", "operator", "poznamka"] as const;
-const csvText = eventsCsv.trim();
+/* const mockDataSourceCols = ["id", "den", "sal", "df", "dt", "title", "typ", "operator", "poznamka"] as const;
+const csvText = eventsCsv.trim(); */
 
-export const _mock_ojp_events: OjpEvent[] = splitCsv(csvText, mockDataSourceCols).map((row) => {
+export const _mock_ojp_events: OjpEvent[] = []; /* splitCsv(csvText, mockDataSourceCols).map((row) => {
   const from = new Date(row.df);
   const to = new Date(row.dt);
   const durationMinutes = (to.getTime() - from.getTime()) / (1000 * 60);
@@ -97,7 +95,7 @@ export const _mock_ojp_events: OjpEvent[] = splitCsv(csvText, mockDataSourceCols
     title: row.title,
     typ: row.typ as "operace" | "pauza" | "svatek" | "uklid",
   };
-}) satisfies OjpEvent[];
+}) satisfies OjpEvent[]; */
 
 export function getSalInfo(salName: OjpSal): OjpSalInfo {
   return OJP_SALY.find((s) => s.name === salName) || OJP_SALY[0];

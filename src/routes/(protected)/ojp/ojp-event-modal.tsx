@@ -6,11 +6,10 @@ import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 import { ButtonWithConfirmation } from "~/components/button-with-confirmation";
 
 import type { OjpEvent, OjpSal } from "./_mock-events";
-import type { OjpProcedureListItemSurgery } from "./procedure-list/_mock-ojp-data";
 
 import { addOjpEvent, deleteOjpEvent, updateOjpEvent } from "./_actions";
 import { OJP_SALY } from "./_mock-events";
-import { ojpProcedureListItemSurgeryMap } from "./procedure-list/_mock-ojp-data";
+import { searchProcedures } from "./ojp-procedure-data";
 
 type OjpEventModalProps = {
   "bind:show": Signal<boolean>;
@@ -43,14 +42,14 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
     // Vyhledávání procedur
     const searchTerm = useSignal("");
-    const selectedProcedure = useSignal<null | OjpProcedureListItemSurgery>(null);
+    const selectedProcedure = useSignal<any>(null);
     const showProcedures = useSignal(false);
 
     // Filtrované procedury
-    const filteredProcedures = useSignal<OjpProcedureListItemSurgery[]>([]);
+    const filteredProcedures = useSignal<any[]>([]);
 
     useTask$(({ track }) => {
-      const search = track(() => searchTerm.value.toLowerCase());
+      const search = track(() => searchTerm.value);
 
       if (search.length < 2) {
         filteredProcedures.value = [];
@@ -58,21 +57,11 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         return;
       }
 
-      const searchTerms = search.split(/\s+/).filter(Boolean);
-      const filtered = ojpProcedureListItemSurgeryMap.filter((procedure) => {
-        const firstName = procedure.surgeon.firstName.toLowerCase();
-        const lastName = procedure.surgeon.lastName.toLowerCase();
-        const surgery = procedure.surgery.toLowerCase();
-        return searchTerms.every(
-          (term) => firstName.includes(term) || lastName.includes(term) || surgery.includes(term),
-        );
-      });
-
-      filteredProcedures.value = filtered.slice(0, 10); // Max 10 výsledků
+      const filtered = searchProcedures(search);
+      filteredProcedures.value = filtered;
       showProcedures.value = filtered.length > 0;
     });
 
-    // Inicializace formuláře
     useTask$(({ track }) => {
       const isOpen = track(() => showSig.value);
       const currentMode = track(() => modalState.mode);
@@ -85,46 +74,75 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
           formData.datum = dateStr;
           formData.casOd = timeStr;
-          formData.casDo = timeStr; // Bude se přepočítat při výběru procedury
+          formData.casDo = timeStr;
         }
 
         if (data.sal) {
           formData.sal = data.sal;
         }
 
-        // Reset
         formData.title = "";
         formData.typ = "";
         formData.operator = "";
         formData.poznamka = "";
         searchTerm.value = "";
         selectedProcedure.value = null;
-      } else if (isOpen && (currentMode === "edit" || currentMode === "view") && event) {
-        formData.sal = event.sal;
-        formData.datum = event.dateFrom.toISOString().split("T")[0];
-        formData.casOd = event.dateFrom.toTimeString().slice(0, 5);
-        formData.casDo = event.dateTo.toTimeString().slice(0, 5);
-        formData.title = event.title;
-        formData.typ = event.typ;
-        formData.operator = event.operator || "";
-        formData.poznamka = event.poznamka || "";
+      }
+    });
 
-        // Pre-vyplnit search
-        if (event.operator) {
-          searchTerm.value = event.operator;
+    useTask$(({ track }) => {
+      const currentEvent = track(() => event);
+      const currentMode = track(() => modalState.mode);
+
+      if ((currentMode === "edit" || currentMode === "view") && currentEvent) {
+        formData.sal = currentEvent.sal;
+        formData.datum = currentEvent.dateFrom.toISOString().split("T")[0];
+        formData.casOd = currentEvent.dateFrom.toTimeString().slice(0, 5);
+        formData.casDo = currentEvent.dateTo.toTimeString().slice(0, 5);
+        formData.title = currentEvent.title;
+        formData.typ = currentEvent.typ;
+        formData.operator = currentEvent.operator || "";
+        formData.poznamka = currentEvent.poznamka || "";
+
+        if (currentEvent.operator) {
+          searchTerm.value = currentEvent.operator;
+        } else if (currentEvent.title) {
+          searchTerm.value = currentEvent.title;
         }
       }
     });
 
-    const selectProcedure = $((procedure: OjpProcedureListItemSurgery) => {
+    useTask$(({ track }) => {
+      const currentMode = track(() => modalState.mode);
+      const currentEvent = track(() => event);
+
+      if (currentMode === "edit" && currentEvent) {
+        formData.sal = currentEvent.sal;
+        formData.datum = currentEvent.dateFrom.toISOString().split("T")[0];
+        formData.casOd = currentEvent.dateFrom.toTimeString().slice(0, 5);
+        formData.casDo = currentEvent.dateTo.toTimeString().slice(0, 5);
+        formData.title = currentEvent.title;
+        formData.typ = currentEvent.typ;
+        formData.operator = currentEvent.operator || "";
+        formData.poznamka = currentEvent.poznamka || "";
+      }
+    });
+
+    const selectProcedure = $((procedure: any) => {
       selectedProcedure.value = procedure;
-      searchTerm.value = `${procedure.surgeon.firstName} ${procedure.surgeon.lastName}`;
+
+      const operatorName =
+        procedure.surgeon.firstName && procedure.surgeon.lastName
+          ? `${procedure.surgeon.firstName} ${procedure.surgeon.lastName}`
+          : "";
+
+      searchTerm.value = operatorName || procedure.surgery;
       showProcedures.value = false;
 
       // Auto-vyplnění
       formData.title = procedure.secondIdSurgeonSurgery;
-      formData.typ = "operace";
-      formData.operator = `${procedure.surgeon.firstName} ${procedure.surgeon.lastName}`;
+      formData.typ = procedure.type === "Úklid" ? "uklid" : procedure.type === "Pauza" ? "pauza" : "operace";
+      formData.operator = operatorName;
 
       // Přepočet času do
       if (formData.casOd) {
@@ -137,56 +155,59 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       }
     });
 
-    const handleSave = $(async () => {
+    const handleSave = $(() => {
       try {
         isLoading.value = true;
         errorMessage.value = "";
 
+        // Pokud je formData prázdný, vezmi hodnotu z event
         const values = {
-          casDo: formData.casDo,
-          casOd: formData.casOd,
-          datum: formData.datum,
-          operator: formData.operator,
-          poznamka: formData.poznamka,
-          sal: formData.sal,
-          title: formData.title,
-          typ: formData.typ,
+          casDo: formData.casDo || (event?.dateTo ? event.dateTo.toTimeString().slice(0, 5) : ""),
+          casOd: formData.casOd || (event?.dateFrom ? event.dateFrom.toTimeString().slice(0, 5) : ""),
+          datum: formData.datum || (event?.dateFrom ? event.dateFrom.toISOString().split("T")[0] : ""),
+          operator: formData.operator || event?.operator || "",
+          poznamka: formData.poznamka || event?.poznamka || "",
+          sal: formData.sal || event?.sal || "",
+          title: formData.title || event?.title || "",
+          typ: formData.typ || event?.typ || "operace",
         };
 
         let result;
         if (modalState.mode === "new") {
-          result = await addOjpEvent(values);
+          result = addOjpEvent(values);
         } else if (event) {
-          result = await updateOjpEvent({ ...values, id: event.id });
+          result = updateOjpEvent({ ...values, id: event.id });
         }
 
         if (result?.success) {
           showSig.value = false;
-          refreshTrigger.value++;
+          refreshTrigger.value = Date.now();
         } else {
           errorMessage.value = result?.message || "Nastala chyba při ukládání";
         }
-      } catch {
+      } catch (error) {
+        console.error("Save error:", error);
         errorMessage.value = "Nastala chyba při ukládání";
       } finally {
         isLoading.value = false;
       }
     });
 
-    const handleDelete = $(async () => {
+    const handleDelete = $(() => {
       if (!event) return;
 
       try {
         isLoading.value = true;
-        const result = await deleteOjpEvent({ id: event.id });
+        const result = deleteOjpEvent({ id: event.id });
 
         if (result.success) {
           showSig.value = false;
-          refreshTrigger.value++;
+          refreshTrigger.value = Date.now();
         } else {
           errorMessage.value = result.message || "Nastala chyba při mazání";
         }
-      } catch {
+      } catch (error) {
+        console.error("Delete error:", error);
         errorMessage.value = "Nastala chyba při mazání";
       } finally {
         isLoading.value = false;
@@ -224,7 +245,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   formData.sal = (element as HTMLSelectElement).value;
                 }}
                 required
-                value={formData.sal}
+                value={event?.sal || formData.sal || ""}
               >
                 <option value="">-- Vyberte sál --</option>
                 {OJP_SALY.map((sal) => (
@@ -245,7 +266,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 }}
                 required
                 type="date"
-                value={formData.datum}
+                value={event?.dateFrom ? event.dateFrom.toISOString().split("T")[0] : formData.datum || ""}
               />
             </div>
 
@@ -260,7 +281,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   }}
                   placeholder="Zadejte jméno lékaře nebo operační výkon..."
                   type="text"
-                  value={searchTerm.value}
+                  value={event?.operator || searchTerm.value || ""}
                 />
 
                 {showProcedures.value && !isReadonly && (
@@ -308,7 +329,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 }}
                 required
                 type="time"
-                value={formData.casOd}
+                value={event?.dateFrom ? event.dateFrom.toTimeString().slice(0, 5) : formData.casOd || ""}
               />
             </div>
 
@@ -322,7 +343,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 }}
                 required
                 type="time"
-                value={formData.casDo}
+                value={event?.dateTo ? event.dateTo.toTimeString().slice(0, 5) : formData.casDo || ""}
               />
             </div>
 
@@ -336,7 +357,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 }}
                 required
                 type="text"
-                value={formData.title}
+                value={event?.title || formData.title || ""}
               />
             </div>
 
@@ -349,7 +370,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   formData.operator = (element as HTMLInputElement).value;
                 }}
                 type="text"
-                value={formData.operator}
+                value={event?.operator || formData.operator || ""}
               />
             </div>
           </div>
@@ -363,7 +384,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 formData.poznamka = (element as HTMLTextAreaElement).value;
               }}
               rows={3}
-              value={formData.poznamka}
+              value={event?.poznamka || formData.poznamka || ""}
             />
           </div>
 

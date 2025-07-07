@@ -54,6 +54,7 @@ export const OjpPlanningCalendar = component$(() => {
     const weekStart = track(() => currentWeekStart.value);
     track(() => refreshTrigger.value);
 
+    // Force reload z _mock_ojp_events
     eventsSignal.value = getWeekEvents(weekStart);
 
     dates.value = Array.from({ length: 5 }, (_, i) => {
@@ -109,7 +110,6 @@ export const OjpPlanningCalendar = component$(() => {
           onEventClick$={handleEventClick}
           saly={staticData.saly}
           timeHourFrom={staticData.calendarHourFrom}
-          timeHourTo={staticData.calendarHourTo}
           times={staticData.times}
         />
       </div>

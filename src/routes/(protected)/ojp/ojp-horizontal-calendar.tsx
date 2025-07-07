@@ -13,7 +13,6 @@ type OjpHorizontalCalendarProps = {
   onEventClick$?: QRL<(event: any) => void>;
   saly: OjpSalInfo[];
   timeHourFrom: number;
-  timeHourTo: number;
   times: { time: Date }[];
 };
 
