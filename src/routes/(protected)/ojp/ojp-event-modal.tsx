@@ -110,13 +110,20 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       const search = track(() => searchTerm.value);
       const showOther = track(() => showOtherProcedures.value);
 
+      // Pro "other" sloty nepotřebujeme vyhledávání, protože máme select
+      if (showOther) {
+        filteredProcedures.value = [];
+        showProcedures.value = false;
+        return;
+      }
+
       if (search.length < 2) {
         filteredProcedures.value = [];
         showProcedures.value = false;
         return;
       }
 
-      const filtered = searchProcedures(search, showOther ? "other" : "surgery");
+      const filtered = searchProcedures(search, "surgery"); // Jen surgery pro text input
       filteredProcedures.value = filtered;
       showProcedures.value = filtered.length > 0;
     });
@@ -369,41 +376,72 @@ export const OjpEventModal = component$<OjpEventModalProps>(
             </div>
 
             <div class="md:col-span-2">
-              <div class="relative">
-                <input
-                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
-                  disabled={isReadonly}
-                  onInput$={(_, element) => {
-                    searchTerm.value = (element as HTMLInputElement).value;
-                  }}
-                  placeholder="Zadejte jméno lékaře nebo operační výkon..."
-                  type="text"
-                  value={searchTerm.value || ""}
-                />
+              {showOtherProcedures.value ? (
+                // 🆕 SELECT pro ostatní sloty
+                <div>
+                  <label class="block text-sm font-medium text-gray-700">Vyberte slot</label>
+                  <select
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
+                    disabled={isReadonly}
+                    onInput$={(_, element) => {
+                      const selectedId = (element as HTMLSelectElement).value;
+                      if (selectedId) {
+                        // Najdi proceduru podle ID ze "other" procedur
+                        const otherProcedures = searchProcedures("", "other");
+                        const procedure = otherProcedures.find((p) => p.id === selectedId);
+                        if (procedure) {
+                          selectProcedure(procedure);
+                        }
+                      }
+                    }}
+                    value={selectedProcedure.value?.id || ""}
+                  >
+                    <option value="">-- Vyberte slot --</option>
+                    {searchProcedures("", "other").map((procedure) => (
+                      <option key={procedure.id} value={procedure.id}>
+                        {`${procedure.secondIdSurgeonSurgery} (${procedure.duration.toString()} min)`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                // 🔄 PŮVODNÍ search input pro operace
+                <div class="relative">
+                  <input
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
+                    disabled={isReadonly}
+                    onInput$={(_, element) => {
+                      searchTerm.value = (element as HTMLInputElement).value;
+                    }}
+                    placeholder="Zadejte jméno lékaře nebo operační výkon..."
+                    type="text"
+                    value={searchTerm.value || ""}
+                  />
 
-                {showProcedures.value && !isReadonly && (
-                  <div class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg">
-                    <div class="max-h-60 overflow-auto">
-                      {filteredProcedures.value.map((procedure) => (
-                        <button
-                          class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
-                          key={procedure.id}
-                          onClick$={() => selectProcedure(procedure)}
-                          type="button"
-                        >
-                          <div class="font-medium">
-                            {procedure.surgeon.firstName} {procedure.surgeon.lastName}
-                          </div>
-                          <div class="text-gray-600">{procedure.surgery}</div>
-                          <div class="text-xs text-gray-500">
-                            {procedure.duration} min | {procedure.secondIdSurgeonSurgery} | {procedure.type}
-                          </div>
-                        </button>
-                      ))}
+                  {showProcedures.value && !isReadonly && (
+                    <div class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-lg">
+                      <div class="max-h-60 overflow-auto">
+                        {filteredProcedures.value.map((procedure) => (
+                          <button
+                            class="block w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
+                            key={procedure.id}
+                            onClick$={() => selectProcedure(procedure)}
+                            type="button"
+                          >
+                            <div class="font-medium">
+                              {procedure.surgeon.firstName} {procedure.surgeon.lastName}
+                            </div>
+                            <div class="text-gray-600">{procedure.surgery}</div>
+                            <div class="text-xs text-gray-500">
+                              {procedure.duration} min | {procedure.secondIdSurgeonSurgery} | {procedure.type}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {displayData.doctorName && (
