@@ -44,7 +44,7 @@ const otherProcedures: OjpProcedureItem[] = [
     type: "Pauza",
   },
   {
-    duration: 480,
+    duration: 60,
     id: "dovolena",
     secondIdSurgeonSurgery: "DOVOLENÁ",
     surgeon: { firstName: "", lastName: "" },
@@ -52,11 +52,27 @@ const otherProcedures: OjpProcedureItem[] = [
     type: "Ostatní",
   },
   {
-    duration: 480,
+    duration: 60,
     id: "mimo-provoz",
     secondIdSurgeonSurgery: "MIMO PROVOZ",
     surgeon: { firstName: "", lastName: "" },
     surgery: "Mimo provoz",
+    type: "Ostatní",
+  },
+  {
+    duration: 60,
+    id: "statni-svatek",
+    secondIdSurgeonSurgery: "STÁTNÍ SVÁTEK",
+    surgeon: { firstName: "", lastName: "" },
+    surgery: "Státní svátek",
+    type: "Ostatní",
+  },
+  {
+    duration: 30,
+    id: "jine",
+    secondIdSurgeonSurgery: "JINÉ",
+    surgeon: { firstName: "", lastName: "" },
+    surgery: "Jiné",
     type: "Ostatní",
   },
 ];

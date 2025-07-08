@@ -40,6 +40,12 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       typ: "",
     });
 
+    // Zobrazovací data (jen pro UI, neukládají se)
+    const displayData = useStore({
+      department: "",
+      doctorName: "",
+    });
+
     // Vyhledávání procedur
     const searchTerm = useSignal("");
     const showOtherProcedures = useSignal(false);
@@ -63,6 +69,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       filteredProcedures.value = filtered;
       showProcedures.value = filtered.length > 0;
     });
+
     useTask$(({ track }) => {
       const isOpen = track(() => showSig.value);
       const currentMode = track(() => modalState.mode);
@@ -86,6 +93,8 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         formData.typ = "";
         formData.operator = "";
         formData.poznamka = "";
+        displayData.doctorName = "";
+        displayData.department = "";
         searchTerm.value = "";
         selectedProcedure.value = null;
       }
@@ -105,11 +114,16 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         formData.operator = currentEvent.operator || "";
         formData.poznamka = currentEvent.poznamka || "";
 
+        // Pro zobrazení v search fieldu - zkusíme operační výkon nebo operátora
         if (currentEvent.operator) {
           searchTerm.value = currentEvent.operator;
         } else if (currentEvent.title) {
           searchTerm.value = currentEvent.title;
         }
+
+        // Resetujeme zobrazovací data
+        displayData.doctorName = "";
+        displayData.department = "";
       }
     });
 
@@ -132,18 +146,22 @@ export const OjpEventModal = component$<OjpEventModalProps>(
     const selectProcedure = $((procedure: any) => {
       selectedProcedure.value = procedure;
 
-      const operatorName =
+      const doctorName =
         procedure.surgeon.firstName && procedure.surgeon.lastName
           ? `${procedure.surgeon.firstName} ${procedure.surgeon.lastName}`
           : "";
 
-      searchTerm.value = operatorName || procedure.surgery;
+      searchTerm.value = doctorName || procedure.surgery;
       showProcedures.value = false;
 
       // Auto-vyplnění
       formData.title = procedure.secondIdSurgeonSurgery;
       formData.typ = procedure.type === "Úklid" ? "uklid" : procedure.type === "Pauza" ? "pauza" : "operace";
-      formData.operator = operatorName;
+      formData.operator = procedure.surgery; // ZMĚNA: ukládáme operační výkon místo jména doktora
+
+      // Zobrazovací data
+      displayData.doctorName = doctorName;
+      displayData.department = procedure.type;
 
       // Přepočet času do
       if (formData.casOd) {
@@ -289,7 +307,6 @@ export const OjpEventModal = component$<OjpEventModalProps>(
             </div>
 
             <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700">Vyhledat proceduru *</label>
               <div class="relative">
                 <input
                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
@@ -299,7 +316,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                   }}
                   placeholder="Zadejte jméno lékaře nebo operační výkon..."
                   type="text"
-                  value={event?.operator || searchTerm.value || ""}
+                  value={searchTerm.value || ""}
                 />
 
                 {showProcedures.value && !isReadonly && (
@@ -317,7 +334,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                           </div>
                           <div class="text-gray-600">{procedure.surgery}</div>
                           <div class="text-xs text-gray-500">
-                            {procedure.duration} min | {procedure.secondIdSurgeonSurgery}
+                            {procedure.duration} min | {procedure.secondIdSurgeonSurgery} | {procedure.type}
                           </div>
                         </button>
                       ))}
@@ -326,6 +343,30 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 )}
               </div>
             </div>
+
+            {displayData.doctorName && (
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Lékař</label>
+                <input
+                  class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+                  disabled
+                  type="text"
+                  value={displayData.doctorName}
+                />
+              </div>
+            )}
+
+            {displayData.department && (
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Oddělení</label>
+                <input
+                  class="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
+                  disabled
+                  type="text"
+                  value={displayData.department}
+                />
+              </div>
+            )}
 
             <div>
               <label class="block text-sm font-medium text-gray-700">Čas od *</label>
@@ -378,9 +419,11 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 value={event?.title || formData.title || ""}
               />
             </div>
+          </div>
 
+          <div class="mt-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Operátor</label>
+              <label class="block text-sm font-medium text-gray-700">Operační výkon</label>
               <input
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
                 disabled={isReadonly}
@@ -391,9 +434,6 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 value={event?.operator || formData.operator || ""}
               />
             </div>
-          </div>
-
-          <div class="mt-4">
             <label class="block text-sm font-medium text-gray-700">Poznámka</label>
             <textarea
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"

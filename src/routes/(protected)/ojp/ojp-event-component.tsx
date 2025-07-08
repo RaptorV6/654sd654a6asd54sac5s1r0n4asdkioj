@@ -48,7 +48,12 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       event.typ === "uklid" ||
       event.typ === "pauza" ||
       event.title.includes("ÚS") ||
-      event.title.includes("OBĚDOVÁ")
+      event.title.includes("OBĚDOVÁ") ||
+      event.title.includes("DOVOLENÁ") ||
+      event.title.includes("JINÉ") ||
+      event.title.includes("MIMO PROVOZ") ||
+      event.title.includes("STÁTNÍ SVÁTEK") ||
+      event.title.includes("TECHNICKÁ PAUZA")
     ) {
       backgroundColor = "#e5e7eb";
       borderColor = "#9ca3af";
