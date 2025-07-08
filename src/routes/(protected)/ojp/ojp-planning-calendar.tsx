@@ -36,10 +36,11 @@ export const OjpPlanningCalendar = component$(() => {
 
   const newEventData = useStore<{
     dateTime?: Date;
+    forceOtherSlots?: boolean; // 🔧 Přidej tuhle property
     sal?: OjpSal;
   }>({});
 
-  const newEventTrigger = useSignal<{ dateTime: Date; sal: OjpSal } | null>(null);
+  const newEventTrigger = useSignal<{ dateTime: Date; forceOtherSlots?: boolean; sal: OjpSal } | null>(null); // 🔧 Aktualizuj typ
 
   const dates = useSignal(
     Array.from({ length: 5 }, (_, i) => {
@@ -81,12 +82,12 @@ export const OjpPlanningCalendar = component$(() => {
     }
   });
 
-  // Handle new event trigger
   useTask$(({ track }) => {
     const trigger = track(() => newEventTrigger.value);
     if (trigger) {
       newEventData.dateTime = trigger.dateTime;
       newEventData.sal = trigger.sal;
+      newEventData.forceOtherSlots = trigger.forceOtherSlots; // 🔧 Přidej tuhle řádku
 
       showNewEventModal.value = true;
       newEventTrigger.value = null;

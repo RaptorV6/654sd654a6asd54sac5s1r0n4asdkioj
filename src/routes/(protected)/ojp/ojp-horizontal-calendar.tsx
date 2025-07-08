@@ -9,7 +9,7 @@ import { OjpEventComponent } from "./ojp-event-component";
 type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
   events: OjpEventPositioned[];
-  newEventTrigger: Signal<{ dateTime: Date; sal: OjpSal } | null>;
+  newEventTrigger: Signal<{ dateTime: Date; forceOtherSlots?: boolean; sal: OjpSal } | null>; // 🔧 Přidej forceOtherSlots
   onEventClick$?: QRL<(event: any) => void>;
   saly: OjpSalInfo[];
   timeHourFrom: number;
@@ -84,7 +84,19 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       const newDateTime = new Date(date);
       newDateTime.setHours(hours, minutes, 0, 0);
 
-      newEventTrigger.value = { dateTime: newDateTime, sal };
+      // 🆕 KONTROLA: Existuje už v tomto řádku operace?
+      const existingOperations = events.filter(
+        (event) =>
+          event.dateFrom.toDateString() === date.toDateString() && event.sal === sal && event.typ === "operace",
+      );
+
+      const shouldForceOtherSlots = existingOperations.length > 0;
+
+      newEventTrigger.value = {
+        dateTime: newDateTime,
+        forceOtherSlots: shouldForceOtherSlots, // 🆕 Přidáme flag
+        sal,
+      };
     });
 
     return (

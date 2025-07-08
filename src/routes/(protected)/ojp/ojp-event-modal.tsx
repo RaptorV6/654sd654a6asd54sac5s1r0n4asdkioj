@@ -8,7 +8,7 @@ import { ButtonWithConfirmation } from "~/components/button-with-confirmation";
 import type { OjpEvent, OjpSal } from "./_mock-events";
 
 import { addOjpEvent, deleteOjpEvent, updateOjpEvent } from "./_actions";
-import { OJP_SALY } from "./_mock-events";
+import { _mock_ojp_events, OJP_SALY } from "./_mock-events";
 import { searchProcedures } from "./ojp-procedure-data";
 
 type OjpEventModalProps = {
@@ -16,6 +16,7 @@ type OjpEventModalProps = {
   event?: OjpEvent;
   initialData?: {
     dateTime?: Date;
+    forceOtherSlots?: boolean; // 🔧 Přidej tuhle property
     sal?: OjpSal;
   };
   mode: "edit" | "new" | "view";
@@ -59,15 +60,20 @@ export const OjpEventModal = component$<OjpEventModalProps>(
     useTask$(({ track }) => {
       const currentEvent = track(() => event);
       const isOpen = track(() => showSig.value);
+      const data = track(() => initialData);
 
       // Pokud se modal otevírá s novou událostí, resetuj error state
       if (isOpen && currentEvent) {
         errorMessage.value = "";
         isLoading.value = false;
         isDeleting.value = false;
+
+        // 🔧 Přidej kontrolu existence data
+        if (data?.forceOtherSlots) {
+          showOtherProcedures.value = true;
+        }
       }
     });
-
     // Reset state při zavření modalu
     useTask$(({ track }) => {
       const isOpen = track(() => showSig.value);
@@ -155,6 +161,10 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         displayData.department = "";
         searchTerm.value = "";
         selectedProcedure.value = null;
+
+        if (data.forceOtherSlots) {
+          showOtherProcedures.value = true;
+        }
       }
     });
 
@@ -250,6 +260,34 @@ export const OjpEventModal = component$<OjpEventModalProps>(
           title: formData.title || event?.title || "",
           typ: formData.typ || event?.typ || "operace",
         };
+
+        // 🆕 VALIDACE: Kontrola úklidu po operaci
+        if (modalState.mode === "new" && values.typ === "operace") {
+          const currentDate = new Date(values.datum);
+          const existingEvents = _mock_ojp_events.filter(
+            (evt) => evt.dateFrom.toDateString() === currentDate.toDateString() && evt.sal === values.sal,
+          );
+
+          // Najdi všechny operace v řádku
+          const operations = existingEvents
+            .filter((evt) => evt.typ === "operace")
+            .sort((a, b) => b.dateTo.getTime() - a.dateTo.getTime());
+
+          // 🔧 Změna: explicitní kontrola délky pole
+          if (operations.length > 0) {
+            const lastOperation = operations[0];
+
+            // Zkontroluj, jestli po poslední operaci následuje úklid/pauza
+            const cleaningAfterLastOp = existingEvents.find(
+              (evt) => (evt.typ === "uklid" || evt.typ === "pauza") && evt.dateFrom >= lastOperation.dateTo,
+            );
+
+            if (!cleaningAfterLastOp) {
+              errorMessage.value = "Po operaci musí následovat úklid nebo pauza. Použijte 'Zobrazit ostatní sloty'.";
+              return;
+            }
+          }
+        }
 
         let result;
         if (modalState.mode === "new") {
