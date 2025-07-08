@@ -25,19 +25,19 @@ const OjpEventUpdateSchema = v.intersect([
 export type OjpEventFormData = v.InferInput<typeof OjpEventSchema>;
 export type OjpEventUpdateData = v.InferInput<typeof OjpEventUpdateSchema>;
 
+// src/routes/(protected)/ojp/_actions.ts
 export function addOjpEvent(values: OjpEventFormData) {
   try {
-    // Valibot validace
     const validatedData = v.parse(OjpEventSchema, values);
 
     const [hodinyOd, minutyOd] = validatedData.casOd.split(":").map(Number);
     const [hodinyDo, minutyDo] = validatedData.casDo.split(":").map(Number);
 
-    const dateFrom = new Date(validatedData.datum);
-    dateFrom.setHours(hodinyOd, minutyOd, 0, 0);
+    // 🔧 OPRAVA: Stejná oprava i zde
+    const [year, month, day] = validatedData.datum.split("-").map(Number);
 
-    const dateTo = new Date(validatedData.datum);
-    dateTo.setHours(hodinyDo, minutyDo, 0, 0);
+    const dateFrom = new Date(year, month - 1, day, hodinyOd, minutyOd, 0, 0);
+    const dateTo = new Date(year, month - 1, day, hodinyDo, minutyDo, 0, 0);
 
     if (dateTo <= dateFrom) {
       return { failed: true, message: "Čas konce musí být později než čas začátku" };
@@ -71,9 +71,9 @@ export function addOjpEvent(values: OjpEventFormData) {
   }
 }
 
+// src/routes/(protected)/ojp/_actions.ts
 export function updateOjpEvent(values: OjpEventUpdateData) {
   try {
-    // Valibot validace
     const validatedData = v.parse(OjpEventUpdateSchema, values);
 
     const eventIndex = _mock_ojp_events.findIndex((event) => event.id === validatedData.id);
@@ -85,11 +85,11 @@ export function updateOjpEvent(values: OjpEventUpdateData) {
     const [hodinyOd, minutyOd] = validatedData.casOd.split(":").map(Number);
     const [hodinyDo, minutyDo] = validatedData.casDo.split(":").map(Number);
 
-    const dateFrom = new Date(validatedData.datum);
-    dateFrom.setHours(hodinyOd, minutyOd, 0, 0);
+    // 🔧 OPRAVA: Správné parsování data bez timezone issues
+    const [year, month, day] = validatedData.datum.split("-").map(Number);
 
-    const dateTo = new Date(validatedData.datum);
-    dateTo.setHours(hodinyDo, minutyDo, 0, 0);
+    const dateFrom = new Date(year, month - 1, day, hodinyOd, minutyOd, 0, 0);
+    const dateTo = new Date(year, month - 1, day, hodinyDo, minutyDo, 0, 0);
 
     if (dateTo <= dateFrom) {
       return { failed: true, message: "Čas konce musí být později než čas začátku" };

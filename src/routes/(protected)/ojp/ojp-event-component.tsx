@@ -1,7 +1,8 @@
+// src/routes/(protected)/ojp/ojp-event-component.tsx
 import type { QRL } from "@builder.io/qwik";
 
 import { Button, ButtonLabelIcon } from "@akeso/ui-components";
-import { component$ } from "@builder.io/qwik";
+import { component$, sync$ } from "@builder.io/qwik";
 
 import { EditIcon } from "~/components/icons-outline";
 
@@ -13,6 +14,7 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
+  isDragging?: boolean;
   onEventClick$?: QRL<(event: OjpEventPositioned) => void>;
   scrollLeft: number;
   timeHourFrom: number;
@@ -20,12 +22,11 @@ type OjpEventComponentProps = {
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, onEventClick$, scrollLeft, timeHourFrom, viewportWidth }) => {
+  ({ event, intervalMinutes, intervalWidth, isDragging, onEventClick$, scrollLeft, timeHourFrom, viewportWidth }) => {
     // Pozicování v 5-minutových intervalech
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
-    // Přepočet na pozici v px (včetně offset pro sloupec se sály)
     const salsWidth = 140;
     const startInterval = startTotalMinutes / intervalMinutes;
     const endInterval = endTotalMinutes / intervalMinutes;
@@ -84,12 +85,43 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
     return (
       <div
-        class="group absolute bottom-1 top-1 z-10 flex cursor-pointer items-center justify-center rounded border p-1 text-xs font-semibold transition-all hover:z-20 hover:shadow-lg"
-        onClick$={() => {
+        class={`
+          ojp-event-component group absolute bottom-1 top-1 z-10 flex cursor-move select-none items-center justify-center rounded border-2 p-1 
+          text-xs font-semibold transition-all duration-200 hover:z-20 hover:shadow-md
+          ${isDragging ? "ojp-event-dragging" : "hover:shadow-lg"}
+        `}
+        draggable={true} // 🔧 OPRAVA: boolean místo string
+        onClick$={(e) => {
+          e.stopPropagation();
           if (onEventClick$) {
             onEventClick$(event);
           }
         }}
+        onDragEnd$={sync$((e: DragEvent) => {
+          // Reset styling po drag
+          const target = e.target as HTMLElement;
+          target.style.opacity = "";
+          target.style.boxShadow = "";
+          target.style.zIndex = "";
+        })}
+        onDragStart$={sync$((e: DragEvent) => {
+          const dragData = {
+            eventId: event.id,
+            originalDate: event.dateFrom.toISOString(),
+            originalSal: event.sal,
+            title: event.title,
+            type: "ojp-event",
+          };
+
+          e.dataTransfer!.setData("application/json", JSON.stringify(dragData));
+          e.dataTransfer!.effectAllowed = "move";
+
+          // Jemná animace bez rotace
+          const target = e.target as HTMLElement;
+          target.style.opacity = "0.6";
+          target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
+          target.style.zIndex = "9999";
+        })}
         style={`
          left: ${leftPx}px;
          width: ${widthPx}px;
@@ -117,7 +149,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
         </div>
 
         <div
-          class="overflow-hidden text-center leading-tight"
+          class="pointer-events-none overflow-hidden text-center leading-tight"
           style={textTransform ? `transform: ${textTransform};` : ""}
         >
           {event.title}
