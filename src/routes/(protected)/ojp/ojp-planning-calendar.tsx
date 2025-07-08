@@ -49,7 +49,6 @@ export const OjpPlanningCalendar = component$(() => {
     }),
   );
 
-  // Refresh events when week changes or refresh triggered
   useTask$(({ track }) => {
     const weekStart = track(() => currentWeekStart.value);
     track(() => refreshTrigger.value);
@@ -57,11 +56,29 @@ export const OjpPlanningCalendar = component$(() => {
     // Force reload z _mock_ojp_events
     eventsSignal.value = getWeekEvents(weekStart);
 
+    // 🔧 PŘIDEJ: Reset selectedEvent pokud byla smazána
+    if (selectedEvent.value) {
+      const eventExists = eventsSignal.value.some((e) => e.id === selectedEvent.value?.id);
+      if (!eventExists) {
+        selectedEvent.value = null;
+        showEditEventModal.value = false;
+      }
+    }
+
     dates.value = Array.from({ length: 5 }, (_, i) => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + i);
       return { date };
     });
+  });
+
+  useTask$(({ track }) => {
+    const isModalOpen = track(() => showEditEventModal.value);
+
+    // Když se modal zavře, resetuj selectedEvent
+    if (!isModalOpen && selectedEvent.value) {
+      selectedEvent.value = null;
+    }
   });
 
   // Handle new event trigger

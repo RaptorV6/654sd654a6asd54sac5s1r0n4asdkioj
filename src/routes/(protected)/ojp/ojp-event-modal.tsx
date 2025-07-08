@@ -26,6 +26,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
   ({ "bind:show": showSig, event, initialData, mode, refreshTrigger }) => {
     const modalState = useStore({ mode });
     const isLoading = useSignal(false);
+    const isDeleting = useSignal(false);
     const errorMessage = useSignal("");
 
     // Formulář data
@@ -54,6 +55,56 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
     // Filtrované procedury
     const filteredProcedures = useSignal<any[]>([]);
+
+    useTask$(({ track }) => {
+      const currentEvent = track(() => event);
+      const isOpen = track(() => showSig.value);
+
+      // Pokud se modal otevírá s novou událostí, resetuj error state
+      if (isOpen && currentEvent) {
+        errorMessage.value = "";
+        isLoading.value = false;
+        isDeleting.value = false;
+      }
+    });
+
+    // Reset state při zavření modalu
+    useTask$(({ track }) => {
+      const isOpen = track(() => showSig.value);
+
+      if (!isOpen) {
+        // Reset všech state hodnot
+        modalState.mode = mode;
+        isLoading.value = false;
+        isDeleting.value = false;
+        errorMessage.value = "";
+
+        // Reset formuláře
+        Object.assign(formData, {
+          casDo: "",
+          casOd: "",
+          datum: "",
+          operator: "",
+          poznamka: "",
+          sal: "",
+          title: "",
+          typ: "",
+        });
+
+        // Reset zobrazovacích dat
+        Object.assign(displayData, {
+          department: "",
+          doctorName: "",
+        });
+
+        // Reset vyhledávání
+        searchTerm.value = "";
+        showOtherProcedures.value = false;
+        selectedProcedure.value = null;
+        showProcedures.value = false;
+        filteredProcedures.value = [];
+      }
+    });
 
     useTask$(({ track }) => {
       const search = track(() => searchTerm.value);
@@ -127,22 +178,6 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       }
     });
 
-    useTask$(({ track }) => {
-      const currentMode = track(() => modalState.mode);
-      const currentEvent = track(() => event);
-
-      if (currentMode === "edit" && currentEvent) {
-        formData.sal = currentEvent.sal;
-        formData.datum = currentEvent.dateFrom.toISOString().split("T")[0];
-        formData.casOd = currentEvent.dateFrom.toTimeString().slice(0, 5);
-        formData.casDo = currentEvent.dateTo.toTimeString().slice(0, 5);
-        formData.title = currentEvent.title;
-        formData.typ = currentEvent.typ;
-        formData.operator = currentEvent.operator || "";
-        formData.poznamka = currentEvent.poznamka || "";
-      }
-    });
-
     const selectProcedure = $((procedure: any) => {
       selectedProcedure.value = procedure;
 
@@ -156,8 +191,19 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
       // Auto-vyplnění
       formData.title = procedure.secondIdSurgeonSurgery;
-      formData.typ = procedure.type === "Úklid" ? "uklid" : procedure.type === "Pauza" ? "pauza" : "operace";
-      formData.operator = procedure.surgery; // ZMĚNA: ukládáme operační výkon místo jména doktora
+
+      // OPRAVENÉ mapování typu:
+      if (procedure.type === "Úklid") {
+        formData.typ = "uklid";
+      } else if (procedure.type === "Pauza") {
+        formData.typ = "pauza";
+      } else if (procedure.type === "Svátek") {
+        formData.typ = "svatek";
+      } else {
+        formData.typ = "operace";
+      }
+
+      formData.operator = procedure.surgery;
 
       // Zobrazovací data
       displayData.doctorName = doctorName;
@@ -174,7 +220,14 @@ export const OjpEventModal = component$<OjpEventModalProps>(
       }
     });
 
+    const closeModal = $(() => {
+      modalState.mode = mode; // Reset na původní mode
+      showSig.value = false;
+    });
+
     const handleSave = $(() => {
+      if (isLoading.value || isDeleting.value) return;
+
       try {
         isLoading.value = true;
         errorMessage.value = "";
@@ -199,8 +252,8 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         }
 
         if (result?.success) {
-          showSig.value = false;
           refreshTrigger.value = Date.now();
+          closeModal();
         } else {
           errorMessage.value = result?.message || "Nastala chyba při ukládání";
         }
@@ -213,15 +266,23 @@ export const OjpEventModal = component$<OjpEventModalProps>(
     });
 
     const handleDelete = $(() => {
-      if (!event) return;
+      if (!event || isLoading.value || isDeleting.value) return;
 
+      if (!event.id) {
+        console.error("🔍 No event ID found!");
+        errorMessage.value = "Chyba: Nenalezeno ID události";
+        return;
+      }
       try {
         isLoading.value = true;
+        isDeleting.value = true;
+
         const result = deleteOjpEvent({ id: event.id });
 
         if (result.success) {
-          showSig.value = false;
           refreshTrigger.value = Date.now();
+          closeModal();
+          return; // Ihned skonči
         } else {
           errorMessage.value = result.message || "Nastala chyba při mazání";
         }
@@ -230,6 +291,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         errorMessage.value = "Nastala chyba při mazání";
       } finally {
         isLoading.value = false;
+        isDeleting.value = false;
       }
     });
 
@@ -460,7 +522,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 dialogActionConfirmLabel="Ano"
                 dialogAlertText=""
                 dialogTitle="Chcete skutečně smazat událost?"
-                disabled={isLoading.value}
+                disabled={isLoading.value || isDeleting.value}
                 onClick$={handleDelete}
                 severity="accent"
                 variant="contained"
@@ -471,12 +533,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
           </div>
 
           <div class="flex gap-2">
-            <Button
-              onClick$={() => {
-                showSig.value = false;
-              }}
-              type="button"
-            >
+            <Button onClick$={closeModal} type="button">
               {isReadonly ? "Zavřít" : "Zrušit"}
             </Button>
 
@@ -495,7 +552,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
             {!isReadonly && (
               <Button
-                disabled={isLoading.value}
+                disabled={isLoading.value || isDeleting.value}
                 onClick$={handleSave}
                 severity="accent"
                 type="button"

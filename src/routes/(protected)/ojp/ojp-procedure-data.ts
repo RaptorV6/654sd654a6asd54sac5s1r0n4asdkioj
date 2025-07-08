@@ -49,7 +49,7 @@ const otherProcedures: OjpProcedureItem[] = [
     secondIdSurgeonSurgery: "DOVOLENÁ",
     surgeon: { firstName: "", lastName: "" },
     surgery: "Dovolená",
-    type: "Ostatní",
+    type: "Svátek", // <-- ZMĚNA: z "Ostatní" na "Svátek"
   },
   {
     duration: 60,
@@ -57,7 +57,7 @@ const otherProcedures: OjpProcedureItem[] = [
     secondIdSurgeonSurgery: "MIMO PROVOZ",
     surgeon: { firstName: "", lastName: "" },
     surgery: "Mimo provoz",
-    type: "Ostatní",
+    type: "Svátek", // <-- ZMĚNA: z "Ostatní" na "Svátek"
   },
   {
     duration: 60,
@@ -65,7 +65,7 @@ const otherProcedures: OjpProcedureItem[] = [
     secondIdSurgeonSurgery: "STÁTNÍ SVÁTEK",
     surgeon: { firstName: "", lastName: "" },
     surgery: "Státní svátek",
-    type: "Ostatní",
+    type: "Svátek", // <-- ZMĚNA: z "Ostatní" na "Svátek"
   },
   {
     duration: 30,
@@ -73,7 +73,7 @@ const otherProcedures: OjpProcedureItem[] = [
     secondIdSurgeonSurgery: "JINÉ",
     surgeon: { firstName: "", lastName: "" },
     surgery: "Jiné",
-    type: "Ostatní",
+    type: "Ostatní", // <-- Nechat jako "Ostatní"
   },
 ];
 

@@ -136,7 +136,6 @@ export function deleteOjpEvent(values: { id: string }) {
 
     return { success: true };
   } catch (error) {
-    console.error("Delete event error:", error);
     if (error instanceof v.ValiError) {
       return { failed: true, message: `Validační chyba: ${error.message}` };
     }
