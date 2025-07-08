@@ -11,7 +11,7 @@ export { getWeekEvents, useOjpPlanningData } from "./_loaders";
 
 import { OjpPlanningCalendar } from "./ojp-planning-calendar";
 
-export { useAddOjpEventAction, useDeleteOjpEventAction, useUpdateOjpEventAction } from "./_actions";
+export { addOjpEvent, deleteOjpEvent, updateOjpEvent } from "./_actions";
 
 const pageTitle = "OJP - Plánování operačních sálů";
 

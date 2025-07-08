@@ -74,12 +74,25 @@ export const allProcedures: OjpProcedureItem[] = [
   ...otherProcedures,
 ];
 
-export function searchProcedures(searchTerm: string): OjpProcedureItem[] {
+export function searchProcedures(searchTerm: string, type: "other" | "surgery" = "surgery"): OjpProcedureItem[] {
   if (searchTerm.length < 2) return [];
 
   const searchTerms = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
 
-  return allProcedures
+  // Filtruj podle typu
+  const dataToSearch =
+    type === "other"
+      ? otherProcedures
+      : ojpProcedureListItemSurgeryMap.map((item) => ({
+          duration: item.duration,
+          id: item.id,
+          secondIdSurgeonSurgery: item.secondIdSurgeonSurgery,
+          surgeon: item.surgeon,
+          surgery: item.surgery,
+          type: item.type,
+        }));
+
+  return dataToSearch
     .filter((procedure) => {
       const firstName = procedure.surgeon.firstName.toLowerCase();
       const lastName = procedure.surgeon.lastName.toLowerCase();
@@ -90,5 +103,5 @@ export function searchProcedures(searchTerm: string): OjpProcedureItem[] {
         (term) => firstName.includes(term) || lastName.includes(term) || surgery.includes(term) || type.includes(term),
       );
     })
-    .slice(0, 15); // Max 15 výsledků
+    .slice(0, 15);
 }

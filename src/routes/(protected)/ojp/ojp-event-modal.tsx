@@ -1,6 +1,6 @@
 import type { Signal } from "@builder.io/qwik";
 
-import { Button, Dialog, DialogBody, DialogFooter, DialogHeader } from "@akeso/ui-components";
+import { Button, Dialog, DialogBody, DialogFooter, DialogHeader, InputCheckbox } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import { ButtonWithConfirmation } from "~/components/button-with-confirmation";
@@ -42,6 +42,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
     // Vyhledávání procedur
     const searchTerm = useSignal("");
+    const showOtherProcedures = useSignal(false);
     const selectedProcedure = useSignal<any>(null);
     const showProcedures = useSignal(false);
 
@@ -50,6 +51,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
     useTask$(({ track }) => {
       const search = track(() => searchTerm.value);
+      const showOther = track(() => showOtherProcedures.value);
 
       if (search.length < 2) {
         filteredProcedures.value = [];
@@ -57,11 +59,10 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         return;
       }
 
-      const filtered = searchProcedures(search);
+      const filtered = searchProcedures(search, showOther ? "other" : "surgery");
       filteredProcedures.value = filtered;
       showProcedures.value = filtered.length > 0;
     });
-
     useTask$(({ track }) => {
       const isOpen = track(() => showSig.value);
       const currentMode = track(() => modalState.mode);
@@ -267,6 +268,23 @@ export const OjpEventModal = component$<OjpEventModalProps>(
                 required
                 type="date"
                 value={event?.dateFrom ? event.dateFrom.toISOString().split("T")[0] : formData.datum || ""}
+              />
+            </div>
+
+            <div class="md:col-span-2">
+              <InputCheckbox
+                class="!mt-0"
+                disabled={isReadonly}
+                error=""
+                label="Zobrazit ostatní sloty"
+                name="showOther"
+                onInput$={(_, target) => {
+                  showOtherProcedures.value = target.checked;
+                  searchTerm.value = "";
+                }}
+                required={false}
+                switch
+                value={showOtherProcedures.value}
               />
             </div>
 
