@@ -114,11 +114,37 @@ export const OjpEventModal = component$<OjpEventModalProps>(
 
     useTask$(({ track }) => {
       const search = track(() => searchTerm.value);
+      const selected = track(() => selectedProcedure.value);
+
+      // Pokud je něco vybráno a uživatel mění search term, resetuj selection
+      if (selected && search) {
+        const expectedName =
+          selected.surgeon.firstName && selected.surgeon.lastName
+            ? `${selected.surgeon.firstName} ${selected.surgeon.lastName}`
+            : selected.surgery;
+
+        // Pokud se search term liší od očekávaného jména, resetuj
+        if (search !== expectedName) {
+          selectedProcedure.value = null;
+        }
+      }
+    });
+
+    // Původní useTask$ zůstává stejný
+    useTask$(({ track }) => {
+      const search = track(() => searchTerm.value);
       const showOther = track(() => showOtherProcedures.value);
+      const selected = track(() => selectedProcedure.value);
 
       // Pro "other" sloty nepotřebujeme vyhledávání, protože máme select
       if (showOther) {
         filteredProcedures.value = [];
+        showProcedures.value = false;
+        return;
+      }
+
+      // Pokud je už něco vybráno, neotevírej dropdown
+      if (selected) {
         showProcedures.value = false;
         return;
       }
@@ -129,7 +155,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
         return;
       }
 
-      const filtered = searchProcedures(search, "surgery"); // Jen surgery pro text input
+      const filtered = searchProcedures(search, "surgery");
       filteredProcedures.value = filtered;
       showProcedures.value = filtered.length > 0;
     });
@@ -482,7 +508,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
               )}
             </div>
 
-            {displayData.doctorName && (
+            {!showOtherProcedures.value && displayData.doctorName && (
               <div>
                 <label class="block text-sm font-medium text-gray-700">Lékař</label>
                 <input
@@ -494,7 +520,7 @@ export const OjpEventModal = component$<OjpEventModalProps>(
               </div>
             )}
 
-            {displayData.department && (
+            {!showOtherProcedures.value && displayData.department && (
               <div>
                 <label class="block text-sm font-medium text-gray-700">Oddělení</label>
                 <input
@@ -560,18 +586,20 @@ export const OjpEventModal = component$<OjpEventModalProps>(
           </div>
 
           <div class="mt-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">Operační výkon</label>
-              <input
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
-                disabled={isReadonly}
-                onInput$={(_, element) => {
-                  formData.operator = (element as HTMLInputElement).value;
-                }}
-                type="text"
-                value={event?.operator || formData.operator || ""}
-              />
-            </div>
+            {!showOtherProcedures.value && (
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Operační výkon</label>
+                <input
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
+                  disabled={isReadonly}
+                  onInput$={(_, element) => {
+                    formData.operator = (element as HTMLInputElement).value;
+                  }}
+                  type="text"
+                  value={event?.operator || formData.operator || ""}
+                />
+              </div>
+            )}
             <label class="block text-sm font-medium text-gray-700">Poznámka</label>
             <textarea
               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm disabled:bg-gray-100"
