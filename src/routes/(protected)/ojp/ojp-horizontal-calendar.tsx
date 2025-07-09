@@ -1,6 +1,6 @@
-// src/routes/(protected)/ojp/ojp-horizontal-calendar.tsx
 import type { QRL, Signal } from "@builder.io/qwik";
 
+import { useToaster } from "@akeso/ui-components";
 import { $, component$, sync$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
@@ -94,7 +94,7 @@ type StructureItem =
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
   ({ dates, events, newEventTrigger, onEventClick$, onEventDrop$, saly, timeHourFrom, times }) => {
     useStyles$(calendarStyles);
-
+    const { toastError$ } = useToaster();
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
     const slotWidth = 24;
@@ -110,7 +110,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const draggedEventType = useSignal<string>("");
     const dragGhostRef = useSignal<HTMLDivElement>();
 
-    // 🔧 OPRAVA: Pre-computed validation results místo runtime validace
     const validationResults = useSignal<Map<string, boolean>>(new Map());
 
     useTask$(({ track }) => {
@@ -118,74 +117,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       if (scrollContainerRef.value) {
         viewportWidth.value = scrollContainerRef.value.clientWidth;
       }
-    });
-
-    // 🔧 SMART VALIDACE: Pre-compute všechny pozice pro aktuální dragovaný event
-    useTask$(({ track }) => {
-      const draggedType = track(() => draggedEventType.value);
-      const currentEvents = track(() => events);
-
-      if (!draggedType) {
-        validationResults.value = new Map();
-        return;
-      }
-
-      const newResults = new Map<string, boolean>();
-
-      // Pro každý řádek zkontroluj všechny sloty
-      structure.forEach((item) => {
-        if (item.type === "sal") {
-          for (let slotIndex = 0; slotIndex < totalSlots; slotIndex++) {
-            const key = `${item.date.toDateString()}-${item.sal.name}-${slotIndex}`;
-
-            // Inline validace - rychlá a bez serializace
-            let isValid = true;
-
-            if (draggedType === "operace") {
-              const targetRowEvents = currentEvents
-                .filter(
-                  (event) =>
-                    event.dateFrom.toDateString() === item.date.toDateString() &&
-                    event.sal === item.sal.name &&
-                    event.id !== draggedEventId.value, // Vylučujeme dragovaný event
-                )
-                .sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
-
-              const targetMinutes = slotIndex * 5;
-              const targetHours = timeHourFrom + Math.floor(targetMinutes / 60);
-              const targetMins = targetMinutes % 60;
-              const targetTime = new Date(item.date);
-              targetTime.setHours(targetHours, targetMins, 0, 0);
-
-              // Kontrola kolizí s operacemi
-              for (const event of targetRowEvents) {
-                if (event.typ === "operace") {
-                  const timeDiffAfter = targetTime.getTime() - event.dateTo.getTime();
-                  const timeDiffBefore = event.dateFrom.getTime() - targetTime.getTime();
-
-                  const minutesDiffAfter = timeDiffAfter / (1000 * 60);
-                  const minutesDiffBefore = timeDiffBefore / (1000 * 60);
-
-                  // Operace nesmí být hned za sebou (méně než 5 minut)
-                  if (minutesDiffAfter >= 0 && minutesDiffAfter < 5) {
-                    isValid = false;
-                    break;
-                  }
-
-                  if (minutesDiffBefore >= 0 && minutesDiffBefore < 5) {
-                    isValid = false;
-                    break;
-                  }
-                }
-              }
-            }
-
-            newResults.set(key, isValid);
-          }
-        }
-      });
-
-      validationResults.value = newResults;
     });
 
     const handleScroll = $((e: Event) => {
@@ -388,19 +319,100 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                                 };
                               }
                             })}
+                            // Opravený onDrop handler
                             onDrop$={sync$((e: DragEvent) => {
                               const data = e.dataTransfer!.getData("application/json");
                               if (data) {
                                 try {
                                   const parsed = JSON.parse(data);
+
                                   if (parsed.type === "ojp-event") {
-                                    // 🔧 KONTROLA: Použij pre-computed validaci
+                                    // Najdi dragovanou událost
+                                    const draggedEvent = events.find((evt) => evt.id === parsed.eventId);
+
+                                    if (!draggedEvent) {
+                                      return;
+                                    }
+
+                                    // Spočítej nový čas
+                                    const targetMinutes = slotIndex * 5;
+                                    const targetHours = timeHourFrom + Math.floor(targetMinutes / 60);
+                                    const targetMins = targetMinutes % 60;
+                                    const newStartTime = new Date(item.date);
+                                    newStartTime.setHours(targetHours, targetMins, 0, 0);
+                                    const newEndTime = new Date(
+                                      newStartTime.getTime() + draggedEvent.duration * 60 * 1000,
+                                    );
+
+                                    // VALIDACE PŘÍMO ZDE
+                                    let isValid = true;
+                                    let reason = "";
+
+                                    if (draggedEvent.typ === "operace") {
+                                      // Najdi všechny události v tomto řádku (kromě dragované)
+                                      const rowEvents = events.filter(
+                                        (event) =>
+                                          event.dateFrom.toDateString() === item.date.toDateString() &&
+                                          event.sal === item.sal.name &&
+                                          event.id !== parsed.eventId,
+                                      );
+
+                                      // Najdi všechny operace v řádku
+                                      const operationsInRow = rowEvents.filter((e) => e.typ === "operace");
+
+                                      // Kontrola překrývání
+                                      const overlapping = rowEvents.find((event) => {
+                                        return newStartTime < event.dateTo && newEndTime > event.dateFrom;
+                                      });
+
+                                      if (overlapping) {
+                                        isValid = false;
+                                        reason = "Událost se překrývá s jinou";
+                                      }
+
+                                      // Kontrola operací za sebou - zjednodušená logika
+                                      if (isValid && operationsInRow.length > 0) {
+                                        // Seřaď všechny operace včetně nové podle času
+                                        const allOperations = [
+                                          ...operationsInRow,
+                                          {
+                                            dateFrom: newStartTime,
+                                            dateTo: newEndTime,
+                                            id: "new",
+                                            typ: "operace",
+                                          },
+                                        ].sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
+
+                                        // Zkontroluj že mezi každými dvěma operacemi je úklid/pauza
+                                        for (let i = 0; i < allOperations.length - 1; i++) {
+                                          const currentOp = allOperations[i];
+                                          const nextOp = allOperations[i + 1];
+
+                                          // Najdi úklid/pauzu mezi těmito operacemi
+                                          const cleaningBetween = rowEvents.find(
+                                            (event) =>
+                                              (event.typ === "uklid" || event.typ === "pauza") &&
+                                              event.dateFrom >= currentOp.dateTo &&
+                                              event.dateTo <= nextOp.dateFrom,
+                                          );
+
+                                          if (!cleaningBetween) {
+                                            isValid = false;
+                                            reason = "Mezi operacemi musí být úklid nebo pauza";
+                                            break;
+                                          }
+                                        }
+                                      }
+                                    }
+
                                     if (isValid) {
                                       handleEventDrop(parsed.eventId, item.date, item.sal.name, slotIndex);
+                                    } else {
+                                      toastError$(reason, { duration: 3000 });
                                     }
                                   }
                                 } catch {
-                                  // Silent catch
+                                  toastError$("Chyba při přesouvání události", { duration: 3000 });
                                 }
                               }
 
