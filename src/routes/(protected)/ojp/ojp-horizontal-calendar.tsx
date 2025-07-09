@@ -289,7 +289,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       key={`day-${item.dayIndex}`}
                       style={`grid-template-columns: ${salsWidth}px 1fr; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
                     >
-                      <div class="sticky left-0 z-30 flex items-center justify-center border-r-2 border-blue-400 bg-gradient-to-r from-blue-600 to-blue-700 font-bold">
+                      <div class="sticky left-0  flex items-center justify-center border-r-2 border-blue-400 bg-gradient-to-r from-blue-600 to-blue-700 font-bold">
                         {item.dayName} {item.date.toLocaleDateString("cs-CZ", { day: "2-digit", month: "2-digit" })}
                       </div>
                       <div class="border-r border-blue-400"></div>
@@ -310,7 +310,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       style={`grid-template-columns: ${minutesGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
                     >
                       <div
-                        class="ojp-sal-header sticky left-0 z-30 flex items-center justify-center border-r-2 border-gray-300 text-xs"
+                        class="ojp-sal-header sticky left-0 flex items-center justify-center border-r-2 border-gray-300 text-xs"
                         style={`background-color: ${item.sal.bgColor}; color: ${item.sal.color};`}
                       >
                         <div class="text-center">
