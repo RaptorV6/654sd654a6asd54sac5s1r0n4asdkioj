@@ -1,7 +1,7 @@
 import type { QRL, Signal } from "@builder.io/qwik";
 
 import { useToaster } from "@akeso/ui-components";
-import { $, component$, sync$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
+import { $, component$, sync$, useComputed$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
 
@@ -146,6 +146,46 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           type: "sal",
         });
       });
+    });
+
+    const validSlots = useComputed$(() => {
+      const valid = new Set<string>();
+
+      // Pro každý den/sál spočítej kde může operace začít
+      structure.forEach((item) => {
+        if (item.type === "sal") {
+          const rowEvents = events
+            .filter(
+              (event) => event.dateFrom.toDateString() === item.date.toDateString() && event.sal === item.sal.name,
+            )
+            .sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
+
+          // Projdi všechny sloty a označ validní pro operace
+          for (let slot = 0; slot < totalSlots; slot++) {
+            const slotMinutes = slot * 5;
+            const slotHours = timeHourFrom + Math.floor(slotMinutes / 60);
+            const slotMins = slotMinutes % 60;
+            const slotTime = new Date(item.date);
+            slotTime.setHours(slotHours, slotMins, 0, 0);
+
+            // Najdi událost která končí právě v tomto čase
+            const endingEvent = rowEvents.find(
+              (event) => Math.abs(event.dateTo.getTime() - slotTime.getTime()) < 30000, // 30s tolerance
+            );
+
+            // Validní slot = za úklidem/pauzou NEBO na začátku dne bez operace
+            const isValid =
+              (!endingEvent && slot === 0) || // začátek dne
+              (endingEvent && (endingEvent.typ === "uklid" || endingEvent.typ === "pauza"));
+
+            if (isValid) {
+              valid.add(`${item.date.toDateString()}-${item.sal.name}-${slot}`);
+            }
+          }
+        }
+      });
+
+      return valid;
     });
 
     const getVykonyCount = (date: Date, salName: OjpSal): number => {
@@ -311,6 +351,25 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                               }
                             })}
                             onDragOver$={sync$(() => {
+                              if (draggedEventType.value === "operace") {
+                                // Magnet: zkus 3 sloty kolem aktuální pozice
+                                const snapTargets = [slotIndex - 1, slotIndex, slotIndex + 1];
+                                const validSnap = snapTargets.find(
+                                  (slot) =>
+                                    slot >= 0 &&
+                                    slot < totalSlots &&
+                                    validSlots.value.has(`${item.date.toDateString()}-${item.sal.name}-${slot}`),
+                                );
+
+                                if (validSnap !== undefined) {
+                                  dropPreview.value = {
+                                    date: item.date,
+                                    sal: item.sal.name,
+                                    slotIndex: validSnap,
+                                  };
+                                  return;
+                                }
+                              }
                               if (draggedEventType.value) {
                                 dropPreview.value = {
                                   date: item.date,
@@ -399,6 +458,58 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                                           if (!cleaningBetween) {
                                             isValid = false;
                                             reason = "Mezi operacemi musí být úklid nebo pauza";
+                                            break;
+                                          }
+                                        }
+                                      }
+                                    } else if (draggedEvent.typ === "uklid" || draggedEvent.typ === "pauza") {
+                                      // NOVÁ VALIDACE: kontrola zdrojového řádku po odebrání úklidu
+                                      const sourceRowEvents = events.filter(
+                                        (event) =>
+                                          event.dateFrom.toDateString() === draggedEvent.dateFrom.toDateString() &&
+                                          event.sal === draggedEvent.sal &&
+                                          event.id !== parsed.eventId,
+                                      );
+
+                                      // Najdi všechny události v cílovém řádku (kontrola překrývání)
+                                      const targetRowEvents = events.filter(
+                                        (event) =>
+                                          event.dateFrom.toDateString() === item.date.toDateString() &&
+                                          event.sal === item.sal.name &&
+                                          event.id !== parsed.eventId,
+                                      );
+
+                                      // Kontrola překrývání v cílovém řádku
+                                      const overlapping = targetRowEvents.find((event) => {
+                                        return newStartTime < event.dateTo && newEndTime > event.dateFrom;
+                                      });
+
+                                      if (overlapping) {
+                                        isValid = false;
+                                        reason = "Událost se překrývá s jinou";
+                                      }
+
+                                      // Kontrola zdrojového řádku - vzniknou operace za sebou?
+                                      if (isValid) {
+                                        const operations = sourceRowEvents
+                                          .filter((e) => e.typ === "operace")
+                                          .sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
+
+                                        for (let i = 0; i < operations.length - 1; i++) {
+                                          const currentOp = operations[i];
+                                          const nextOp = operations[i + 1];
+
+                                          // Najdi úklid/pauzu mezi těmito operacemi (kromě dragované)
+                                          const cleaningBetween = sourceRowEvents.find(
+                                            (event) =>
+                                              (event.typ === "uklid" || event.typ === "pauza") &&
+                                              event.dateFrom >= currentOp.dateTo &&
+                                              event.dateTo <= nextOp.dateFrom,
+                                          );
+
+                                          if (!cleaningBetween) {
+                                            isValid = false;
+                                            reason = "Nelze přesunout úklid - vznikly by operace za sebou";
                                             break;
                                           }
                                         }
