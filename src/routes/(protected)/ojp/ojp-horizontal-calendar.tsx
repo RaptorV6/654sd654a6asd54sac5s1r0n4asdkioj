@@ -7,50 +7,72 @@ import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
 
 import { OjpEventComponent } from "./ojp-event-component";
 
-// Proper Qwik styles
-const dragDropStyles = `
-  [draggable="true"] {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    cursor: move;
+const calendarStyles = `
+  .ojp-time-slot {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
   
-  .ojp-event-dragging {
-    opacity: 0.6;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 9999;
-    transition: none;
-  }
-  
-  .ojp-drop-zone-active {
+  .ojp-drop-valid {
     background: linear-gradient(45deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.25)) !important;
     border: 2px dashed #22c55e !important;
-    animation: ojp-pulse 0.6s ease-in-out infinite alternate;
+    animation: pulse-valid 0.8s ease-in-out infinite alternate;
+    transform: scale(1.02);
   }
   
-  @keyframes ojp-pulse {
+  .ojp-drop-invalid {
+    background: linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.25)) !important;
+    border: 2px dashed #ef4444 !important;
+    animation: pulse-invalid 0.8s ease-in-out infinite alternate;
+    transform: scale(1.02);
+  }
+  
+  @keyframes pulse-valid {
     from { 
       background-color: rgba(34, 197, 94, 0.1);
-      transform: scale(1);
+      box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
     }
     to { 
       background-color: rgba(34, 197, 94, 0.25);
-      transform: scale(1.02);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
     }
   }
   
-  .ojp-event-component,
-  .ojp-time-slot {
-    will-change: transform, opacity;
-    backface-visibility: hidden;
+  @keyframes pulse-invalid {
+    from { 
+      background-color: rgba(239, 68, 68, 0.1);
+      box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+    to { 
+      background-color: rgba(239, 68, 68, 0.25);
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
   }
   
-  @media (hover: none) and (pointer: coarse) {
-    .ojp-event-component {
-      touch-action: none;
-    }
+  .ojp-calendar-grid {
+    contain: layout style paint;
+  }
+  
+  .ojp-sal-header {
+    contain: layout style;
+  }
+  
+  .ojp-drag-ghost {
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+    opacity: 0.8;
+    transform: rotate(3deg);
+    pointer-events: none;
+    z-index: 9999;
+    padding: 8px 12px;
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 `;
 
@@ -71,7 +93,7 @@ type StructureItem =
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
   ({ dates, events, newEventTrigger, onEventClick$, onEventDrop$, saly, timeHourFrom, times }) => {
-    useStyles$(dragDropStyles);
+    useStyles$(calendarStyles);
 
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
@@ -85,12 +107,85 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const viewportWidth = useSignal(800);
     const draggedEventId = useSignal<string>("");
     const dropPreview = useSignal<{ date: Date; sal: OjpSal; slotIndex: number } | null>(null);
+    const draggedEventType = useSignal<string>("");
+    const dragGhostRef = useSignal<HTMLDivElement>();
+
+    // 🔧 OPRAVA: Pre-computed validation results místo runtime validace
+    const validationResults = useSignal<Map<string, boolean>>(new Map());
 
     useTask$(({ track }) => {
       track(() => scrollContainerRef.value);
       if (scrollContainerRef.value) {
         viewportWidth.value = scrollContainerRef.value.clientWidth;
       }
+    });
+
+    // 🔧 SMART VALIDACE: Pre-compute všechny pozice pro aktuální dragovaný event
+    useTask$(({ track }) => {
+      const draggedType = track(() => draggedEventType.value);
+      const currentEvents = track(() => events);
+
+      if (!draggedType) {
+        validationResults.value = new Map();
+        return;
+      }
+
+      const newResults = new Map<string, boolean>();
+
+      // Pro každý řádek zkontroluj všechny sloty
+      structure.forEach((item) => {
+        if (item.type === "sal") {
+          for (let slotIndex = 0; slotIndex < totalSlots; slotIndex++) {
+            const key = `${item.date.toDateString()}-${item.sal.name}-${slotIndex}`;
+
+            // Inline validace - rychlá a bez serializace
+            let isValid = true;
+
+            if (draggedType === "operace") {
+              const targetRowEvents = currentEvents
+                .filter(
+                  (event) =>
+                    event.dateFrom.toDateString() === item.date.toDateString() &&
+                    event.sal === item.sal.name &&
+                    event.id !== draggedEventId.value, // Vylučujeme dragovaný event
+                )
+                .sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
+
+              const targetMinutes = slotIndex * 5;
+              const targetHours = timeHourFrom + Math.floor(targetMinutes / 60);
+              const targetMins = targetMinutes % 60;
+              const targetTime = new Date(item.date);
+              targetTime.setHours(targetHours, targetMins, 0, 0);
+
+              // Kontrola kolizí s operacemi
+              for (const event of targetRowEvents) {
+                if (event.typ === "operace") {
+                  const timeDiffAfter = targetTime.getTime() - event.dateTo.getTime();
+                  const timeDiffBefore = event.dateFrom.getTime() - targetTime.getTime();
+
+                  const minutesDiffAfter = timeDiffAfter / (1000 * 60);
+                  const minutesDiffBefore = timeDiffBefore / (1000 * 60);
+
+                  // Operace nesmí být hned za sebou (méně než 5 minut)
+                  if (minutesDiffAfter >= 0 && minutesDiffAfter < 5) {
+                    isValid = false;
+                    break;
+                  }
+
+                  if (minutesDiffBefore >= 0 && minutesDiffBefore < 5) {
+                    isValid = false;
+                    break;
+                  }
+                }
+              }
+            }
+
+            newResults.set(key, isValid);
+          }
+        }
+      });
+
+      validationResults.value = newResults;
     });
 
     const handleScroll = $((e: Event) => {
@@ -164,14 +259,20 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       }
       draggedEventId.value = "";
       dropPreview.value = null;
+      draggedEventType.value = "";
     });
 
     return (
       <div class="flex h-full flex-col">
+        {/* 🔧 CUSTOM DRAG GHOST */}
+        <div class="ojp-drag-ghost" id="drag-ghost" ref={dragGhostRef}>
+          📅 Přesouvám událost...
+        </div>
+
         <div class="flex-1 overflow-auto" onScroll$={handleScroll} ref={scrollContainerRef}>
-          <div style={`min-width: ${totalGridWidth}px; width: 100%;`}>
-            {/* Sticky header s hodinami */}
-            <div class="sticky top-0 z-30 border-b bg-white">
+          <div class="ojp-calendar-grid" style={`min-width: ${totalGridWidth}px; width: 100%;`}>
+            {/* Header stejný... */}
+            <div class="sticky top-0 z-30 border-b bg-white shadow-sm">
               <div
                 class="grid"
                 style={`grid-template-columns: ${hoursGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
@@ -189,7 +290,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                 ))}
               </div>
 
-              {/* Sub-header s minutami */}
               <div
                 class="grid text-xs"
                 style={`grid-template-columns: ${minutesGridTemplate}; height: ${rowHeight / 2}px; min-width: ${totalGridWidth}px;`}
@@ -238,9 +338,8 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                       key={`sal-${item.dayIndex}-${item.sal.name}`}
                       style={`grid-template-columns: ${minutesGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
                     >
-                      {/* Sál header */}
                       <div
-                        class="sticky left-0 z-30 flex items-center justify-center border-r-2 border-gray-300 text-xs"
+                        class="ojp-sal-header sticky left-0 z-30 flex items-center justify-center border-r-2 border-gray-300 text-xs"
                         style={`background-color: ${item.sal.bgColor}; color: ${item.sal.color};`}
                       >
                         <div class="text-center">
@@ -249,8 +348,11 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                         </div>
                       </div>
 
-                      {/* Time slots s drop zone */}
+                      {/* 🔧 SMART TIME SLOTS s pre-computed validací */}
                       {Array.from({ length: totalSlots }, (_, slotIndex) => {
+                        const validationKey = `${item.date.toDateString()}-${item.sal.name}-${slotIndex}`;
+                        const isValid = validationResults.value.get(validationKey) ?? true;
+
                         const isDropPreview =
                           dropPreview.value &&
                           dropPreview.value.date.toDateString() === item.date.toDateString() &&
@@ -262,7 +364,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                             class={`
                               ojp-time-slot relative cursor-pointer border-r border-gray-200 transition-all duration-200
                               hover:bg-blue-100 hover:bg-opacity-50
-                              ${isDropPreview ? "ojp-drop-zone-active" : ""}
+                              ${isDropPreview ? (isValid ? "ojp-drop-valid" : "ojp-drop-invalid") : ""}
                             `}
                             key={`slot-${slotIndex}`}
                             onDblClick$={() => {
@@ -277,22 +379,13 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                                 dropPreview.value = null;
                               }
                             })}
-                            onDragOver$={sync$((e: DragEvent) => {
-                              // 🔧 OPRAVA: Odstraním nepoužitou proměnnou target
-                              const data = e.dataTransfer!.getData("application/json");
-                              if (data) {
-                                try {
-                                  const parsed = JSON.parse(data);
-                                  if (parsed.type === "ojp-event") {
-                                    dropPreview.value = {
-                                      date: item.date,
-                                      sal: item.sal.name,
-                                      slotIndex,
-                                    };
-                                  }
-                                } catch {
-                                  // Silent catch
-                                }
+                            onDragOver$={sync$(() => {
+                              if (draggedEventType.value) {
+                                dropPreview.value = {
+                                  date: item.date,
+                                  sal: item.sal.name,
+                                  slotIndex,
+                                };
                               }
                             })}
                             onDrop$={sync$((e: DragEvent) => {
@@ -301,21 +394,32 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                                 try {
                                   const parsed = JSON.parse(data);
                                   if (parsed.type === "ojp-event") {
-                                    handleEventDrop(parsed.eventId, item.date, item.sal.name, slotIndex);
+                                    // 🔧 KONTROLA: Použij pre-computed validaci
+                                    if (isValid) {
+                                      handleEventDrop(parsed.eventId, item.date, item.sal.name, slotIndex);
+                                    }
                                   }
                                 } catch {
                                   // Silent catch
                                 }
                               }
+
+                              dropPreview.value = null;
                             })}
                             preventdefault:dragover
                             preventdefault:drop
-                            title="Poklepejte pro přidání události nebo přetáhněte existující"
+                            title="Poklepejte pro přidání události nebo přetáhněte událost"
                           >
                             {isDropPreview && (
-                              <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-                                <div class="rounded bg-white bg-opacity-95 px-2 py-1 text-xs font-bold text-green-800 shadow-sm">
-                                  Přesunout zde
+                              <div class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
+                                <div
+                                  class={`rounded border px-2 py-1 text-xs font-bold shadow-lg ${
+                                    isValid
+                                      ? "border-green-200 bg-green-50 text-green-800"
+                                      : "border-red-200 bg-red-50 text-red-800"
+                                  }`}
+                                >
+                                  {isValid ? "✓ Přesunout zde" : "✗ Operace musí mít mezeru"}
                                 </div>
                               </div>
                             )}

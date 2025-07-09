@@ -2,13 +2,57 @@
 import type { QRL } from "@builder.io/qwik";
 
 import { Button, ButtonLabelIcon } from "@akeso/ui-components";
-import { component$, sync$ } from "@builder.io/qwik";
+import { component$, sync$, useStyles$ } from "@builder.io/qwik";
 
 import { EditIcon } from "~/components/icons-outline";
 
 import type { OjpEventPositioned } from "./_mock-events";
 
 import { getSalInfo } from "./_mock-events";
+
+// 🚀 OPTIMALIZACE: CSS jako string pro lepší performance
+const eventStyles = `
+  .ojp-event {
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  
+  .ojp-event.draggable {
+    cursor: grab;
+    transition: all 0.15s ease-out;
+  }
+  
+  .ojp-event.draggable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .ojp-event.draggable:active {
+    cursor: grabbing;
+    transform: scale(1.02);
+  }
+  
+  .ojp-event.dragging {
+    opacity: 0.7;
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    z-index: 9999;
+    transition: none;
+  }
+  
+  .ojp-event-operace.draggable::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(0, 0, 0, 0.3);
+    font-size: 8px;
+    line-height: 0.8;
+    letter-spacing: -1px;
+  }
+`;
 
 type OjpEventComponentProps = {
   event: OjpEventPositioned;
@@ -23,7 +67,9 @@ type OjpEventComponentProps = {
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
   ({ event, intervalMinutes, intervalWidth, isDragging, onEventClick$, scrollLeft, timeHourFrom, viewportWidth }) => {
-    // Pozicování v 5-minutových intervalech
+    useStyles$(eventStyles);
+
+    // Pozicování
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
@@ -36,7 +82,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
     const salInfo = getSalInfo(event.sal);
 
-    // Logika pro různé typy událostí
+    // Styly pro typy událostí
     let backgroundColor: string;
     let borderColor: string;
     let textColor: string = "#000";
@@ -63,7 +109,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       borderColor = salInfo.color;
     }
 
-    // Logika pro dynamické pozicování textu
+    // Text positioning pro dlouhé události
     const isLongEvent = widthPx > viewportWidth * 0.6;
     let textTransform = "";
 
@@ -83,30 +129,32 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       }
     }
 
+    //const isDraggable = event.typ === "operace";
+
     return (
       <div
         class={`
-          ojp-event-component group absolute bottom-1 top-1 z-10 flex cursor-move select-none items-center justify-center rounded border-2 p-1 
-          text-xs font-semibold transition-all duration-200 hover:z-20 hover:shadow-md
-          ${isDragging ? "ojp-event-dragging" : "hover:shadow-lg"}
+          ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1
+          text-xs font-semibold hover:cursor-grab active:cursor-grabbing
+          ${isDragging ? "dragging" : ""}
         `}
-        draggable={true} // 🔧 OPRAVA: boolean místo string
+        draggable={true} // 🔧 VŠECHNY typy jsou draggable
         onClick$={(e) => {
           e.stopPropagation();
           if (onEventClick$) {
             onEventClick$(event);
           }
         }}
-        onDragEnd$={sync$((e: DragEvent) => {
-          // Reset styling po drag
-          const target = e.target as HTMLElement;
-          target.style.opacity = "";
-          target.style.boxShadow = "";
-          target.style.zIndex = "";
+        onDragEnd$={sync$(() => {
+          const dragGhost = document.getElementById("drag-ghost");
+          if (dragGhost) {
+            dragGhost.style.display = "none";
+          }
         })}
         onDragStart$={sync$((e: DragEvent) => {
           const dragData = {
             eventId: event.id,
+            eventType: event.typ,
             originalDate: event.dateFrom.toISOString(),
             originalSal: event.sal,
             title: event.title,
@@ -116,11 +164,13 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           e.dataTransfer!.setData("application/json", JSON.stringify(dragData));
           e.dataTransfer!.effectAllowed = "move";
 
-          // Jemná animace bez rotace
-          const target = e.target as HTMLElement;
-          target.style.opacity = "0.6";
-          target.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.15)";
-          target.style.zIndex = "9999";
+          // 🔧 CUSTOM DRAG IMAGE
+          const dragGhost = document.getElementById("drag-ghost");
+          if (dragGhost) {
+            dragGhost.textContent = `📅 ${event.title}`;
+            dragGhost.style.display = "block";
+            e.dataTransfer!.setDragImage(dragGhost, 20, 20);
+          }
         })}
         style={`
          left: ${leftPx}px;
@@ -129,6 +179,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
          border-color: ${borderColor};
          color: ${textColor};
        `}
+        title="Táhněte pro přesun události"
       >
         <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
           <Button
