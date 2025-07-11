@@ -1,9 +1,7 @@
 import type { QRL, Signal } from "@builder.io/qwik";
 
-import { Button, ButtonLabelIcon } from "@akeso/ui-components";
+import { Button } from "@akeso/ui-components";
 import { component$, sync$, useStyles$ } from "@builder.io/qwik";
-
-import { EditIcon } from "~/components/icons-outline";
 
 import type { OjpEventPositioned } from "./_mock-events";
 
@@ -217,10 +215,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
             }}
             size="xs"
             type="button"
-          >
-            <ButtonLabelIcon as={EditIcon} standalone />
-            <span class="sr-only">Editovat událost</span>
-          </Button>
+          ></Button>
         </div>
 
         <div
