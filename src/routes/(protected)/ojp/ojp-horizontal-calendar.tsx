@@ -242,13 +242,12 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
         <div class="flex-1 overflow-auto" onScroll$={handleScroll} ref={scrollContainerRef}>
           <div class="ojp-calendar-grid" style={`min-width: ${totalGridWidth}px; width: 100%;`}>
-            {/* Header stejný... */}
             <div class="sticky top-0 z-30 border-b bg-white shadow-sm">
               <div
                 class="grid"
                 style={`grid-template-columns: ${hoursGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
               >
-                <div class="sticky left-0 z-40 flex items-center justify-center border-r-2 border-gray-400 bg-gray-100 text-sm font-bold">
+                <div class="sticky left-0 z-40 flex items-center justify-center border-r-2 border-gray-400 bg-gray-50 text-sm font-bold">
                   Den / Sál
                 </div>
                 {times.map((time) => (
