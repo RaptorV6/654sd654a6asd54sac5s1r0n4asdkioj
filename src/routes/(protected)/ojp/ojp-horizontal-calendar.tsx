@@ -102,12 +102,10 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const scrollContainerRef = useSignal<HTMLDivElement>();
     const scrollLeft = useSignal(0);
     const viewportWidth = useSignal(800);
-    const draggedEventId = useSignal<string>("");
+    const draggedEventId = useSignal<string>(""); // ✅ NOVÝ state pro hiding
     const dropPreview = useSignal<{ date: Date; sal: OjpSal; slotIndex: number } | null>(null);
     const draggedEventType = useSignal<string>("");
     const dragGhostRef = useSignal<HTMLDivElement>();
-
-    const validationResults = useSignal<Map<string, boolean>>(new Map());
 
     useTask$(({ track }) => {
       track(() => scrollContainerRef.value);
@@ -210,6 +208,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
         onEventDrop$(eventId, date, sal, newTime);
       }
+      // ✅ Reset drag state po drop
       draggedEventId.value = "";
       dropPreview.value = null;
       draggedEventType.value = "";
@@ -238,6 +237,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                   date={date.date}
                   dayIndex={dayIndex}
                   dayName={dayNames[dayIndex] || dayNames[0]}
+                  draggedEventId={draggedEventId}
                   draggedEventType={draggedEventType}
                   dropPreview={dropPreview}
                   events={events}
@@ -253,7 +253,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                   timeHourFrom={timeHourFrom}
                   totalGridWidth={totalGridWidth}
                   totalSlots={totalSlots}
-                  validationResults={validationResults}
                   validSlots={validSlots.value}
                   viewportWidth={viewportWidth.value}
                 />

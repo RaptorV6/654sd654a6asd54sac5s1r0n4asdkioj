@@ -10,6 +10,8 @@ type OjpDaySectionProps = {
   date: Date;
   dayIndex: number;
   dayName: string;
+  // ✅ Přidáme draggedEventId
+  draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
   dropPreview: Signal<{ date: Date; sal: OjpSal; slotIndex: number } | null>;
   events: OjpEventPositioned[];
@@ -24,7 +26,6 @@ type OjpDaySectionProps = {
   timeHourFrom: number;
   totalGridWidth: number;
   totalSlots: number;
-  validationResults: Signal<Map<string, boolean>>;
   validSlots: Set<string>;
   viewportWidth: number;
 };
@@ -34,6 +35,7 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
     date,
     dayIndex,
     dayName,
+    draggedEventId,
     draggedEventType,
     dropPreview,
     events,
@@ -48,7 +50,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
     timeHourFrom,
     totalGridWidth,
     totalSlots,
-    validationResults,
     validSlots,
     viewportWidth,
   }) => {
@@ -82,7 +83,7 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
           return (
             <OjpStationRow
               date={date}
-              dayIndex={dayIndex}
+              draggedEventId={draggedEventId}
               draggedEventType={draggedEventType}
               dropPreview={dropPreview}
               key={`sal-${dayIndex}-${sal.name}`}
@@ -98,7 +99,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
               timeHourFrom={timeHourFrom}
               totalGridWidth={totalGridWidth}
               totalSlots={totalSlots}
-              validationResults={validationResults}
               validSlots={validSlots}
               viewportWidth={viewportWidth}
               vykonyCount={vykonyCount}

@@ -8,7 +8,8 @@ import { OjpEventComponent } from "./ojp-event-component";
 
 type OjpStationRowProps = {
   date: Date;
-  dayIndex: number;
+  // ✅ Přidáme draggedEventId
+  draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
   dropPreview: Signal<{ date: Date; sal: OjpSal; slotIndex: number } | null>;
   onEventClick$?: QRL<(event: any) => void>;
@@ -23,7 +24,6 @@ type OjpStationRowProps = {
   timeHourFrom: number;
   totalGridWidth: number;
   totalSlots: number;
-  validationResults: Signal<Map<string, boolean>>;
   validSlots: Set<string>;
   viewportWidth: number;
   vykonyCount: number;
@@ -32,7 +32,7 @@ type OjpStationRowProps = {
 export const OjpStationRow = component$<OjpStationRowProps>(
   ({
     date,
-    dayIndex,
+    draggedEventId,
     draggedEventType,
     dropPreview,
     onEventClick$,
@@ -47,7 +47,6 @@ export const OjpStationRow = component$<OjpStationRowProps>(
     timeHourFrom,
     totalGridWidth,
     totalSlots,
-    validationResults,
     validSlots,
     viewportWidth,
     vykonyCount,
@@ -57,11 +56,11 @@ export const OjpStationRow = component$<OjpStationRowProps>(
     return (
       <div
         class="relative grid border-b border-gray-200"
-        key={`sal-${dayIndex}-${sal.name}`}
         style={`grid-template-columns: ${minutesGridTemplate}; height: ${rowHeight}px; min-width: ${totalGridWidth}px;`}
       >
+        {/* Station header */}
         <div
-          class="ojp-sal-header sticky left-0 z-20 flex items-center justify-center border-r-2 border-gray-300 text-xs"
+          class="sticky left-0 z-20 flex items-center justify-center border-r-2 border-gray-300 text-xs"
           style={`background-color: ${sal.bgColor}; color: ${sal.color};`}
         >
           <div class="text-center">
@@ -73,7 +72,7 @@ export const OjpStationRow = component$<OjpStationRowProps>(
         {/* Time slots */}
         {Array.from({ length: totalSlots }, (_, slotIndex) => {
           const validationKey = `${date.toDateString()}-${sal.name}-${slotIndex}`;
-          const isValid = validationResults.value.get(validationKey) ?? true;
+          const isValid = validSlots.has(validationKey);
 
           const isDropPreview =
             dropPreview.value &&
@@ -84,7 +83,7 @@ export const OjpStationRow = component$<OjpStationRowProps>(
           return (
             <div
               class={`
-                ojp-time-slot relative cursor-pointer border-r border-gray-200 transition-all duration-200
+                relative cursor-pointer border-r border-gray-200 transition-all duration-200
                 hover:bg-blue-100 hover:bg-opacity-50
                 ${isDropPreview ? (isValid ? "ojp-drop-valid" : "ojp-drop-invalid") : ""}
               `}
@@ -162,6 +161,7 @@ export const OjpStationRow = component$<OjpStationRowProps>(
         {/* Events */}
         {rowEvents.map((event) => (
           <OjpEventComponent
+            draggedEventId={draggedEventId}
             event={event}
             intervalMinutes={5}
             intervalWidth={slotWidth}

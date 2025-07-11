@@ -1,5 +1,4 @@
-// src/routes/(protected)/ojp/ojp-event-component.tsx
-import type { QRL } from "@builder.io/qwik";
+import type { QRL, Signal } from "@builder.io/qwik";
 
 import { Button, ButtonLabelIcon } from "@akeso/ui-components";
 import { component$, sync$, useStyles$ } from "@builder.io/qwik";
@@ -10,7 +9,7 @@ import type { OjpEventPositioned } from "./_mock-events";
 
 import { getSalInfo } from "./_mock-events";
 
-// 🚀 OPTIMALIZACE: CSS jako string pro lepší performance
+// 🚀 OPTIMALIZACE: CSS + hiding logic
 const eventStyles = `
   .ojp-event {
     will-change: transform, opacity;
@@ -41,6 +40,13 @@ const eventStyles = `
     transition: none;
   }
   
+  /* ✅ NOVÁ hiding logika */
+  .ojp-event[data-being-dragged="true"] {
+    opacity: 0.1 !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+  }
+  
   .ojp-event-operace.draggable::before {
     content: "⋮⋮";
     position: absolute;
@@ -55,6 +61,8 @@ const eventStyles = `
 `;
 
 type OjpEventComponentProps = {
+  // ✅ Jen přidáme draggedEventId signal
+  draggedEventId: Signal<string>;
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
@@ -66,10 +74,20 @@ type OjpEventComponentProps = {
 };
 
 export const OjpEventComponent = component$<OjpEventComponentProps>(
-  ({ event, intervalMinutes, intervalWidth, isDragging, onEventClick$, scrollLeft, timeHourFrom, viewportWidth }) => {
+  ({
+    draggedEventId,
+    event,
+    intervalMinutes,
+    intervalWidth,
+    isDragging,
+    onEventClick$,
+    scrollLeft,
+    timeHourFrom,
+    viewportWidth,
+  }) => {
     useStyles$(eventStyles);
 
-    // Pozicování
+    // Pozicování - stejné jako předtím
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
@@ -82,7 +100,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
     const salInfo = getSalInfo(event.sal);
 
-    // Styly pro typy událostí
+    // Styly pro typy událostí - stejné jako předtím
     let backgroundColor: string;
     let borderColor: string;
     let textColor: string = "#000";
@@ -109,7 +127,7 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       borderColor = salInfo.color;
     }
 
-    // Text positioning pro dlouhé události
+    // Text positioning pro dlouhé události - stejné jako předtím
     const isLongEvent = widthPx > viewportWidth * 0.6;
     let textTransform = "";
 
@@ -129,7 +147,8 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       }
     }
 
-    //const isDraggable = event.typ === "operace";
+    // ✅ Check if this event is being dragged
+    const isBeingDragged = draggedEventId.value === event.id;
 
     return (
       <div
@@ -138,7 +157,8 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           text-xs font-semibold hover:cursor-grab active:cursor-grabbing
           ${isDragging ? "dragging" : ""}
         `}
-        draggable={true} // 🔧 VŠECHNY typy jsou draggable
+        data-being-dragged={isBeingDragged ? "true" : undefined}
+        draggable={true}
         onClick$={(e) => {
           e.stopPropagation();
           if (onEventClick$) {
@@ -150,8 +170,13 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           if (dragGhost) {
             dragGhost.style.display = "none";
           }
+          // ✅ Reset dragged state
+          draggedEventId.value = "";
         })}
         onDragStart$={sync$((e: DragEvent) => {
+          // ✅ Set dragged state immediately
+          draggedEventId.value = event.id;
+
           const dragData = {
             eventId: event.id,
             eventType: event.typ,
@@ -164,7 +189,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           e.dataTransfer!.setData("application/json", JSON.stringify(dragData));
           e.dataTransfer!.effectAllowed = "move";
 
-          // 🔧 CUSTOM DRAG IMAGE
           const dragGhost = document.getElementById("drag-ghost");
           if (dragGhost) {
             dragGhost.textContent = `📅 ${event.title}`;
