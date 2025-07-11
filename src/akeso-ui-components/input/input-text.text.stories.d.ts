@@ -1,0 +1,13 @@
+import type { Meta, StoryObj } from "storybook-framework-qwik";
+import type { InputTextProps } from "./input-text";
+type Args = InputTextProps<"text">;
+declare const meta: Meta<Args>;
+export default meta;
+type Story = StoryObj<Args>;
+export declare const Base: Story;
+export declare const AdornmentStart: Story;
+export declare const AdornmentStartDivided: Story;
+export declare const AdornmentEnd: Story;
+export declare const AdornmentEndDivided: Story;
+export declare const AdornmentBoth: Story;
+export declare const AdornmentBothDivides: Story;

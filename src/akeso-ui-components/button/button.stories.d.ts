@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from "storybook-framework-qwik";
+import type { BaseButtonIntrinsicElements } from "../base-button/base-button";
+import { type ButtonProps } from "./button";
+declare const meta: Meta<ButtonProps<any>>;
+type Story<T extends keyof BaseButtonIntrinsicElements> = StoryObj<ButtonProps<T>>;
+export default meta;
+export declare const Base: Story<"button">;
+export declare const Size: Story<"button">;
+export declare const Severity: Story<"button">;
+export declare const Variant: Story<"button">;
+export declare const AsPill: Story<"button">;

@@ -1,0 +1,11 @@
+import type { Meta, StoryObj } from "storybook-framework-qwik";
+import { type AvatarProps } from "./avatar";
+declare const meta: Meta<AvatarProps>;
+type Story = StoryObj<AvatarProps>;
+export default meta;
+export declare const Base: Story;
+export declare const Initials: Story;
+export declare const Image: Story;
+export declare const Size: Story;
+export declare const Square: Story;
+export declare const Indicator: Story;
