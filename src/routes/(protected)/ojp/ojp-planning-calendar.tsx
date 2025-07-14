@@ -8,8 +8,8 @@ import { updateOjpEvent } from "./_actions";
 import { getWeekEvents, useOjpPlanningData } from "./_loaders";
 import { getDenFromDate } from "./_mock-events";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
-import { OjpEventModal } from "./ojp-event-modal";
 import { OjpHorizontalCalendar } from "./ojp-horizontal-calendar";
+import { OjpModal } from "./ojp-modal";
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -236,14 +236,9 @@ export const OjpPlanningCalendar = component$(() => {
         />
       </div>
 
-      <OjpEventModal
-        bind:show={showNewEventModal}
-        initialData={newEventData}
-        mode="new"
-        refreshTrigger={refreshTrigger}
-      />
+      <OjpModal bind:show={showNewEventModal} initialData={newEventData} mode="new" refreshTrigger={refreshTrigger} />
 
-      <OjpEventModal
+      <OjpModal
         bind:show={showEditEventModal}
         event={selectedEvent.value}
         mode="view"
