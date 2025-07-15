@@ -304,7 +304,7 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
             type="button"
             variant={activeTab.value === "nova-sablona" ? "contained" : "outline"}
           >
-            Nová šablona
+            Nový záznam
           </Button>
           <Button
             onClick$={() => handleTabChange("pauzy")}
