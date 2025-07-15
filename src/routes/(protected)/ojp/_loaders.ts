@@ -58,7 +58,6 @@ export function getWeekEvents(weekStart: Date) {
   weekEnd.setHours(23, 59, 59, 999);
 
   const weekEvents = _mock_ojp_events.filter((event) => {
-    // KONTROLA validity před použitím
     if (!(event.dateFrom instanceof Date) || isNaN(event.dateFrom.getTime())) {
       return false;
     }
@@ -69,5 +68,7 @@ export function getWeekEvents(weekStart: Date) {
     return isInRange;
   });
 
-  return calendarEventsPosition(weekEvents);
+  const positioned = calendarEventsPosition(weekEvents);
+
+  return positioned;
 }

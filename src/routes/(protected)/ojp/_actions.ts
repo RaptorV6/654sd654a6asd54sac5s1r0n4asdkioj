@@ -25,7 +25,6 @@ const OjpEventUpdateSchema = v.intersect([
 export type OjpEventFormData = v.InferInput<typeof OjpEventSchema>;
 export type OjpEventUpdateData = v.InferInput<typeof OjpEventUpdateSchema>;
 
-// src/routes/(protected)/ojp/_actions.ts
 export function addOjpEvent(values: OjpEventFormData) {
   try {
     const validatedData = v.parse(OjpEventSchema, values);
@@ -33,7 +32,6 @@ export function addOjpEvent(values: OjpEventFormData) {
     const [hodinyOd, minutyOd] = validatedData.casOd.split(":").map(Number);
     const [hodinyDo, minutyDo] = validatedData.casDo.split(":").map(Number);
 
-    // 🔧 OPRAVA: Stejná oprava i zde
     const [year, month, day] = validatedData.datum.split("-").map(Number);
 
     const dateFrom = new Date(year, month - 1, day, hodinyOd, minutyOd, 0, 0);
@@ -44,7 +42,9 @@ export function addOjpEvent(values: OjpEventFormData) {
     }
 
     const duration = (dateTo.getTime() - dateFrom.getTime()) / (1000 * 60);
-    const newId = String(Date.now());
+
+    // ✅ OPRAVA: Garantovně unikátní ID
+    const newId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     const newEvent = {
       dateFrom,
@@ -63,7 +63,6 @@ export function addOjpEvent(values: OjpEventFormData) {
 
     return { event: newEvent, success: true };
   } catch (error) {
-    console.error("Add event error:", error);
     if (error instanceof v.ValiError) {
       return { failed: true, message: `Validační chyba: ${error.message}` };
     }
