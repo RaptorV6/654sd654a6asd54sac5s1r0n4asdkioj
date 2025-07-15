@@ -1,4 +1,3 @@
-// src/routes/(protected)/ojp/ojp-planning-calendar.tsx
 import { Card } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
@@ -58,7 +57,7 @@ export const OjpPlanningCalendar = component$(() => {
 
   useTask$(({ track }) => {
     const weekStart = track(() => currentWeekStart.value);
-    track(() => refreshTrigger.value); // 🔧 Jen track bez assignment
+    track(() => refreshTrigger.value);
 
     // Načti fresh data ze serveru
     const serverEvents = getWeekEvents(weekStart);
@@ -142,7 +141,6 @@ export const OjpPlanningCalendar = component$(() => {
     showEditEventModal.value = true;
   });
 
-  // src/routes/(protected)/ojp/ojp-planning-calendar.tsx
   const handleEventDrop = $((eventId: string, newDate: Date, newSal: OjpSal, newTime: Date) => {
     const event = eventsSignal.value.find((e) => e.id === eventId);
     if (!event || !(newTime instanceof Date)) {
