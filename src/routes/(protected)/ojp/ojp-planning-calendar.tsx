@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Card } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
@@ -36,7 +37,7 @@ export const OjpPlanningCalendar = component$(() => {
   const showEditEventModal = useSignal(false);
   const selectedEvent = useSignal<any>(null);
 
-  // 🆕 Track pending drag&drop updates
+  // Track pending drag&drop updates
   const pendingUpdates = useSignal<Set<string>>(new Set());
 
   const newEventData = useStore<{
@@ -104,12 +105,12 @@ export const OjpPlanningCalendar = component$(() => {
     });
   });
 
-  useTask$(({ track }) => {
-    const isModalOpen = track(() => showEditEventModal.value);
-
-    if (!isModalOpen && selectedEvent.value) {
-      selectedEvent.value = null;
-    }
+  const handleEventClick = $((event: any) => {
+    console.log("🖱️ Event clicked in calendar:", event);
+    selectedEvent.value = event;
+    console.log("🎯 selectedEvent.value set to:", selectedEvent.value); // ✅ DEBUG
+    showEditEventModal.value = true;
+    console.log("🔄 showEditEventModal set to:", showEditEventModal.value); // ✅ DEBUG
   });
 
   useTask$(({ track }) => {
@@ -134,11 +135,6 @@ export const OjpPlanningCalendar = component$(() => {
 
   const handleToday = $(() => {
     currentWeekStart.value = startOfWeek(new Date());
-  });
-
-  const handleEventClick = $((event: any) => {
-    selectedEvent.value = event;
-    showEditEventModal.value = true;
   });
 
   const handleEventDrop = $((eventId: string, newDate: Date, newSal: OjpSal, newTime: Date) => {
@@ -167,14 +163,14 @@ export const OjpPlanningCalendar = component$(() => {
     });
     eventsSignal.value = updatedEvents;
 
-    // 🔧 OPRAVA: Správné datum bez timezone problémů
+    // Správné datum bez timezone problémů
     const localDate = new Date(newDate.getTime() - newDate.getTimezoneOffset() * 60000);
     const dateString = localDate.toISOString().split("T")[0];
 
     const updateData = {
       casDo: newEndTime.toTimeString().slice(0, 5),
       casOd: newTime.toTimeString().slice(0, 5),
-      datum: dateString, // 🔧 Použijeme local date
+      datum: dateString,
       id: eventId,
       operator: event.operator || "",
       poznamka: event.poznamka || "",
@@ -190,7 +186,7 @@ export const OjpPlanningCalendar = component$(() => {
       newPending.delete(eventId);
       pendingUpdates.value = newPending;
 
-      if (!result.success) {
+      if (result.failed) {
         eventsSignal.value = eventsSignal.value.map((e) => {
           if (e.id === eventId) {
             return event;
@@ -238,8 +234,8 @@ export const OjpPlanningCalendar = component$(() => {
 
       <OjpModal
         bind:show={showEditEventModal}
-        event={selectedEvent.value}
-        mode="view"
+        eventSignal={selectedEvent}
+        mode="edit"
         refreshTrigger={refreshTrigger}
       />
     </Card>
