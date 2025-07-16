@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import type { QRL, Signal } from "@builder.io/qwik";
 
 import {
@@ -154,7 +153,7 @@ export const OjpModal = component$<OjpModalProps>(
           procedure: procedure || null,
           sal: event.sal,
           typ: procedure?.type || event.typ,
-          vykon: event.title,
+          vykon: procedure?.surgery || event.title,
         };
 
         // Set both current and original data
@@ -212,10 +211,7 @@ export const OjpModal = component$<OjpModalProps>(
 
     const handleDelete = $(() => {
       const event = currentEvent.value;
-      if (!event) {
-        console.error("❌ No event to delete");
-        return;
-      }
+      if (!event) return;
 
       confirmDialog.title = "Smazat událost";
       confirmDialog.message = `Opravdu chcete smazat událost "${event.title}"?`;
@@ -224,7 +220,6 @@ export const OjpModal = component$<OjpModalProps>(
         const result = deleteOjpEvent({ id: event.id });
 
         if (result.failed) {
-          console.error("❌ Delete failed:", result.message);
           errorMessage.value = result.message || "Nastala chyba při mazání";
         } else {
           refreshTrigger.value = Date.now();
@@ -237,15 +232,7 @@ export const OjpModal = component$<OjpModalProps>(
     });
 
     const executeSave = $(async () => {
-      console.log("💾 Execute save called");
-
       if (!modalData.procedure || !modalData.datum || !modalData.casOd || !modalData.sal) {
-        console.error("❌ Missing required data:", {
-          casOd: !!modalData.casOd,
-          datum: !!modalData.datum,
-          procedure: !!modalData.procedure,
-          sal: !!modalData.sal,
-        });
         errorMessage.value = "Vyplňte všechny povinné údaje";
         return;
       }
@@ -257,11 +244,9 @@ export const OjpModal = component$<OjpModalProps>(
         if (mode === "edit") {
           const event = currentEvent.value;
           if (!event) {
-            console.error("❌ No event for edit mode");
+            errorMessage.value = "Chyba při načítání události";
             return;
           }
-
-          console.log("📝 Updating event:", event.id);
 
           // Update existing event
           const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
@@ -279,20 +264,13 @@ export const OjpModal = component$<OjpModalProps>(
             typ: activeTab.value === "pauzy" ? "pauza" : activeTab.value === "vlastni" ? "svatek" : "operace",
           };
 
-          console.log("📤 Sending update data:", updateData);
           const result = updateOjpEvent(updateData);
-          console.log("📥 Update result:", result);
 
           if (result.failed) {
-            console.error("❌ Update failed:", result.message);
             errorMessage.value = result.message || "Nastala chyba při ukládání";
             return;
           }
-
-          console.log("✅ Update successful");
         } else {
-          console.log("✨ Creating new event(s)");
-
           // Create new event(s) - existing logic
           if (activeTab.value === "pauzy" || activeTab.value === "vlastni") {
             const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
@@ -309,23 +287,18 @@ export const OjpModal = component$<OjpModalProps>(
               typ: activeTab.value === "pauzy" ? "pauza" : "svatek",
             };
 
-            console.log("📤 Creating single event:", eventData);
             const result = addOjpEvent(eventData);
-            console.log("📥 Add result:", result);
 
             if (result.failed) {
-              console.error("❌ Add failed:", result.message);
               errorMessage.value = result.message || "Nastala chyba při ukládání";
               return;
             }
           } else {
             // Series creation for "pridat" tab
-            console.log("📤 Creating event series");
             let currentTime = new Date(`${modalData.datum}T${modalData.casOd}`);
 
             for (let i = 0; i < modalData.repeatCount; i++) {
               const operationNumber = i + 1;
-              console.log(`📤 Creating operation ${operationNumber}/${modalData.repeatCount}`);
 
               // Add operation
               const endTime = new Date(currentTime.getTime() + modalData.procedure.duration * 60 * 1000);
@@ -343,7 +316,6 @@ export const OjpModal = component$<OjpModalProps>(
 
               const result = addOjpEvent(procedureEventData);
               if (result.failed) {
-                console.error("❌ Operation add failed:", result.message);
                 errorMessage.value = result.message || "Nastala chyba při ukládání";
                 return;
               }
@@ -367,7 +339,6 @@ export const OjpModal = component$<OjpModalProps>(
 
               const separatorResult = addOjpEvent(separatorEventData);
               if (separatorResult.failed) {
-                console.error("❌ Separator add failed:", separatorResult.message);
                 errorMessage.value = separatorResult.message || "Nastala chyba při ukládání ÚS";
                 return;
               }
@@ -377,11 +348,9 @@ export const OjpModal = component$<OjpModalProps>(
           }
         }
 
-        console.log("✅ All operations successful, refreshing...");
         refreshTrigger.value = Date.now();
         closeModal();
-      } catch (error) {
-        console.error("💥 Save error:", error);
+      } catch {
         errorMessage.value = "Nastala chyba při ukládání";
       } finally {
         isLoading.value = false;
@@ -389,29 +358,23 @@ export const OjpModal = component$<OjpModalProps>(
     });
 
     const handleSave = $(() => {
-      console.log("💾 Handle save called, mode:", mode, "hasChanges:", hasChanges.value);
-
       if (mode === "edit" && hasChanges.value) {
-        console.log("❓ Showing save confirmation");
         // Show confirmation for edit with changes
         confirmDialog.title = "Uložit změny";
         confirmDialog.message = "Chcete uložit provedené změny?";
         confirmDialog.severity = "warning";
         confirmDialog.onConfirm = $(() => {
-          console.log("✅ User confirmed save");
           executeSave();
           confirmDialogShow.value = false;
         });
         confirmDialogShow.value = true;
       } else {
-        console.log("💾 Direct save (new mode or no changes)");
         // Direct save for new or edit without changes
         executeSave();
       }
     });
 
     const handleConfirmCancel = $(() => {
-      console.log("❌ User cancelled confirmation");
       confirmDialogShow.value = false;
     });
 

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { Card } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
@@ -105,14 +104,6 @@ export const OjpPlanningCalendar = component$(() => {
     });
   });
 
-  const handleEventClick = $((event: any) => {
-    console.log("🖱️ Event clicked in calendar:", event);
-    selectedEvent.value = event;
-    console.log("🎯 selectedEvent.value set to:", selectedEvent.value); // ✅ DEBUG
-    showEditEventModal.value = true;
-    console.log("🔄 showEditEventModal set to:", showEditEventModal.value); // ✅ DEBUG
-  });
-
   useTask$(({ track }) => {
     const trigger = track(() => newEventTrigger.value);
     if (trigger) {
@@ -135,6 +126,11 @@ export const OjpPlanningCalendar = component$(() => {
 
   const handleToday = $(() => {
     currentWeekStart.value = startOfWeek(new Date());
+  });
+
+  const handleEventClick = $((event: any) => {
+    selectedEvent.value = event;
+    showEditEventModal.value = true;
   });
 
   const handleEventDrop = $((eventId: string, newDate: Date, newSal: OjpSal, newTime: Date) => {
