@@ -168,52 +168,54 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
   return (
     <Dialog bind:show={showSig} closeButton>
       <DialogHeader>
+        {/* ✅ NOVÝ TAB SYSTÉM S AKESO BUTTONS */}
         <div class="flex w-full items-center justify-between">
-          <div class="flex gap-4">
-            <button
-              class={`px-4 py-2 text-sm font-medium ${
-                activeTab.value === "pridat"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
+          <div class="flex gap-3">
+            <Button
+              class="transition-all duration-300"
               onClick$={() => (activeTab.value = "pridat")}
+              severity={activeTab.value === "pridat" ? "accent" : "none"}
+              size="sm"
+              type="button"
+              variant={activeTab.value === "pridat" ? "contained" : "outline"}
             >
               Přidat událost
-            </button>
-            <button
-              class={`px-4 py-2 text-sm font-medium ${
-                activeTab.value === "pauzy"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
+            </Button>
+            <Button
+              class="transition-all duration-300"
               onClick$={() => (activeTab.value = "pauzy")}
+              severity={activeTab.value === "pauzy" ? "accent" : "none"}
+              size="sm"
+              type="button"
+              variant={activeTab.value === "pauzy" ? "contained" : "outline"}
             >
               Pauzy
-            </button>
-            <button
-              class={`px-4 py-2 text-sm font-medium ${
-                activeTab.value === "vlastni"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-gray-600 hover:text-gray-800"
-              }`}
+            </Button>
+            <Button
+              class="transition-all duration-300"
               onClick$={() => (activeTab.value = "vlastni")}
+              severity={activeTab.value === "vlastni" ? "accent" : "none"}
+              size="sm"
+              type="button"
+              variant={activeTab.value === "vlastni" ? "contained" : "outline"}
             >
               Vlastní
-            </button>
+            </Button>
           </div>
         </div>
       </DialogHeader>
 
-      {/* ✅ Fixní velikost DialogBody */}
-      <DialogBody class="max-h-[600px] w-[800px] overflow-y-auto">
-        <OjpModalContent activeTab={activeTab.value} data={modalData} errorMessage={errorMessage.value} />
-
-        <OjpModalPreview activeTab={activeTab.value} data={modalData} />
+      {/* ✅ ŠIRŠÍ MODAL S LEPŠÍM LAYOUTEM */}
+      <DialogBody class="max-h-[800px] w-[1400px] overflow-y-auto">
+        <div class="space-y-6">
+          <OjpModalContent activeTab={activeTab.value} data={modalData} errorMessage={errorMessage.value} />
+          <OjpModalPreview activeTab={activeTab.value} data={modalData} />
+        </div>
       </DialogBody>
 
       <DialogFooter class="flex justify-between">
         <div></div>
-        <div class="flex gap-2">
+        <div class="flex gap-3">
           <Button onClick$={closeModal} size="sm" type="button" variant="outline">
             Zrušit
           </Button>
