@@ -19,7 +19,7 @@ type OjpModalProps = {
     dateTime?: Date;
     sal?: OjpSal;
   };
-  mode: "edit" | "new" | "view";
+  mode: "edit" | "new";
   refreshTrigger: Signal<number>;
 };
 
