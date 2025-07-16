@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, FieldNumber } from "@akeso/ui-components";
-import { $, component$, type Signal, useTask$ } from "@builder.io/qwik";
+import { $, component$, useTask$ } from "@builder.io/qwik";
 import { setValue, useForm, valiForm$ } from "@modular-forms/qwik";
 import * as v from "valibot";
 
@@ -9,7 +9,6 @@ type SeparatorType = {
   name: string;
 };
 
-// ✅ Schema pro preview form
 const PreviewFormSchema = v.object({
   repeatCount: v.pipe(v.number("Počet musí být číslo"), v.minValue(1, "Minimum je 1"), v.maxValue(10, "Maximum je 10")),
 });
@@ -19,11 +18,10 @@ type PreviewFormValues = v.InferInput<typeof PreviewFormSchema>;
 type OjpModalPreviewProps = {
   activeTab: "pauzy" | "pridat" | "vlastni";
   data: any;
-  showSignal: Signal<boolean>;
+  separatorOptions: SeparatorType[];
 };
 
-export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, data }) => {
-  // ✅ Vytvoření formStore pro preview
+export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, data, separatorOptions }) => {
   const [previewFormStore, { Form }] = useForm<PreviewFormValues>({
     loader: {
       value: {
@@ -33,25 +31,17 @@ export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, da
     validate: valiForm$(PreviewFormSchema),
   });
 
-  const separatorOptions: SeparatorType[] = [
-    { duration: 15, id: "us-basic", name: "ÚS" },
-    { duration: 30, id: "us-tep", name: "ÚS TEP" },
-    { duration: 45, id: "us-extended", name: "ÚS+" },
-  ];
-
   const handleSeparatorChange = $((index: number, separator: SeparatorType) => {
     if (!data.separators) data.separators = {};
     data.separators[index] = separator;
   });
 
-  // ✅ Tracking změn repeatCount pomocí useTask$
   useTask$(({ track }) => {
     const repeatCount = track(() => previewFormStore.internal.fields.repeatCount?.value);
 
     if (repeatCount !== undefined && repeatCount !== data.repeatCount) {
       data.repeatCount = repeatCount;
 
-      // Aktualizuj separators
       const newSeparators: Record<number, SeparatorType> = {};
       for (let i = 1; i <= repeatCount; i++) {
         newSeparators[i] = data.separators?.[i] || separatorOptions[0];
@@ -60,7 +50,6 @@ export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, da
     }
   });
 
-  // ✅ Synchronizace data.repeatCount -> formStore
   useTask$(({ track }) => {
     track(() => data.repeatCount);
 
@@ -98,7 +87,7 @@ export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, da
           />
         </Form>
 
-        {data.repeatCount >= 1 && (
+        {data.repeatCount >= 1 && separatorOptions.length > 0 && (
           <div class="mt-4">
             <h5 class="mb-2 text-sm font-medium">Úklid po každé operaci:</h5>
             {Array.from({ length: data.repeatCount }, (_, i) => {

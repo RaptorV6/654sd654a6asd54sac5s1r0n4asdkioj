@@ -1,13 +1,14 @@
 import type { Signal } from "@builder.io/qwik";
 
 import { Button, Dialog, DialogBody, DialogFooter, DialogHeader } from "@akeso/ui-components";
-import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
+import { $, component$, useComputed$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEvent, OjpSal } from "./_mock-events";
 
 import { addOjpEvent } from "./_actions";
 import { OjpModalContent } from "./ojp-modal-content";
 import { OjpModalPreview } from "./ojp-modal-preview";
+import { allProcedures } from "./ojp-procedure-data"; // ✅ Import pro všechny procedures
 
 type TabType = "pauzy" | "pridat" | "vlastni";
 
@@ -39,10 +40,28 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
     vykon: "",
   });
 
+  // ✅ Computed pro načítání separátorů z procedure listu
+  const separatorOptions = useComputed$(() => {
+    return allProcedures
+      .filter(
+        (proc) =>
+          // Hledáme "other" procedures s cleaning ID
+          proc.type === "Úklid" ||
+          (proc.secondIdSurgeonSurgery &&
+            (proc.secondIdSurgeonSurgery.includes("Úklid sálu běžný") ||
+              proc.secondIdSurgeonSurgery.includes("Úklid sálu  po TEP"))),
+      )
+      .map((proc) => ({
+        duration: proc.duration,
+        id: proc.id,
+        name: proc.secondIdSurgeonSurgery || "Úklid",
+      }));
+  });
+
   const closeModal = $(() => {
     showSig.value = false;
     errorMessage.value = "";
-    activeTab.value = "pridat"; // ✅ Reset tabu na výchozí
+    activeTab.value = "pridat";
     modalData.casOd = "";
     modalData.datum = "";
     modalData.operator = "";
@@ -64,7 +83,6 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
       isLoading.value = true;
       errorMessage.value = "";
 
-      // ✅ Pro pauzy/vlastní jen jeden event bez ÚS
       if (activeTab.value === "pauzy" || activeTab.value === "vlastni") {
         const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
         const endTime = new Date(startTime.getTime() + modalData.procedure.duration * 60 * 1000);
@@ -86,13 +104,6 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
           return;
         }
       } else {
-        // ✅ Pro operace s ÚS a opakováním
-        const separatorOptions = [
-          { duration: 15, id: "us-basic", name: "ÚS" },
-          { duration: 30, id: "us-tep", name: "ÚS TEP" },
-          { duration: 45, id: "us-extended", name: "ÚS+" },
-        ];
-
         let currentTime = new Date(`${modalData.datum}T${modalData.casOd}`);
 
         for (let i = 0; i < modalData.repeatCount; i++) {
@@ -120,8 +131,7 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
 
           currentTime = endTime;
 
-          // Přidej ÚS po operaci
-          const separator = modalData.separators[operationNumber] || separatorOptions[0];
+          const separator = modalData.separators[operationNumber] || separatorOptions.value[0];
           const separatorEndTime = new Date(currentTime.getTime() + separator.duration * 60 * 1000);
 
           const separatorEventData = {
@@ -169,7 +179,6 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
   return (
     <Dialog bind:show={showSig} closeButton>
       <DialogHeader>
-        {/* ✅ NOVÝ TAB SYSTÉM S AKESO BUTTONS */}
         <div class="flex w-full items-center justify-between">
           <div class="flex gap-3">
             <Button
@@ -206,7 +215,6 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
         </div>
       </DialogHeader>
 
-      {/* ✅ ŠIRŠÍ MODAL S LEPŠÍM LAYOUTEM */}
       <DialogBody class="max-h-[800px] w-[1400px] overflow-y-auto">
         <div class="space-y-6">
           <OjpModalContent
@@ -215,7 +223,7 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
             errorMessage={errorMessage.value}
             showSignal={showSig}
           />
-          <OjpModalPreview activeTab={activeTab.value} data={modalData} showSignal={showSig} />
+          <OjpModalPreview activeTab={activeTab.value} data={modalData} separatorOptions={separatorOptions.value} />
         </div>
       </DialogBody>
 
