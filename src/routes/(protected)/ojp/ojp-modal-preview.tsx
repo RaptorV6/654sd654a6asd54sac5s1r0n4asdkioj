@@ -1,5 +1,7 @@
-import { Button, Card, CardBody, InputNumber } from "@akeso/ui-components";
-import { $, component$ } from "@builder.io/qwik";
+import { Button, Card, CardBody, FieldNumber } from "@akeso/ui-components";
+import { $, component$, useTask$ } from "@builder.io/qwik";
+import { setValue, useForm, valiForm$ } from "@modular-forms/qwik";
+import * as v from "valibot";
 
 type SeparatorType = {
   duration: number;
@@ -7,12 +9,29 @@ type SeparatorType = {
   name: string;
 };
 
+// ✅ Schema pro preview form
+const PreviewFormSchema = v.object({
+  repeatCount: v.pipe(v.number("Počet musí být číslo"), v.minValue(1, "Minimum je 1"), v.maxValue(10, "Maximum je 10")),
+});
+
+type PreviewFormValues = v.InferInput<typeof PreviewFormSchema>;
+
 type OjpModalPreviewProps = {
   activeTab: "pauzy" | "pridat" | "vlastni";
   data: any;
 };
 
 export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, data }) => {
+  // ✅ Vytvoření formStore pro preview
+  const [previewFormStore, { Form }] = useForm<PreviewFormValues>({
+    loader: {
+      value: {
+        repeatCount: data.repeatCount || 1,
+      },
+    },
+    validate: valiForm$(PreviewFormSchema),
+  });
+
   const separatorOptions: SeparatorType[] = [
     { duration: 15, id: "us-basic", name: "ÚS" },
     { duration: 30, id: "us-tep", name: "ÚS TEP" },
@@ -22,6 +41,31 @@ export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, da
   const handleSeparatorChange = $((index: number, separator: SeparatorType) => {
     if (!data.separators) data.separators = {};
     data.separators[index] = separator;
+  });
+
+  // ✅ Tracking změn repeatCount pomocí useTask$
+  useTask$(({ track }) => {
+    const repeatCount = track(() => previewFormStore.internal.fields.repeatCount?.value);
+
+    if (repeatCount !== undefined && repeatCount !== data.repeatCount) {
+      data.repeatCount = repeatCount;
+
+      // Aktualizuj separators
+      const newSeparators: Record<number, SeparatorType> = {};
+      for (let i = 1; i <= repeatCount; i++) {
+        newSeparators[i] = data.separators?.[i] || separatorOptions[0];
+      }
+      data.separators = newSeparators;
+    }
+  });
+
+  // ✅ Synchronizace data.repeatCount -> formStore
+  useTask$(({ track }) => {
+    track(() => data.repeatCount);
+
+    if (data.repeatCount !== previewFormStore.internal.fields.repeatCount?.value) {
+      setValue(previewFormStore, "repeatCount", data.repeatCount || 1);
+    }
   });
 
   if (!data.procedure) return null;
@@ -46,26 +90,17 @@ export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, da
         </div>
 
         <div class="border-t pt-4">
-          {/* ✅ InputNumber místo FieldNumber */}
-          <InputNumber
-            error=""
-            label="Počet opakování"
-            max={10}
-            min={1}
-            name="repeatCount"
-            onInput$={(_: any, target: any) => {
-              const newCount = parseInt(target.value) || 1;
-              data.repeatCount = newCount;
-
-              const newSeparators: Record<number, SeparatorType> = {};
-              for (let i = 1; i <= newCount; i++) {
-                newSeparators[i] = data.separators?.[i] || separatorOptions[0];
-              }
-              data.separators = newSeparators;
-            }}
-            required
-            value={data.repeatCount}
-          />
+          <Form class="form-styles">
+            <FieldNumber
+              class="w-32"
+              label="Počet opakování"
+              max={10}
+              min={1}
+              name="repeatCount"
+              of={previewFormStore}
+              required
+            />
+          </Form>
 
           {data.repeatCount >= 1 && (
             <div class="mt-4">

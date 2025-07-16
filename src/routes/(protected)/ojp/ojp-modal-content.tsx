@@ -1,10 +1,29 @@
-import { Button, Card, CardBody, InputDate, InputRadioSelect, InputTime } from "@akeso/ui-components";
-import { $, component$, useComputed$ } from "@builder.io/qwik";
+import { Button, Card, CardBody, FieldDate, FieldRadioSelect, FieldTime, PreviewText } from "@akeso/ui-components";
+import { $, component$, useComputed$, useTask$ } from "@builder.io/qwik";
+import { reset, useForm, valiForm$ } from "@modular-forms/qwik";
+import * as v from "valibot";
 
 import { OJP_SALY } from "./_mock-events";
 import { allProcedures } from "./ojp-procedure-data";
 
 type TabType = "pauzy" | "pridat" | "vlastni";
+
+// ✅ Valibot schema podle vašich patterns
+const FormSchema = v.object({
+  casOd: v.pipe(
+    v.string("Vyberte čas"),
+    v.minLength(1, "Vyberte čas"),
+    v.regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Neplatný formát času"),
+  ),
+  datum: v.pipe(
+    v.string("Vyberte datum"),
+    v.minLength(1, "Vyberte datum"),
+    v.transform((s) => s), // Zachováme jako string pro kompatibilitu
+  ),
+  sal: v.pipe(v.string("Vyberte sál"), v.minLength(1, "Vyberte sál")),
+});
+
+type FormValues = v.InferInput<typeof FormSchema>;
 
 type OjpModalContentProps = {
   activeTab: TabType;
@@ -13,6 +32,45 @@ type OjpModalContentProps = {
 };
 
 export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, data, errorMessage }) => {
+  // ✅ Vytvoření formuláře podle vašich patterns
+  const [formStore, { Form }] = useForm<FormValues>({
+    loader: {
+      value: {
+        casOd: data.casOd || "",
+        datum: data.datum || "",
+        sal: data.sal || "",
+      },
+    },
+    validate: valiForm$(FormSchema),
+  });
+
+  // ✅ Synchronizace formStore s modalData - obousmerně
+  useTask$(({ track }) => {
+    track(() => data.sal);
+    track(() => data.datum);
+    track(() => data.casOd);
+
+    // Při změně data objektu aktualizuj formStore
+    reset(formStore, {
+      initialValues: {
+        casOd: data.casOd || "",
+        datum: data.datum || "",
+        sal: data.sal || "",
+      },
+    });
+  });
+
+  // ✅ Synchronizace formStore -> modalData
+  useTask$(({ track }) => {
+    const sal = track(() => formStore.internal.fields.sal?.value);
+    const datum = track(() => formStore.internal.fields.datum?.value);
+    const casOd = track(() => formStore.internal.fields.casOd?.value);
+
+    if (sal !== undefined) data.sal = sal;
+    if (datum !== undefined) data.datum = datum;
+    if (casOd !== undefined) data.casOd = casOd;
+  });
+
   const salOptions = OJP_SALY.map((sal) => ({
     label: sal.displayName,
     value: sal.name,
@@ -111,47 +169,44 @@ export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, da
 
   return (
     <div class="space-y-6">
-      {/* ✅ Základní údaje s Akeso Input komponenty */}
       <Card>
         <CardBody>
-          <div class="grid grid-cols-4 gap-4">
-            <InputRadioSelect
-              emptyOptionLabel="Vyberte sál"
-              error=""
-              label="Sál"
-              name="sal"
-              onInput$={(_: any, target: any) => (data.sal = target.value)}
-              options={salOptions}
-              required
-              value={data.sal}
-            />
-            <InputDate
-              error=""
-              label="Datum"
-              name="datum"
-              onInput$={(_: any, target: any) => (data.datum = target.value)}
-              required
-              value={data.datum}
-            />
-            <InputTime
-              error=""
-              label="Čas od"
-              name="casOd"
-              onInput$={(_: any, target: any) => (data.casOd = target.value)}
-              required
-              value={data.casOd}
-            />
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-gray-700">Čas do</label>
-              <div class="flex h-10 w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                {calculateEndTime.value || "---"}
+          <Form class="form-styles">
+            <div class="grid grid-cols-4 items-start gap-4">
+              <div>
+                <FieldRadioSelect label="Sál" name="sal" of={formStore} options={salOptions} required />
+              </div>
+              <div>
+                <FieldDate
+                  label="Datum"
+                  name="datum"
+                  of={formStore}
+                  onClick$={$((_, element: HTMLInputElement) => {
+                    element.showPicker();
+                  })}
+                  required
+                />
+              </div>
+              <div>
+                <FieldTime
+                  label="Čas od"
+                  name="casOd"
+                  of={formStore}
+                  onClick$={$((_, element: HTMLInputElement) => {
+                    element.showPicker();
+                  })}
+                  required
+                />
+              </div>
+              <div>
+                <PreviewText label="Čas do" value={calculateEndTime.value || "---"} />
               </div>
             </div>
-          </div>
+          </Form>
         </CardBody>
       </Card>
 
-      {/* ✅ Fixní výška pro selection oblast */}
+      {/* ✅ Fixní výška pro selection oblast - zachováno beze změny */}
       <div class="h-[300px] space-y-4 overflow-y-auto">
         {activeTab === "pridat" && (
           <>
