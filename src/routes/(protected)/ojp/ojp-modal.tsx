@@ -42,6 +42,7 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
   const closeModal = $(() => {
     showSig.value = false;
     errorMessage.value = "";
+    activeTab.value = "pridat"; // ✅ Reset tabu na výchozí
     modalData.casOd = "";
     modalData.datum = "";
     modalData.operator = "";
@@ -208,8 +209,13 @@ export const OjpModal = component$<OjpModalProps>(({ "bind:show": showSig, initi
       {/* ✅ ŠIRŠÍ MODAL S LEPŠÍM LAYOUTEM */}
       <DialogBody class="max-h-[800px] w-[1400px] overflow-y-auto">
         <div class="space-y-6">
-          <OjpModalContent activeTab={activeTab.value} data={modalData} errorMessage={errorMessage.value} />
-          <OjpModalPreview activeTab={activeTab.value} data={modalData} />
+          <OjpModalContent
+            activeTab={activeTab.value}
+            data={modalData}
+            errorMessage={errorMessage.value}
+            showSignal={showSig}
+          />
+          <OjpModalPreview activeTab={activeTab.value} data={modalData} showSignal={showSig} />
         </div>
       </DialogBody>
 

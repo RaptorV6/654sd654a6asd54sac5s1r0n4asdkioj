@@ -1,5 +1,5 @@
 import { Button, Card, CardBody, FieldNumber } from "@akeso/ui-components";
-import { $, component$, useTask$ } from "@builder.io/qwik";
+import { $, component$, type Signal, useTask$ } from "@builder.io/qwik";
 import { setValue, useForm, valiForm$ } from "@modular-forms/qwik";
 import * as v from "valibot";
 
@@ -19,6 +19,7 @@ type PreviewFormValues = v.InferInput<typeof PreviewFormSchema>;
 type OjpModalPreviewProps = {
   activeTab: "pauzy" | "pridat" | "vlastni";
   data: any;
+  showSignal: Signal<boolean>;
 };
 
 export const OjpModalPreview = component$<OjpModalPreviewProps>(({ activeTab, data }) => {

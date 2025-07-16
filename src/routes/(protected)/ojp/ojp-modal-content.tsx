@@ -13,7 +13,7 @@ import {
   FieldTime,
   PreviewText,
 } from "@akeso/ui-components";
-import { $, component$, useComputed$, useSignal, useTask$ } from "@builder.io/qwik";
+import { $, component$, type Signal, useComputed$, useSignal, useTask$ } from "@builder.io/qwik";
 import { reset, useForm, valiForm$ } from "@modular-forms/qwik";
 import * as v from "valibot";
 
@@ -36,9 +36,10 @@ type OjpModalContentProps = {
   activeTab: TabType;
   data: any;
   errorMessage: string;
+  showSignal: Signal<boolean>;
 };
 
-export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, data, errorMessage }) => {
+export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, data, errorMessage, showSignal }) => {
   const typExpanded = useSignal(false);
   const operatorExpanded = useSignal(false);
   const vykonExpanded = useSignal(false);
@@ -134,11 +135,43 @@ export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, da
     return endTime.toTimeString().slice(0, 5);
   });
 
+  // ✅ Reset expanded stavů při otevření modalu
+  useTask$(({ track }) => {
+    track(() => showSignal.value);
+
+    if (showSignal.value) {
+      // Reset na výchozí stav - pouze typ otevřený pro tab "pridat"
+      typExpanded.value = activeTab === "pridat";
+      operatorExpanded.value = false;
+      vykonExpanded.value = false;
+    }
+  });
+
+  // ✅ Automatické otevření operatéra po výběru typu
+  useTask$(({ track }) => {
+    track(() => data.typ);
+
+    if (activeTab === "pridat" && data.typ && !data.operator) {
+      operatorExpanded.value = true;
+      typExpanded.value = false; // Zavři typ
+    }
+  });
+
+  // ✅ Automatické otevření výkonu po výběru operatéra
+  useTask$(({ track }) => {
+    track(() => data.operator);
+
+    if (activeTab === "pridat" && data.operator && data.typ && !data.procedure) {
+      vykonExpanded.value = true;
+      operatorExpanded.value = false; // Zavři operatéra
+    }
+  });
+
   const handleOperatorSelect = $((operator: any) => {
     data.operator = operator.fullName;
     data.vykon = "";
     data.procedure = null;
-    operatorExpanded.value = false;
+    // ✅ Neuzavírám operatéra zde - nechám to na automatické logice
   });
 
   const handleTypeSelect = $((type: string) => {
@@ -146,13 +179,13 @@ export const OjpModalContent = component$<OjpModalContentProps>(({ activeTab, da
     data.operator = "";
     data.vykon = "";
     data.procedure = null;
-    typExpanded.value = false;
+    // ✅ Neuzavírám typ zde - nechám to na automatické logice
   });
 
   const handleProcedureSelect = $((procedure: any) => {
     data.procedure = procedure;
     data.vykon = procedure.surgery;
-    vykonExpanded.value = false;
+    vykonExpanded.value = false; // ✅ Zavři výkon po výběru
   });
 
   // Tracking hooks
