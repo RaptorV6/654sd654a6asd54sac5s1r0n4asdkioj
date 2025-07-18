@@ -26,6 +26,7 @@ type TabType = "pauzy" | "pridat" | "vlastni";
 type OjpModalProps = {
   "bind:show": Signal<boolean>;
   eventSignal?: Signal<null | OjpEvent>;
+  eventsSignal?: Signal<OjpEvent[]>;
   initialData?: {
     dateTime?: Date;
     sal?: OjpSal;
@@ -35,7 +36,7 @@ type OjpModalProps = {
 };
 
 export const OjpModal = component$<OjpModalProps>(
-  ({ "bind:show": showSig, eventSignal, initialData, mode, refreshTrigger }) => {
+  ({ "bind:show": showSig, eventSignal, eventsSignal, initialData, mode, refreshTrigger }) => {
     const activeTab = useSignal<TabType>("pridat");
     const isLoading = useSignal(false);
     const errorMessage = useSignal("");
@@ -64,13 +65,14 @@ export const OjpModal = component$<OjpModalProps>(
       vykon: "",
     });
 
-    // Original data for change detection
+    // Original data for change detection - separované aby se předešlo reference sharing
     const originalData = useStore({
       casOd: "",
       datum: "",
       operator: "",
       procedure: null as any,
       sal: "",
+      separatorId: "", // ✅ ZMĚNA: trackuj jen ID místo objektu
       typ: "",
       vykon: "",
     });
@@ -82,6 +84,9 @@ export const OjpModal = component$<OjpModalProps>(
     const hasChanges = useComputed$(() => {
       if (mode === "new") return true;
 
+      // ✅ OPRAVA: porovnávej separator ID místo celého objektu
+      const currentSeparatorId = modalData.separators[1]?.id || "";
+
       return (
         modalData.casOd !== originalData.casOd ||
         modalData.datum !== originalData.datum ||
@@ -89,8 +94,58 @@ export const OjpModal = component$<OjpModalProps>(
         modalData.sal !== originalData.sal ||
         modalData.typ !== originalData.typ ||
         modalData.vykon !== originalData.vykon ||
-        modalData.procedure?.id !== originalData.procedure?.id
+        modalData.procedure?.id !== originalData.procedure?.id ||
+        currentSeparatorId !== originalData.separatorId
       );
+    });
+
+    // Computed: najít navazující úklid
+    const relatedCleanup = useComputed$(() => {
+      if (mode !== "edit" || !currentEvent.value || !eventsSignal?.value.length) return null;
+
+      const events = eventsSignal.value;
+      const current = currentEvent.value;
+      return (
+        events.find(
+          (e) =>
+            e.typ === "uklid" &&
+            e.sal === current.sal &&
+            Math.abs(e.dateFrom.getTime() - current.dateTo.getTime()) < 10 * 60 * 1000,
+        ) || null
+      );
+    });
+
+    // Computed: najít celou sérii (operace + úklidy)
+    const relatedSeries = useComputed$(() => {
+      if (mode !== "edit" || !currentEvent.value || !eventsSignal?.value.length) return [];
+
+      const events = eventsSignal.value;
+      const current = currentEvent.value;
+      const series = [current];
+
+      // Najít všechny navazující úklidy
+      let lastEvent = current;
+      let nextCleanup = events.find(
+        (e) =>
+          e.typ === "uklid" &&
+          e.sal === lastEvent.sal &&
+          Math.abs(e.dateFrom.getTime() - lastEvent.dateTo.getTime()) < 10 * 60 * 1000,
+      );
+
+      while (nextCleanup) {
+        series.push(nextCleanup);
+        lastEvent = nextCleanup;
+
+        // Najít další úklid
+        nextCleanup = events.find(
+          (e) =>
+            e.typ === "uklid" &&
+            e.sal === lastEvent.sal &&
+            Math.abs(e.dateFrom.getTime() - lastEvent.dateTo.getTime()) < 10 * 60 * 1000,
+        );
+      }
+
+      return series;
     });
 
     const separatorOptions = useComputed$(() => {
@@ -114,6 +169,7 @@ export const OjpModal = component$<OjpModalProps>(
       track(() => showSig.value);
       track(() => eventSignal?.value);
       track(() => mode);
+      track(() => relatedCleanup.value);
 
       const event = eventSignal?.value;
 
@@ -145,20 +201,46 @@ export const OjpModal = component$<OjpModalProps>(
           return false;
         });
 
+        // Najít odpovídající separator na základě nalezeného úklidu
+        const cleanup = relatedCleanup.value;
+        let selectedSeparator = separatorOptions.value[0]; // default
+
+        if (cleanup) {
+          const foundSeparator = separatorOptions.value.find(
+            (sep) => sep.name === cleanup.title || sep.duration === cleanup.duration,
+          );
+          if (foundSeparator) {
+            selectedSeparator = foundSeparator;
+          }
+        }
+
         // Prepare event data
         const eventData = {
           casOd: event.dateFrom.toTimeString().slice(0, 5),
           datum: event.dateFrom.toISOString().split("T")[0],
           operator: event.operator || "",
           procedure: procedure || null,
+          repeatCount: 1,
           sal: event.sal,
+          separators: { 1: selectedSeparator },
           typ: procedure?.type || event.typ,
           vykon: procedure?.surgery || event.title,
         };
 
-        // Set both current and original data
+        // ✅ OPRAVA: separátní ukládání original data
+        const originalEventData = {
+          casOd: event.dateFrom.toTimeString().slice(0, 5),
+          datum: event.dateFrom.toISOString().split("T")[0],
+          operator: event.operator || "",
+          procedure: procedure || null,
+          sal: event.sal,
+          separatorId: selectedSeparator.id, // ✅ jen ID
+          typ: procedure?.type || event.typ,
+          vykon: procedure?.surgery || event.title,
+        };
+
         Object.assign(modalData, eventData);
-        Object.assign(originalData, eventData);
+        Object.assign(originalData, originalEventData);
       } else if (mode === "new") {
         // Reset for new mode
         activeTab.value = "pridat";
@@ -176,7 +258,16 @@ export const OjpModal = component$<OjpModalProps>(
         };
 
         Object.assign(modalData, newData);
-        Object.assign(originalData, {}); // Empty for new
+        Object.assign(originalData, {
+          casOd: "",
+          datum: "",
+          operator: "",
+          procedure: null,
+          sal: "",
+          separatorId: "",
+          typ: "",
+          vykon: "",
+        });
       }
     });
 
@@ -204,6 +295,7 @@ export const OjpModal = component$<OjpModalProps>(
         operator: "",
         procedure: null,
         sal: "",
+        separatorId: "",
         typ: "",
         vykon: "",
       });
@@ -213,15 +305,25 @@ export const OjpModal = component$<OjpModalProps>(
       const event = currentEvent.value;
       if (!event) return;
 
-      confirmDialog.title = "Smazat událost";
-      confirmDialog.message = `Opravdu chcete smazat událost "${event.title}"?`;
+      const series = relatedSeries.value;
+      const seriesCount = series.length;
+
+      confirmDialog.title = "Smazat události";
+      confirmDialog.message = `Opravdu chcete smazat ${seriesCount > 1 ? `${seriesCount} souvisejících událostí` : "událost"} "${event.title}"${seriesCount > 1 ? " včetně navazujících úklidů?" : "?"}`;
       confirmDialog.severity = "danger";
       confirmDialog.onConfirm = $(() => {
-        const result = deleteOjpEvent({ id: event.id });
+        // Smazat celou sérii
+        let hasError = false;
+        for (const seriesEvent of series) {
+          const result = deleteOjpEvent({ id: seriesEvent.id });
+          if (result.failed) {
+            hasError = true;
+            errorMessage.value = result.message || "Nastala chyba při mazání";
+            break;
+          }
+        }
 
-        if (result.failed) {
-          errorMessage.value = result.message || "Nastala chyba při mazání";
-        } else {
+        if (!hasError) {
           refreshTrigger.value = Date.now();
           closeModal();
         }
@@ -243,32 +345,128 @@ export const OjpModal = component$<OjpModalProps>(
 
         if (mode === "edit") {
           const event = currentEvent.value;
+          const series = relatedSeries.value;
+
           if (!event) {
             errorMessage.value = "Chyba při načítání události";
             return;
           }
 
-          // Update existing event
-          const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
-          const endTime = new Date(startTime.getTime() + modalData.procedure.duration * 60 * 1000);
+          if (activeTab.value === "pauzy" || activeTab.value === "vlastni") {
+            // Jednoduchý update pro pauzy/vlastní
+            const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
+            const endTime = new Date(startTime.getTime() + modalData.procedure.duration * 60 * 1000);
 
-          const updateData = {
-            casDo: endTime.toTimeString().slice(0, 5),
-            casOd: modalData.casOd,
-            datum: modalData.datum,
-            id: event.id,
-            operator: modalData.operator || undefined,
-            poznamka: modalData.procedure.type || undefined,
-            sal: modalData.sal,
-            title: modalData.procedure.secondIdSurgeonSurgery || modalData.procedure.surgery,
-            typ: activeTab.value === "pauzy" ? "pauza" : activeTab.value === "vlastni" ? "svatek" : "operace",
-          };
+            const updateData = {
+              casDo: endTime.toTimeString().slice(0, 5),
+              casOd: modalData.casOd,
+              datum: modalData.datum,
+              id: event.id,
+              operator: modalData.operator || undefined,
+              poznamka: modalData.procedure.type || undefined,
+              sal: modalData.sal,
+              title: modalData.procedure.secondIdSurgeonSurgery || modalData.procedure.surgery,
+              typ: activeTab.value === "pauzy" ? "pauza" : "svatek",
+            };
 
-          const result = updateOjpEvent(updateData);
+            const result = updateOjpEvent(updateData);
+            if (result.failed) {
+              errorMessage.value = result.message || "Nastala chyba při ukládání";
+              return;
+            }
+          } else {
+            // Update operace + separator série s posunem
+            const startTime = new Date(`${modalData.datum}T${modalData.casOd}`);
+            let currentTime = startTime;
 
-          if (result.failed) {
-            errorMessage.value = result.message || "Nastala chyba při ukládání";
-            return;
+            // ✅ PŘED UPDATE: zjisti rozdíl v délce separátoru
+            const cleanupEvent = series.find((e) => e.typ === "uklid");
+            const newSeparator = modalData.separators[1] || separatorOptions.value[0];
+            const oldSeparatorDuration = cleanupEvent?.duration || 0;
+            const newSeparatorDuration = newSeparator.duration;
+            const durationDiff = newSeparatorDuration - oldSeparatorDuration; // v minutách
+
+            // Update operace
+            const operationEndTime = new Date(currentTime.getTime() + modalData.procedure.duration * 60 * 1000);
+
+            const operationUpdateData = {
+              casDo: operationEndTime.toTimeString().slice(0, 5),
+              casOd: modalData.casOd,
+              datum: modalData.datum,
+              id: event.id,
+              operator: modalData.operator || undefined,
+              poznamka: modalData.procedure.type || undefined,
+              sal: modalData.sal,
+              title: modalData.procedure.secondIdSurgeonSurgery || modalData.procedure.surgery,
+              typ: "operace",
+            };
+
+            const operationResult = updateOjpEvent(operationUpdateData);
+            if (operationResult.failed) {
+              errorMessage.value = operationResult.message || "Nastala chyba při ukládání operace";
+              return;
+            }
+
+            currentTime = operationEndTime;
+
+            // Update separator
+            if (cleanupEvent) {
+              const separatorEndTime = new Date(currentTime.getTime() + newSeparator.duration * 60 * 1000);
+
+              const separatorUpdateData = {
+                casDo: separatorEndTime.toTimeString().slice(0, 5),
+                casOd: currentTime.toTimeString().slice(0, 5),
+                datum: modalData.datum,
+                id: cleanupEvent.id,
+                operator: undefined,
+                poznamka: undefined,
+                sal: modalData.sal,
+                title: newSeparator.name,
+                typ: "uklid",
+              };
+
+              const separatorResult = updateOjpEvent(separatorUpdateData);
+              if (separatorResult.failed) {
+                errorMessage.value = separatorResult.message || "Nastala chyba při ukládání úklidu";
+                return;
+              }
+
+              // ✅ POSUN následujících událostí
+              if (durationDiff !== 0 && eventsSignal?.value) {
+                const allEvents = eventsSignal.value;
+                const oldSeparatorEndTime = cleanupEvent.dateTo.getTime();
+
+                // Najít všechny události ve stejném sále které začínají po původním konci separátoru
+                const eventsToShift = allEvents.filter(
+                  (e) =>
+                    e.sal === modalData.sal &&
+                    e.dateFrom.getTime() >= oldSeparatorEndTime - 60000 && // tolerance 1 min
+                    e.id !== event.id &&
+                    e.id !== cleanupEvent.id,
+                );
+
+                // Posunout všechny následující události
+                for (const eventToShift of eventsToShift) {
+                  const newStartTime = new Date(eventToShift.dateFrom.getTime() + durationDiff * 60 * 1000);
+                  const newEndTime = new Date(eventToShift.dateTo.getTime() + durationDiff * 60 * 1000);
+
+                  const shiftUpdateData = {
+                    casDo: newEndTime.toTimeString().slice(0, 5),
+                    casOd: newStartTime.toTimeString().slice(0, 5),
+                    datum: newStartTime.toISOString().split("T")[0],
+                    id: eventToShift.id,
+                    operator: eventToShift.operator || undefined,
+                    poznamka: eventToShift.poznamka || undefined,
+                    sal: eventToShift.sal,
+                    title: eventToShift.title,
+                    typ: eventToShift.typ,
+                  };
+
+                  updateOjpEvent(shiftUpdateData);
+                  // Pokračuj i při chybě posunu
+                }
+              }
+            }
           }
         } else {
           // Create new event(s) - existing logic

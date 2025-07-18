@@ -226,11 +226,18 @@ export const OjpPlanningCalendar = component$(() => {
         />
       </div>
 
-      <OjpModal bind:show={showNewEventModal} initialData={newEventData} mode="new" refreshTrigger={refreshTrigger} />
+      <OjpModal
+        bind:show={showNewEventModal}
+        eventsSignal={eventsSignal}
+        initialData={newEventData}
+        mode="new"
+        refreshTrigger={refreshTrigger}
+      />
 
       <OjpModal
         bind:show={showEditEventModal}
         eventSignal={selectedEvent}
+        eventsSignal={eventsSignal}
         mode="edit"
         refreshTrigger={refreshTrigger}
       />
