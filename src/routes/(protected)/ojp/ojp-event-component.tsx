@@ -35,7 +35,6 @@ const eventStyles = `
    cursor: grabbing !important;
  }
  
- /* Global cursor během drag */
  body:has([data-being-dragged="true"]) {
    cursor: grabbing !important;
  }
@@ -49,9 +48,10 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
-  // ✅ ODSTRANĚNO: isDragging prop (nepoužíval se)
   onEventClick$?: QRL<(event: OjpEventPositioned) => void>;
-  onMouseDrag$?: QRL<(eventId: string, eventType: string, mouseEvent: MouseEvent, element: HTMLElement) => void>;
+  onStartDrag$?: QRL<
+    (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => void
+  >;
   scrollLeft: number;
   timeHourFrom: number;
   viewportWidth: number;
@@ -64,15 +64,15 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     intervalMinutes,
     intervalWidth,
     onEventClick$,
-    onMouseDrag$,
+    onStartDrag$,
     scrollLeft,
     timeHourFrom,
     viewportWidth,
   }) => {
     useStyles$(eventStyles);
 
-    // ✅ PŘIDÁNO: Track mouse movement pro rozlišení click vs drag
     const mouseDownPos = useSignal<{ x: number; y: number } | null>(null);
+    const hasDragStarted = useSignal(false);
 
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
@@ -138,54 +138,36 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
         class="ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1 text-xs font-semibold"
         data-being-dragged={isBeingDragged ? "true" : undefined}
         data-event-id={event.id}
-        onClick$={(e) => {
-          e.stopPropagation();
-
-          // ✅ PŘIDÁNO: Kontrola jestli to byl skutečný klik (ne drag)
-          if (mouseDownPos.value) {
-            const distance = Math.sqrt(
-              Math.pow(e.clientX - mouseDownPos.value.x, 2) + Math.pow(e.clientY - mouseDownPos.value.y, 2),
-            );
-
-            // Pokud se myš posunula o více než 5px, byl to drag, ne klik
-            if (distance >= 5) {
-              mouseDownPos.value = null;
-              return;
-            }
-          }
-
-          mouseDownPos.value = null;
-
-          if (onEventClick$) {
+        onClick$={sync$(() => {
+          // Jen pokud nebyl drag
+          if (!hasDragStarted.value && onEventClick$) {
             onEventClick$(event);
           }
-        }}
-        onMouseDown$={sync$((e: MouseEvent, target: HTMLElement) => {
+          hasDragStarted.value = false; // reset
+        })}
+        onMouseDown$={sync$((e: MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
 
-          // ✅ PŘIDÁNO: Zaznamenej start pozici
           mouseDownPos.value = { x: e.clientX, y: e.clientY };
-
-          if (onMouseDrag$) {
-            onMouseDrag$(event.id, event.typ, e, target);
-          }
+          hasDragStarted.value = false;
         })}
-        onMouseUp$={sync$((e: MouseEvent) => {
-          // ✅ PŘIDÁNO: Pokud mouseUp bez significant movement = možný klik
-          if (mouseDownPos.value) {
+        onMouseMove$={sync$((e: MouseEvent, target: HTMLElement) => {
+          if (mouseDownPos.value && !hasDragStarted.value) {
             const distance = Math.sqrt(
               Math.pow(e.clientX - mouseDownPos.value.x, 2) + Math.pow(e.clientY - mouseDownPos.value.y, 2),
             );
 
-            // Malý pohyb = byl to klik, ne drag
-            if (distance < 5) {
-              // onClick$ se zavolá automaticky
-              return;
+            // Start drag pouze při 5px movement
+            if (distance > 5) {
+              hasDragStarted.value = true;
+              if (onStartDrag$) {
+                onStartDrag$(event.id, event.typ, mouseDownPos.value, target);
+              }
             }
           }
-
-          // Větší pohyb = byl to drag, vyčisti pozici
+        })}
+        onMouseUp$={sync$(() => {
           mouseDownPos.value = null;
         })}
         style={`

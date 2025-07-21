@@ -13,8 +13,10 @@ type OjpStationRowProps = {
   dropPreview: Signal<{ date: Date; sal: OjpSal; slotIndex: number } | null>;
   onEventClick$?: QRL<(event: any) => void>;
   onEventDrop$: QRL<(eventId: string, date: Date, sal: OjpSal, slotIndex: number) => void>;
-  onMouseDrag$: QRL<(eventId: string, eventType: string, mouseEvent: MouseEvent, element: HTMLElement) => void>;
   onSlotDoubleClick$: QRL<(date: Date, sal: OjpSal, slotIndex: number) => void>;
+  onStartDrag$: QRL<
+    (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => void
+  >;
   rowEvents: OjpEventPositioned[];
   rowHeight: number;
   sal: OjpSalInfo;
@@ -33,13 +35,12 @@ export const OjpStationRow = component$<OjpStationRowProps>(
   ({
     date,
     draggedEventId,
-    // ✅ OPRAVENO: Použiju draggedEventType (byl nepoužitý)
     draggedEventType,
     dropPreview,
     onEventClick$,
-    // ✅ OPRAVENO: Odstranil nepoužitý onEventDrop$ - logika je v handleMouseDrag
-    onMouseDrag$,
+
     onSlotDoubleClick$,
+    onStartDrag$,
     rowEvents,
     rowHeight,
     sal,
@@ -82,7 +83,6 @@ export const OjpStationRow = component$<OjpStationRowProps>(
             dropPreview.value.sal === sal.name &&
             dropPreview.value.slotIndex === slotIndex;
 
-          // ✅ POUŽIJU draggedEventType pro určení typu validace
           const isDraggedOperace = draggedEventType.value === "operace";
 
           return (
@@ -126,7 +126,7 @@ export const OjpStationRow = component$<OjpStationRowProps>(
             intervalWidth={slotWidth}
             key={event.id}
             onEventClick$={onEventClick$}
-            onMouseDrag$={onMouseDrag$}
+            onStartDrag$={onStartDrag$}
             scrollLeft={scrollLeft}
             timeHourFrom={timeHourFrom}
             viewportWidth={viewportWidth}

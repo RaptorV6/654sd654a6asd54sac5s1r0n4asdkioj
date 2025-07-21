@@ -16,8 +16,10 @@ type OjpDaySectionProps = {
   events: OjpEventPositioned[];
   onEventClick$?: QRL<(event: any) => void>;
   onEventDrop$: QRL<(eventId: string, date: Date, sal: OjpSal, slotIndex: number) => void>;
-  onMouseDrag$: QRL<(eventId: string, eventType: string, mouseEvent: MouseEvent, element: HTMLElement) => void>;
   onSlotDoubleClick$: QRL<(date: Date, sal: OjpSal, slotIndex: number) => void>;
+  onStartDrag$: QRL<
+    (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => void
+  >;
   rowHeight: number;
   salsWidth: number;
   saly: OjpSalInfo[];
@@ -41,8 +43,8 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
     events,
     onEventClick$,
     onEventDrop$,
-    onMouseDrag$,
     onSlotDoubleClick$,
+    onStartDrag$,
     rowHeight,
     salsWidth,
     saly,
@@ -90,8 +92,8 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
               key={`sal-${dayIndex}-${sal.name}`}
               onEventClick$={onEventClick$}
               onEventDrop$={onEventDrop$}
-              onMouseDrag$={onMouseDrag$}
               onSlotDoubleClick$={onSlotDoubleClick$}
+              onStartDrag$={onStartDrag$}
               rowEvents={rowEvents}
               rowHeight={rowHeight}
               sal={sal}
