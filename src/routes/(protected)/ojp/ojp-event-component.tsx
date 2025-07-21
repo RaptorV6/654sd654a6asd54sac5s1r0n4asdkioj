@@ -7,59 +7,57 @@ import type { OjpEventPositioned } from "./_mock-events";
 
 import { getSalInfo } from "./_mock-events";
 
-// 🚀 OPTIMALIZACE: CSS + hiding logic
 const eventStyles = `
-  .ojp-event {
-    will-change: transform, opacity;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-  }
-  
-  .ojp-event.draggable {
-    cursor: grab;
-    transition: all 0.15s ease-out;
-  }
-  
-  .ojp-event.draggable:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-  
-  .ojp-event.draggable:active {
-    cursor: grabbing;
-    transform: scale(1.02);
-  }
-  
-  .ojp-event.dragging {
-    opacity: 0.7;
-    transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-    z-index: 9999;
-    transition: none;
-  }
-  
-  /* ✅ NOVÁ hiding logika */
-  .ojp-event[data-being-dragged="true"] {
-    opacity: 0.1 !important;
-    pointer-events: none !important;
-    z-index: -1 !important;
-  }
-  
-  .ojp-event-operace.draggable::before {
-    content: "⋮⋮";
-    position: absolute;
-    left: 2px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(0, 0, 0, 0.3);
-    font-size: 8px;
-    line-height: 0.8;
-    letter-spacing: -1px;
-  }
+ .ojp-event {
+   will-change: transform, opacity;
+   backface-visibility: hidden;
+   transform: translateZ(0);
+ }
+ 
+ .ojp-event.draggable {
+   cursor: grab;
+   transition: all 0.15s ease-out;
+ }
+ 
+ .ojp-event.draggable:hover {
+   transform: translateY(-1px);
+   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+ }
+ 
+ .ojp-event.draggable:active {
+   cursor: grabbing;
+   transform: scale(1.02);
+ }
+ 
+ .ojp-event.dragging {
+   opacity: 0.7;
+   transform: scale(1.05);
+   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+   z-index: 9999;
+   transition: none;
+ }
+ 
+ .ojp-event[data-being-dragged="true"] {
+   opacity: 0.3 !important;
+   pointer-events: none !important;
+   z-index: 1 !important;
+   filter: grayscale(50%) !important;
+ }
+ 
+ .ojp-event-operace.draggable::before {
+   content: "⋮⋮";
+   position: absolute;
+   left: 2px;
+   top: 50%;
+   transform: translateY(-50%);
+   color: rgba(0, 0, 0, 0.3);
+   font-size: 8px;
+   line-height: 0.8;
+   letter-spacing: -1px;
+ }
 `;
 
 type OjpEventComponentProps = {
-  // ✅ Jen přidáme draggedEventId signal
   draggedEventId: Signal<string>;
   event: OjpEventPositioned;
   intervalMinutes: number;
@@ -85,7 +83,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
   }) => {
     useStyles$(eventStyles);
 
-    // Pozicování - stejné jako předtím
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
 
@@ -98,7 +95,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
     const salInfo = getSalInfo(event.sal);
 
-    // Styly pro typy událostí - stejné jako předtím
     let backgroundColor: string;
     let borderColor: string;
     let textColor: string = "#000";
@@ -125,7 +121,6 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       borderColor = salInfo.color;
     }
 
-    // Text positioning pro dlouhé události - stejné jako předtím
     const isLongEvent = widthPx > viewportWidth * 0.6;
     let textTransform = "";
 
@@ -145,16 +140,15 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
       }
     }
 
-    // ✅ Check if this event is being dragged
     const isBeingDragged = draggedEventId.value === event.id;
 
     return (
       <div
         class={`
-          ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1
-          text-xs font-semibold hover:cursor-grab active:cursor-grabbing
-          ${isDragging ? "dragging" : ""}
-        `}
+         ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1
+         text-xs font-semibold hover:cursor-grab active:cursor-grabbing
+         ${isDragging ? "dragging" : ""}
+       `}
         data-being-dragged={isBeingDragged ? "true" : undefined}
         draggable={true}
         onClick$={(e) => {
@@ -164,15 +158,9 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
           }
         }}
         onDragEnd$={sync$(() => {
-          const dragGhost = document.getElementById("drag-ghost");
-          if (dragGhost) {
-            dragGhost.style.display = "none";
-          }
-          // ✅ Reset dragged state
           draggedEventId.value = "";
         })}
         onDragStart$={sync$((e: DragEvent) => {
-          // ✅ Set dragged state immediately
           draggedEventId.value = event.id;
 
           const dragData = {
@@ -186,21 +174,14 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
           e.dataTransfer!.setData("application/json", JSON.stringify(dragData));
           e.dataTransfer!.effectAllowed = "move";
-
-          const dragGhost = document.getElementById("drag-ghost");
-          if (dragGhost) {
-            dragGhost.textContent = `📅 ${event.title}`;
-            dragGhost.style.display = "block";
-            e.dataTransfer!.setDragImage(dragGhost, 20, 20);
-          }
         })}
         style={`
-         left: ${leftPx}px;
-         width: ${widthPx}px;
-         background-color: ${backgroundColor};
-         border-color: ${borderColor};
-         color: ${textColor};
-       `}
+        left: ${leftPx}px;
+        width: ${widthPx}px;
+        background-color: ${backgroundColor};
+        border-color: ${borderColor};
+        color: ${textColor};
+      `}
         title="Táhněte pro přesun události"
       >
         <div class="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100">
