@@ -1,7 +1,7 @@
 import type { QRL, Signal } from "@builder.io/qwik";
 
 import { Button } from "@akeso/ui-components";
-import { component$, sync$, useStyles$ } from "@builder.io/qwik";
+import { component$, sync$, useSignal, useStyles$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned } from "./_mock-events";
 
@@ -9,14 +9,14 @@ import { getSalInfo } from "./_mock-events";
 
 const eventStyles = `
  .ojp-event {
-   will-change: transform, opacity;
+   will-change: transform;
    backface-visibility: hidden;
    transform: translateZ(0);
+   transition: all 0.15s ease-out;
  }
  
  .ojp-event.draggable {
    cursor: grab;
-   transition: all 0.15s ease-out;
  }
  
  .ojp-event.draggable:hover {
@@ -26,34 +26,21 @@ const eventStyles = `
  
  .ojp-event.draggable:active {
    cursor: grabbing;
-   transform: scale(1.02);
- }
- 
- .ojp-event.dragging {
-   opacity: 0.7;
-   transform: scale(1.05);
-   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-   z-index: 9999;
-   transition: none;
  }
  
  .ojp-event[data-being-dragged="true"] {
-   opacity: 0.3 !important;
-   pointer-events: none !important;
-   z-index: 1 !important;
-   filter: grayscale(50%) !important;
+   z-index: 9999 !important;
+   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+   transition: none !important;
+   cursor: grabbing !important;
  }
  
- .ojp-event-operace.draggable::before {
-   content: "⋮⋮";
-   position: absolute;
-   left: 2px;
-   top: 50%;
-   transform: translateY(-50%);
-   color: rgba(0, 0, 0, 0.3);
-   font-size: 8px;
-   line-height: 0.8;
-   letter-spacing: -1px;
+ /* Global cursor během drag */
+ body:has([data-being-dragged="true"]) {
+   cursor: grabbing !important;
+ }
+ body:has([data-being-dragged="true"]) * {
+   cursor: grabbing !important;
  }
 `;
 
@@ -62,8 +49,9 @@ type OjpEventComponentProps = {
   event: OjpEventPositioned;
   intervalMinutes: number;
   intervalWidth: number;
-  isDragging?: boolean;
+  // ✅ ODSTRANĚNO: isDragging prop (nepoužíval se)
   onEventClick$?: QRL<(event: OjpEventPositioned) => void>;
+  onMouseDrag$?: QRL<(eventId: string, eventType: string, mouseEvent: MouseEvent, element: HTMLElement) => void>;
   scrollLeft: number;
   timeHourFrom: number;
   viewportWidth: number;
@@ -75,13 +63,16 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
     event,
     intervalMinutes,
     intervalWidth,
-    isDragging,
     onEventClick$,
+    onMouseDrag$,
     scrollLeft,
     timeHourFrom,
     viewportWidth,
   }) => {
     useStyles$(eventStyles);
+
+    // ✅ PŘIDÁNO: Track mouse movement pro rozlišení click vs drag
+    const mouseDownPos = useSignal<{ x: number; y: number } | null>(null);
 
     const startTotalMinutes = (event.dateFrom.getHours() - timeHourFrom) * 60 + event.dateFrom.getMinutes();
     const endTotalMinutes = (event.dateTo.getHours() - timeHourFrom) * 60 + event.dateTo.getMinutes();
@@ -144,36 +135,58 @@ export const OjpEventComponent = component$<OjpEventComponentProps>(
 
     return (
       <div
-        class={`
-         ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1
-         text-xs font-semibold hover:cursor-grab active:cursor-grabbing
-         ${isDragging ? "dragging" : ""}
-       `}
+        class="ojp-event draggable group absolute bottom-1 top-1 z-10 flex cursor-grab select-none items-center justify-center rounded border-2 p-1 text-xs font-semibold"
         data-being-dragged={isBeingDragged ? "true" : undefined}
-        draggable={true}
+        data-event-id={event.id}
         onClick$={(e) => {
           e.stopPropagation();
+
+          // ✅ PŘIDÁNO: Kontrola jestli to byl skutečný klik (ne drag)
+          if (mouseDownPos.value) {
+            const distance = Math.sqrt(
+              Math.pow(e.clientX - mouseDownPos.value.x, 2) + Math.pow(e.clientY - mouseDownPos.value.y, 2),
+            );
+
+            // Pokud se myš posunula o více než 5px, byl to drag, ne klik
+            if (distance >= 5) {
+              mouseDownPos.value = null;
+              return;
+            }
+          }
+
+          mouseDownPos.value = null;
+
           if (onEventClick$) {
             onEventClick$(event);
           }
         }}
-        onDragEnd$={sync$(() => {
-          draggedEventId.value = "";
+        onMouseDown$={sync$((e: MouseEvent, target: HTMLElement) => {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // ✅ PŘIDÁNO: Zaznamenej start pozici
+          mouseDownPos.value = { x: e.clientX, y: e.clientY };
+
+          if (onMouseDrag$) {
+            onMouseDrag$(event.id, event.typ, e, target);
+          }
         })}
-        onDragStart$={sync$((e: DragEvent) => {
-          draggedEventId.value = event.id;
+        onMouseUp$={sync$((e: MouseEvent) => {
+          // ✅ PŘIDÁNO: Pokud mouseUp bez significant movement = možný klik
+          if (mouseDownPos.value) {
+            const distance = Math.sqrt(
+              Math.pow(e.clientX - mouseDownPos.value.x, 2) + Math.pow(e.clientY - mouseDownPos.value.y, 2),
+            );
 
-          const dragData = {
-            eventId: event.id,
-            eventType: event.typ,
-            originalDate: event.dateFrom.toISOString(),
-            originalSal: event.sal,
-            title: event.title,
-            type: "ojp-event",
-          };
+            // Malý pohyb = byl to klik, ne drag
+            if (distance < 5) {
+              // onClick$ se zavolá automaticky
+              return;
+            }
+          }
 
-          e.dataTransfer!.setData("application/json", JSON.stringify(dragData));
-          e.dataTransfer!.effectAllowed = "move";
+          // Větší pohyb = byl to drag, vyčisti pozici
+          mouseDownPos.value = null;
         })}
         style={`
         left: ${leftPx}px;
