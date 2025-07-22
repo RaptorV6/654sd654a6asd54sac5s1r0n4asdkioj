@@ -11,7 +11,9 @@ type OjpStationRowProps = {
   draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
   onEventClick$?: QRL<(event: any) => void>;
-  onEventDrop$: QRL<(eventId: string, date: Date, sal: OjpSal, slotIndex: number) => void>;
+  onEventDrop$: QRL<
+    (eventId: string, separatorId: string | undefined, date: Date, sal: OjpSal, slotIndex: number) => void
+  >;
   onSlotDoubleClick$: QRL<(date: Date, sal: OjpSal, slotIndex: number) => void>;
   onStartDrag$: QRL<
     (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => void

@@ -133,76 +133,100 @@ export const OjpPlanningCalendar = component$(() => {
     showEditEventModal.value = true;
   });
 
-  const handleEventDrop = $((eventId: string, newDate: Date, newSal: OjpSal, newTime: Date) => {
-    const event = eventsSignal.value.find((e) => e.id === eventId);
-    if (!event || !(newTime instanceof Date)) {
-      return;
-    }
-
-    pendingUpdates.value = new Set([...pendingUpdates.value, eventId]);
-
-    const originalDuration = event.dateTo.getTime() - event.dateFrom.getTime();
-    const newEndTime = new Date(newTime.getTime() + originalDuration);
-
-    const newDen: OjpDen = getDenFromDate(newDate);
-    const updatedEvents = eventsSignal.value.map((e) => {
-      if (e.id === eventId) {
-        return {
-          ...e,
-          dateFrom: newTime,
-          dateTo: newEndTime,
-          den: newDen,
-          sal: newSal,
-        };
+  const handleEventDrop = $(
+    (eventId: string, separatorId: string | undefined, newDate: Date, newSal: OjpSal, newTime: Date) => {
+      const event = eventsSignal.value.find((e) => e.id === eventId);
+      if (!event || !(newTime instanceof Date)) {
+        return;
       }
-      return e;
-    });
-    eventsSignal.value = updatedEvents;
 
-    // Správné datum bez timezone problémů
-    const localDate = new Date(newDate.getTime() - newDate.getTimezoneOffset() * 60000);
-    const dateString = localDate.toISOString().split("T")[0];
+      // ✅ MARK BOTH EVENTS AS PENDING
+      const pendingIds = separatorId ? [eventId, separatorId] : [eventId];
+      pendingUpdates.value = new Set([...pendingUpdates.value, ...pendingIds]);
 
-    const updateData = {
-      casDo: newEndTime.toTimeString().slice(0, 5),
-      casOd: newTime.toTimeString().slice(0, 5),
-      datum: dateString,
-      id: eventId,
-      operator: event.operator || "",
-      poznamka: event.poznamka || "",
-      sal: newSal,
-      title: event.title,
-      typ: event.typ,
-    };
+      const originalDuration = event.dateTo.getTime() - event.dateFrom.getTime();
+      const newEndTime = new Date(newTime.getTime() + originalDuration);
+      const newDen: OjpDen = getDenFromDate(newDate);
 
-    try {
-      const result = updateOjpEvent(updateData);
+      // ✅ UPDATE OPERATION
+      const updatedEvents = eventsSignal.value.map((e) => {
+        if (e.id === eventId) {
+          return {
+            ...e,
+            dateFrom: newTime,
+            dateTo: newEndTime,
+            den: newDen,
+            sal: newSal,
+          };
+        }
+        // ✅ UPDATE SEPARATOR IF EXISTS
+        if (separatorId && e.id === separatorId) {
+          const separatorDuration = e.dateTo.getTime() - e.dateFrom.getTime();
+          const separatorStart = new Date(newEndTime); // Začíná kdy operace končí
+          const separatorEnd = new Date(separatorStart.getTime() + separatorDuration);
 
-      const newPending = new Set(pendingUpdates.value);
-      newPending.delete(eventId);
-      pendingUpdates.value = newPending;
+          return {
+            ...e,
+            dateFrom: separatorStart,
+            dateTo: separatorEnd,
+            den: newDen,
+            sal: newSal,
+          };
+        }
+        return e;
+      });
+      eventsSignal.value = updatedEvents;
 
-      if (result.failed) {
+      // ✅ SERVER UPDATE - OPERATION FIRST
+      const localDate = new Date(newDate.getTime() - newDate.getTimezoneOffset() * 60000);
+      const dateString = localDate.toISOString().split("T")[0];
+
+      const updateData = {
+        casDo: newEndTime.toTimeString().slice(0, 5),
+        casOd: newTime.toTimeString().slice(0, 5),
+        datum: dateString,
+        id: eventId,
+        operator: event.operator || "",
+        poznamka: event.poznamka || "",
+        sal: newSal,
+        title: event.title,
+        typ: event.typ,
+      };
+
+      try {
+        const result = updateOjpEvent(updateData);
+
+        // Clean up pending states
+        const newPending = new Set(pendingUpdates.value);
+        pendingIds.forEach((id) => newPending.delete(id));
+        pendingUpdates.value = newPending;
+
+        if (result.failed) {
+          // Rollback both events
+          eventsSignal.value = eventsSignal.value.map((e) => {
+            if (pendingIds.includes(e.id)) {
+              const originalEvent = eventsSignal.value.find((orig) => orig.id === e.id);
+              return originalEvent || e;
+            }
+            return e;
+          });
+        }
+      } catch {
+        // Rollback on error
+        const newPending = new Set(pendingUpdates.value);
+        pendingIds.forEach((id) => newPending.delete(id));
+        pendingUpdates.value = newPending;
+
         eventsSignal.value = eventsSignal.value.map((e) => {
-          if (e.id === eventId) {
-            return event;
+          if (pendingIds.includes(e.id)) {
+            const originalEvent = eventsSignal.value.find((orig) => orig.id === e.id);
+            return originalEvent || e;
           }
           return e;
         });
       }
-    } catch {
-      const newPending = new Set(pendingUpdates.value);
-      newPending.delete(eventId);
-      pendingUpdates.value = newPending;
-
-      eventsSignal.value = eventsSignal.value.map((e) => {
-        if (e.id === eventId) {
-          return event;
-        }
-        return e;
-      });
-    }
-  });
+    },
+  );
 
   return (
     <Card class="flex h-[calc(100vh-12rem)] flex-col">

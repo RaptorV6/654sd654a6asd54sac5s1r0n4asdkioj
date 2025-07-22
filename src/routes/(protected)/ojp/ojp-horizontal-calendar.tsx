@@ -18,7 +18,9 @@ type OjpHorizontalCalendarProps = {
   events: OjpEventPositioned[];
   newEventTrigger: Signal<{ dateTime: Date; forceOtherSlots?: boolean; sal: OjpSal } | null>;
   onEventClick$?: QRL<(event: any) => void>;
-  onEventDrop$?: QRL<(eventId: string, newDate: Date, newSal: OjpSal, newTime: Date) => void>;
+  onEventDrop$?: QRL<
+    (eventId: string, separatorId: string | undefined, newDate: Date, newSal: OjpSal, newTime: Date) => void
+  >;
   saly: OjpSalInfo[];
   timeHourFrom: number;
   times: { time: Date }[];
@@ -44,6 +46,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       elementOffset?: { x: number; y: number };
       eventId: string;
       eventType: string;
+      separatorId?: string; // ✅ PŘIDAT SEPARATOR ID
       startPos: { x: number; y: number };
     } | null>(null);
 
@@ -96,25 +99,22 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           if (!dragState.value) return;
 
           const eventId = dragState.value.eventId;
+          const separatorId = dragState.value.separatorId;
 
-          // ✅ DROP DETECTION ON MOUSEUP
           const elementRect = dragState.value.dragElement.getBoundingClientRect();
           const elementLeftX = elementRect.left;
           const elementCenterY = elementRect.top + elementRect.height / 2;
           const elementsUnderElement = document.elementsFromPoint(elementLeftX, elementCenterY);
           const dropSlot = elementsUnderElement.find((el) => el.hasAttribute("data-drop-slot"));
 
-          // Cleanup styling
           dragState.value.dragElement.style.transform = "";
           dragState.value.dragElement.removeAttribute("data-being-dragged");
           dragState.value.dragElement.removeAttribute("data-drop-invalid");
 
-          // Clear state FIRST
           dragState.value = null;
           draggedEventId.value = "";
           draggedEventType.value = "";
 
-          // Handle drop
           if (dropSlot && onEventDrop$) {
             const date = new Date(dropSlot.getAttribute("data-date") || "");
             const sal = dropSlot.getAttribute("data-sal") as OjpSal;
@@ -127,7 +127,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
             const newTime = new Date(date);
             newTime.setHours(hours, minutes, 0, 0);
 
-            onEventDrop$(eventId, date, sal, newTime);
+            onEventDrop$(eventId, separatorId, date, sal, newTime);
           }
         });
 
@@ -153,11 +153,31 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
         const offsetX = startPos.x - elementRect.left;
         const offsetY = startPos.y - elementRect.top;
 
+        // ✅ NAJDI NAVAZUJÍÍ SEPARÁTOR PRO OPERACI
+        let separatorId: string | undefined;
+        if (eventType === "operace") {
+          const draggedEvent = events.find((e) => e.id === eventId);
+          if (draggedEvent) {
+            const separator = events.find((event) => {
+              if (event.id === eventId) return false; // Skip sebe
+              if (event.sal !== draggedEvent.sal) return false; // Musí být stejný sál
+              if (event.dateFrom.toDateString() !== draggedEvent.dateFrom.toDateString()) return false; // Stejný den
+              if (event.typ !== "uklid") return false; // Je to úkřid?
+
+              // Začíná těsně po originální operaci? (tolerance 5 min)
+              const timeDiff = Math.abs(event.dateFrom.getTime() - draggedEvent.dateTo.getTime());
+              return timeDiff < 5 * 60 * 1000; // 5 minut tolerance
+            });
+            separatorId = separator?.id;
+          }
+        }
+
         dragState.value = {
           dragElement: element,
           elementOffset: { x: offsetX, y: offsetY },
           eventId,
           eventType,
+          separatorId,
           startPos,
         };
       },
@@ -186,18 +206,20 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     });
 
     // ✅ MISSING EVENT DROP HANDLER
-    const handleEventDrop = $((eventId: string, date: Date, sal: OjpSal, slotIndex: number) => {
-      if (onEventDrop$) {
-        const minutesFromStart = slotIndex * 5;
-        const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
-        const minutes = minutesFromStart % 60;
+    const handleEventDrop = $(
+      (eventId: string, separatorId: string | undefined, date: Date, sal: OjpSal, slotIndex: number) => {
+        if (onEventDrop$) {
+          const minutesFromStart = slotIndex * 5;
+          const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
+          const minutes = minutesFromStart % 60;
 
-        const newTime = new Date(date);
-        newTime.setHours(hours, minutes, 0, 0);
+          const newTime = new Date(date);
+          newTime.setHours(hours, minutes, 0, 0);
 
-        onEventDrop$(eventId, date, sal, newTime);
-      }
-    });
+          onEventDrop$(eventId, separatorId, date, sal, newTime);
+        }
+      },
+    );
 
     // ✅ MISSING RETURN STATEMENT
     return (
