@@ -46,7 +46,8 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       elementOffset?: { x: number; y: number };
       eventId: string;
       eventType: string;
-      separatorId?: string; // ✅ PŘIDAT SEPARATOR ID
+      separatorElement?: HTMLElement; // ✅ PŘIDAT SEPARATOR ELEMENT
+      separatorId?: string;
       startPos: { x: number; y: number };
     } | null>(null);
 
@@ -81,7 +82,13 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           const deltaX = e.clientX - dragState.value.startPos.x;
           const deltaY = e.clientY - dragState.value.startPos.y;
 
+          // ✅ TRANSLATEUJ OPERACI
           dragState.value.dragElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+
+          // ✅ TRANSLATEUJ SEPARÁTOR POKUD EXISTUJE
+          if (dragState.value.separatorElement) {
+            dragState.value.separatorElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+          }
 
           // ✅ HIT DETECTION BASED ON ELEMENT LEFT EDGE, NOT MOUSE
           const elementRect = dragState.value.dragElement.getBoundingClientRect();
@@ -93,6 +100,9 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
           // ✅ PŘIDAT BORDER VALIDATION
           dragState.value.dragElement.setAttribute("data-drop-invalid", dropSlot ? "false" : "true");
+          if (dragState.value.separatorElement) {
+            dragState.value.separatorElement.setAttribute("data-drop-invalid", dropSlot ? "false" : "true");
+          }
         });
 
         const handleGlobalMouseUp = $(() => {
@@ -107,9 +117,17 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           const elementsUnderElement = document.elementsFromPoint(elementLeftX, elementCenterY);
           const dropSlot = elementsUnderElement.find((el) => el.hasAttribute("data-drop-slot"));
 
+          // ✅ CLEANUP STYLING - OPERACE
           dragState.value.dragElement.style.transform = "";
           dragState.value.dragElement.removeAttribute("data-being-dragged");
           dragState.value.dragElement.removeAttribute("data-drop-invalid");
+
+          // ✅ CLEANUP STYLING - SEPARÁTOR
+          if (dragState.value.separatorElement) {
+            dragState.value.separatorElement.style.transform = "";
+            dragState.value.separatorElement.removeAttribute("data-being-dragged");
+            dragState.value.separatorElement.removeAttribute("data-drop-invalid");
+          }
 
           dragState.value = null;
           draggedEventId.value = "";
@@ -155,6 +173,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
         // ✅ NAJDI NAVAZUJÍÍ SEPARÁTOR PRO OPERACI
         let separatorId: string | undefined;
+        let separatorElement: HTMLElement | undefined;
         if (eventType === "operace") {
           const draggedEvent = events.find((e) => e.id === eventId);
           if (draggedEvent) {
@@ -168,7 +187,14 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
               const timeDiff = Math.abs(event.dateFrom.getTime() - draggedEvent.dateTo.getTime());
               return timeDiff < 5 * 60 * 1000; // 5 minut tolerance
             });
-            separatorId = separator?.id;
+            if (separator) {
+              separatorId = separator.id;
+              // ✅ NAJDI SEPARATOR ELEMENT V DOM
+              separatorElement = document.querySelector(`[data-event-id="${separator.id}"]`) as HTMLElement;
+              if (separatorElement) {
+                separatorElement.setAttribute("data-being-dragged", "true");
+              }
+            }
           }
         }
 
@@ -177,6 +203,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
           elementOffset: { x: offsetX, y: offsetY },
           eventId,
           eventType,
+          separatorElement,
           separatorId,
           startPos,
         };
