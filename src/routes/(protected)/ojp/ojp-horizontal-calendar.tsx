@@ -1,7 +1,6 @@
 import type { QRL, Signal } from "@builder.io/qwik";
 
-import { useToaster } from "@akeso/ui-components";
-import { $, component$, useComputed$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
+import { $, component$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
 
@@ -9,48 +8,6 @@ import { OjpCalendarGridHeader } from "./ojp-calendar-grid-header";
 import { OjpDaySection } from "./ojp-day-section";
 
 const calendarStyles = `
-  .ojp-time-slot {
-    will-change: transform;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-  }
-  
-  .ojp-drop-valid {
-    background: linear-gradient(45deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.25)) !important;
-    border: 2px dashed #22c55e !important;
-    animation: pulse-valid 0.8s ease-in-out infinite alternate;
-    transform: scale(1.02);
-  }
-  
-  .ojp-drop-invalid {
-    background: linear-gradient(45deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.25)) !important;
-    border: 2px dashed #ef4444 !important;
-    animation: pulse-invalid 0.8s ease-in-out infinite alternate;
-    transform: scale(1.02);
-  }
-  
-  @keyframes pulse-valid {
-    from { 
-      background-color: rgba(34, 197, 94, 0.1);
-      box-shadow: 0 0 0 rgba(34, 197, 94, 0.4);
-    }
-    to { 
-      background-color: rgba(34, 197, 94, 0.25);
-      box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-    }
-  }
-  
-  @keyframes pulse-invalid {
-    from { 
-      background-color: rgba(239, 68, 68, 0.1);
-      box-shadow: 0 0 0 rgba(239, 68, 68, 0.4);
-    }
-    to { 
-      background-color: rgba(239, 68, 68, 0.25);
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
-    }
-  }
-  
   .ojp-calendar-grid {
     contain: layout style paint;
   }
@@ -70,7 +27,6 @@ type OjpHorizontalCalendarProps = {
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
   ({ dates, events, newEventTrigger, onEventClick$, onEventDrop$, saly, timeHourFrom, times }) => {
     useStyles$(calendarStyles);
-    const { toastError$ } = useToaster();
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
     const slotWidth = 24;
@@ -82,15 +38,15 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const scrollLeft = useSignal(0);
     const viewportWidth = useSignal(800);
 
-    // Jednoduchý drag state
+    // Drag state
     const dragState = useSignal<{
       dragElement: HTMLElement;
+      elementOffset?: { x: number; y: number };
       eventId: string;
       eventType: string;
       startPos: { x: number; y: number };
     } | null>(null);
 
-    const dropPreview = useSignal<{ date: Date; sal: OjpSal; slotIndex: number } | null>(null);
     const draggedEventId = useSignal<string>("");
     const draggedEventType = useSignal<string>("");
 
@@ -108,41 +64,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
     const totalGridWidth = salsWidth + totalSlots * slotWidth;
 
-    const validSlots = useComputed$(() => {
-      const valid = new Set<string>();
-
-      dates.forEach((date) => {
-        saly.forEach((sal) => {
-          const rowEvents = events
-            .filter((event) => event.dateFrom.toDateString() === date.date.toDateString() && event.sal === sal.name)
-            .sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
-
-          for (let slot = 0; slot < totalSlots; slot++) {
-            const slotMinutes = slot * 5;
-            const slotHours = timeHourFrom + Math.floor(slotMinutes / 60);
-            const slotMins = slotMinutes % 60;
-            const slotTime = new Date(date.date);
-            slotTime.setHours(slotHours, slotMins, 0, 0);
-
-            const endingEvent = rowEvents.find(
-              (event) => Math.abs(event.dateTo.getTime() - slotTime.getTime()) < 30000,
-            );
-
-            const isValid =
-              (!endingEvent && slot === 0) ||
-              (endingEvent && (endingEvent.typ === "uklid" || endingEvent.typ === "pauza"));
-
-            if (isValid) {
-              valid.add(`${date.date.toDateString()}-${sal.name}-${slot}`);
-            }
-          }
-        });
-      });
-
-      return valid;
-    });
-
-    // Global mouse tracking - POUZE když dragState existuje
+    // Global mouse tracking
     useTask$(({ cleanup, track }) => {
       const currentDragState = track(() => dragState.value);
 
@@ -158,54 +80,54 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
 
           dragState.value.dragElement.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-          // Hit detection
-          const elementsUnderMouse = document.elementsFromPoint(e.clientX, e.clientY);
-          const dropSlot = elementsUnderMouse.find((el) => el.hasAttribute("data-drop-slot"));
+          // ✅ HIT DETECTION BASED ON ELEMENT LEFT EDGE, NOT MOUSE
+          const elementRect = dragState.value.dragElement.getBoundingClientRect();
+          const elementLeftX = elementRect.left;
+          const elementCenterY = elementRect.top + elementRect.height / 2;
 
-          if (dropSlot) {
-            const date = new Date(dropSlot.getAttribute("data-date") || "");
-            const sal = dropSlot.getAttribute("data-sal") as OjpSal;
-            const slotIndex = parseInt(dropSlot.getAttribute("data-slot-index") || "0");
+          const elementsUnderElement = document.elementsFromPoint(elementLeftX, elementCenterY);
+          const dropSlot = elementsUnderElement.find((el) => el.hasAttribute("data-drop-slot"));
 
-            if (dragState.value.eventType === "operace") {
-              const snapTargets = [slotIndex - 1, slotIndex, slotIndex + 1];
-              const validSnap = snapTargets.find(
-                (slot) =>
-                  slot >= 0 && slot < totalSlots && validSlots.value.has(`${date.toDateString()}-${sal}-${slot}`),
-              );
-
-              if (validSnap !== undefined) {
-                dropPreview.value = { date, sal, slotIndex: validSnap };
-              } else {
-                dropPreview.value = null;
-              }
-            } else {
-              dropPreview.value = { date, sal, slotIndex };
-            }
-          } else {
-            dropPreview.value = null;
-          }
+          // ✅ PŘIDAT BORDER VALIDATION
+          dragState.value.dragElement.setAttribute("data-drop-invalid", dropSlot ? "false" : "true");
         });
 
         const handleGlobalMouseUp = $(() => {
           if (!dragState.value) return;
 
-          const dropTarget = dropPreview.value;
           const eventId = dragState.value.eventId;
+
+          // ✅ DROP DETECTION ON MOUSEUP
+          const elementRect = dragState.value.dragElement.getBoundingClientRect();
+          const elementLeftX = elementRect.left;
+          const elementCenterY = elementRect.top + elementRect.height / 2;
+          const elementsUnderElement = document.elementsFromPoint(elementLeftX, elementCenterY);
+          const dropSlot = elementsUnderElement.find((el) => el.hasAttribute("data-drop-slot"));
 
           // Cleanup styling
           dragState.value.dragElement.style.transform = "";
           dragState.value.dragElement.removeAttribute("data-being-dragged");
+          dragState.value.dragElement.removeAttribute("data-drop-invalid");
 
           // Clear state FIRST
           dragState.value = null;
           draggedEventId.value = "";
           draggedEventType.value = "";
-          dropPreview.value = null;
 
           // Handle drop
-          if (dropTarget && onEventDrop$) {
-            handleEventDrop(eventId, dropTarget.date, dropTarget.sal, dropTarget.slotIndex);
+          if (dropSlot && onEventDrop$) {
+            const date = new Date(dropSlot.getAttribute("data-date") || "");
+            const sal = dropSlot.getAttribute("data-sal") as OjpSal;
+            const slotIndex = parseInt(dropSlot.getAttribute("data-slot-index") || "0");
+
+            const minutesFromStart = slotIndex * 5;
+            const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
+            const minutes = minutesFromStart % 60;
+
+            const newTime = new Date(date);
+            newTime.setHours(hours, minutes, 0, 0);
+
+            onEventDrop$(eventId, date, sal, newTime);
           }
         });
 
@@ -226,8 +148,14 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => {
         element.setAttribute("data-being-dragged", "true");
 
+        // ✅ ZÍSKEJ OFFSET OD ZAČÁTKU ELEMENTU
+        const elementRect = element.getBoundingClientRect();
+        const offsetX = startPos.x - elementRect.left;
+        const offsetY = startPos.y - elementRect.top;
+
         dragState.value = {
           dragElement: element,
+          elementOffset: { x: offsetX, y: offsetY },
           eventId,
           eventType,
           startPos,
@@ -257,6 +185,7 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
       };
     });
 
+    // ✅ MISSING EVENT DROP HANDLER
     const handleEventDrop = $((eventId: string, date: Date, sal: OjpSal, slotIndex: number) => {
       if (onEventDrop$) {
         const minutesFromStart = slotIndex * 5;
@@ -266,29 +195,11 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
         const newTime = new Date(date);
         newTime.setHours(hours, minutes, 0, 0);
 
-        const draggedEvent = events.find((evt) => evt.id === eventId);
-        if (!draggedEvent) return;
-
-        const newStartTime = newTime;
-        const newEndTime = new Date(newStartTime.getTime() + draggedEvent.duration * 60 * 1000);
-
-        const rowEvents = events.filter(
-          (event) => event.dateFrom.toDateString() === date.toDateString() && event.sal === sal && event.id !== eventId,
-        );
-
-        const overlapping = rowEvents.find((event) => {
-          return newStartTime < event.dateTo && newEndTime > event.dateFrom;
-        });
-
-        if (overlapping) {
-          toastError$("Událost se překrývá s jinou", { duration: 3000 });
-          return;
-        }
-
         onEventDrop$(eventId, date, sal, newTime);
       }
     });
 
+    // ✅ MISSING RETURN STATEMENT
     return (
       <div class="flex h-full flex-col">
         <div class="flex-1 overflow-auto" onScroll$={handleScroll} ref={scrollContainerRef}>
@@ -310,7 +221,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                   dayName={dayNames[dayIndex] || dayNames[0]}
                   draggedEventId={draggedEventId}
                   draggedEventType={draggedEventType}
-                  dropPreview={dropPreview}
                   events={events}
                   key={`day-${dayIndex}`}
                   onEventClick$={onEventClick$}
@@ -325,7 +235,6 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
                   timeHourFrom={timeHourFrom}
                   totalGridWidth={totalGridWidth}
                   totalSlots={totalSlots}
-                  validSlots={validSlots.value}
                   viewportWidth={viewportWidth.value}
                 />
               ))}

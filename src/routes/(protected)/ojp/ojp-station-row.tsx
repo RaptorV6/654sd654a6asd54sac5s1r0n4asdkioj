@@ -10,7 +10,6 @@ type OjpStationRowProps = {
   date: Date;
   draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
-  dropPreview: Signal<{ date: Date; sal: OjpSal; slotIndex: number } | null>;
   onEventClick$?: QRL<(event: any) => void>;
   onEventDrop$: QRL<(eventId: string, date: Date, sal: OjpSal, slotIndex: number) => void>;
   onSlotDoubleClick$: QRL<(date: Date, sal: OjpSal, slotIndex: number) => void>;
@@ -26,7 +25,6 @@ type OjpStationRowProps = {
   timeHourFrom: number;
   totalGridWidth: number;
   totalSlots: number;
-  validSlots: Set<string>;
   viewportWidth: number;
   vykonyCount: number;
 };
@@ -35,8 +33,6 @@ export const OjpStationRow = component$<OjpStationRowProps>(
   ({
     date,
     draggedEventId,
-    draggedEventType,
-    dropPreview,
     onEventClick$,
 
     onSlotDoubleClick$,
@@ -50,7 +46,7 @@ export const OjpStationRow = component$<OjpStationRowProps>(
     timeHourFrom,
     totalGridWidth,
     totalSlots,
-    validSlots,
+
     viewportWidth,
     vykonyCount,
   }) => {
@@ -73,49 +69,20 @@ export const OjpStationRow = component$<OjpStationRowProps>(
         </div>
 
         {/* Time slots with drop detection data */}
-        {Array.from({ length: totalSlots }, (_, slotIndex) => {
-          const validationKey = `${date.toDateString()}-${sal.name}-${slotIndex}`;
-          const isValid = validSlots.has(validationKey);
-
-          const isDropPreview =
-            dropPreview.value &&
-            dropPreview.value.date.toDateString() === date.toDateString() &&
-            dropPreview.value.sal === sal.name &&
-            dropPreview.value.slotIndex === slotIndex;
-
-          const isDraggedOperace = draggedEventType.value === "operace";
-
-          return (
-            <div
-              class={`
-                relative cursor-pointer border-r border-gray-200 transition-all duration-200
-                hover:bg-blue-100 hover:bg-opacity-50
-                ${isDropPreview ? (isValid ? "ojp-drop-valid" : "ojp-drop-invalid") : ""}
-              `}
-              data-date={date.toISOString()}
-              data-drop-slot="true"
-              data-sal={sal.name}
-              data-slot-index={slotIndex}
-              key={`slot-${slotIndex}`}
-              onDblClick$={() => {
-                onSlotDoubleClick$(date, sal.name, slotIndex);
-              }}
-              title="Poklepejte pro přidání události nebo přetáhněte událost"
-            >
-              {isDropPreview && (
-                <div class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center">
-                  <div
-                    class={`rounded border px-2 py-1 text-xs font-bold shadow-lg ${
-                      isValid ? "border-green-200 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-800"
-                    }`}
-                  >
-                    {isValid ? "✓ Přesunout zde" : isDraggedOperace ? "✗ Operace musí mít mezeru" : "✗ Neplatné místo"}
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {Array.from({ length: totalSlots }, (_, slotIndex) => (
+          <div
+            class="relative cursor-pointer border-r border-gray-200 transition-colors duration-75 hover:bg-blue-50"
+            data-date={date.toISOString()}
+            data-drop-slot="true"
+            data-sal={sal.name}
+            data-slot-index={slotIndex}
+            key={`slot-${slotIndex}`}
+            onDblClick$={() => {
+              onSlotDoubleClick$(date, sal.name, slotIndex);
+            }}
+            title="Poklepejte pro přidání události nebo přetáhněte událost"
+          ></div>
+        ))}
 
         {/* Events */}
         {rowEvents.map((event) => (

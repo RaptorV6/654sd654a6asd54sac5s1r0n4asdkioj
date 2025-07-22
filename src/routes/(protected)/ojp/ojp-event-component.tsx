@@ -33,6 +33,11 @@ const eventStyles = `
    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
    transition: none !important;
    cursor: grabbing !important;
+   border: 3px solid #22c55e !important; /* ✅ ZELENÝ BORDER */
+ }
+ 
+ .ojp-event[data-drop-invalid="true"] {
+   border: 3px solid #ef4444 !important; /* ✅ ČERVENÝ BORDER */
  }
  
  body:has([data-being-dragged="true"]) {

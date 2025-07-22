@@ -12,7 +12,6 @@ type OjpDaySectionProps = {
   dayName: string;
   draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
-  dropPreview: Signal<{ date: Date; sal: OjpSal; slotIndex: number } | null>;
   events: OjpEventPositioned[];
   onEventClick$?: QRL<(event: any) => void>;
   onEventDrop$: QRL<(eventId: string, date: Date, sal: OjpSal, slotIndex: number) => void>;
@@ -28,7 +27,6 @@ type OjpDaySectionProps = {
   timeHourFrom: number;
   totalGridWidth: number;
   totalSlots: number;
-  validSlots: Set<string>;
   viewportWidth: number;
 };
 
@@ -39,7 +37,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
     dayName,
     draggedEventId,
     draggedEventType,
-    dropPreview,
     events,
     onEventClick$,
     onEventDrop$,
@@ -53,7 +50,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
     timeHourFrom,
     totalGridWidth,
     totalSlots,
-    validSlots,
     viewportWidth,
   }) => {
     const getVykonyCount = (salName: OjpSal): number => {
@@ -88,7 +84,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
               date={date}
               draggedEventId={draggedEventId}
               draggedEventType={draggedEventType}
-              dropPreview={dropPreview}
               key={`sal-${dayIndex}-${sal.name}`}
               onEventClick$={onEventClick$}
               onEventDrop$={onEventDrop$}
@@ -103,7 +98,6 @@ export const OjpDaySection = component$<OjpDaySectionProps>(
               timeHourFrom={timeHourFrom}
               totalGridWidth={totalGridWidth}
               totalSlots={totalSlots}
-              validSlots={validSlots}
               viewportWidth={viewportWidth}
               vykonyCount={vykonyCount}
             />
