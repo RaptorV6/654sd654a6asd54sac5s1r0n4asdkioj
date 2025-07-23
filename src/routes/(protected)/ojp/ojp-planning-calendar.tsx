@@ -148,7 +148,7 @@ export const OjpPlanningCalendar = component$(() => {
       const newEndTime = new Date(newTime.getTime() + originalDuration);
       const newDen: OjpDen = getDenFromDate(newDate);
 
-      // ✅ UPDATE OPERATION
+      // ✅ UPDATE HLAVNÍ EVENT (to co se táhne)
       const updatedEvents = eventsSignal.value.map((e) => {
         if (e.id === eventId) {
           return {
@@ -159,16 +159,26 @@ export const OjpPlanningCalendar = component$(() => {
             sal: newSal,
           };
         }
-        // ✅ UPDATE SEPARATOR IF EXISTS
+        // ✅ UPDATE PROPOJENÝ EVENT (pokud existuje)
         if (separatorId && e.id === separatorId) {
-          const separatorDuration = e.dateTo.getTime() - e.dateFrom.getTime();
-          const separatorStart = new Date(newEndTime); // Začíná kdy operace končí
-          const separatorEnd = new Date(separatorStart.getTime() + separatorDuration);
+          const connectedDuration = e.dateTo.getTime() - e.dateFrom.getTime();
+
+          // ✅ SPRÁVNÉ POZICOVÁNÍ: záleží na tom co se táhne
+          let connectedStart: Date;
+          if (event.typ === "operace") {
+            // Táhnu operaci → separátor následuje za operací
+            connectedStart = new Date(newEndTime);
+          } else {
+            // Táhnu separátor → operace končí kde separátor začíná
+            connectedStart = new Date(newTime.getTime() - connectedDuration);
+          }
+
+          const connectedEnd = new Date(connectedStart.getTime() + connectedDuration);
 
           return {
             ...e,
-            dateFrom: separatorStart,
-            dateTo: separatorEnd,
+            dateFrom: connectedStart,
+            dateTo: connectedEnd,
             den: newDen,
             sal: newSal,
           };
@@ -177,7 +187,7 @@ export const OjpPlanningCalendar = component$(() => {
       });
       eventsSignal.value = updatedEvents;
 
-      // ✅ SERVER UPDATE - OPERATION FIRST
+      // ✅ SERVER UPDATE - původní logika
       const localDate = new Date(newDate.getTime() - newDate.getTimezoneOffset() * 60000);
       const dateString = localDate.toISOString().split("T")[0];
 
