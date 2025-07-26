@@ -9,12 +9,23 @@ export const dragStyles = `
   
   /* Mouse dragging state - physical element movement */
   .ojp-event[data-being-dragged="true"] {
-    transform: scale(1.1) translateZ(0) !important;
+    transform: scale(1.05) translateZ(0) !important;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
     z-index: 9999 !important;
     position: fixed !important;
     pointer-events: none !important;
     transition: none !important;
+    border: 3px solid #22c55e !important; /* Zelený border pro default stav */
+  }
+  
+  /* Collision state - červený border */
+  .ojp-event[data-drop-invalid="true"] {
+    border: 3px solid #ef4444 !important; /* Červený border pro kolizi */
+  }
+  
+  /* Valid drop state - zelený border */
+  .ojp-event[data-drop-invalid="false"] {
+    border: 3px solid #22c55e !important; /* Zelený border pro validní drop */
   }
   
   /* Global cursor during drag */

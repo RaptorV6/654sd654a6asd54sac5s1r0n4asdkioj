@@ -3,6 +3,7 @@ import type { QRL, Signal } from "@builder.io/qwik";
 import { $, component$, useSignal, useStyles$, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSal, OjpSalInfo } from "./_mock-events";
+import type { CollisionInfo, DraggedEventInfo } from "./ojp-collision-detection";
 
 import { OjpCalendarGridHeader } from "./ojp-calendar-grid-header";
 import { OjpDaySection } from "./ojp-day-section";
@@ -18,17 +19,30 @@ type OjpHorizontalCalendarProps = {
   dates: { date: Date }[];
   events: OjpEventPositioned[];
   newEventTrigger: Signal<{ dateTime: Date; forceOtherSlots?: boolean; sal: OjpSal } | null>;
+  onCollisionDetected$?: QRL<(collisionInfo: CollisionInfo, draggedEventInfo: DraggedEventInfo) => void>;
   onEventClick$?: QRL<(event: any) => void>;
   onEventDrop$?: QRL<
     (eventId: string, separatorId: string | undefined, newDate: Date, newSal: OjpSal, newTime: Date) => void
   >;
   saly: OjpSalInfo[];
   timeHourFrom: number;
+  timeHourTo: number;
   times: { time: Date }[];
 };
 
 export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
-  ({ dates, events, newEventTrigger, onEventClick$, onEventDrop$, saly, timeHourFrom, times }) => {
+  ({
+    dates,
+    events,
+    newEventTrigger,
+    onCollisionDetected$,
+    onEventClick$,
+    onEventDrop$,
+    saly,
+    timeHourFrom,
+    timeHourTo,
+    times,
+  }) => {
     useStyles$(calendarStyles);
     const dayNames = ["PONDĚLÍ", "ÚTERÝ", "STŘEDA", "ČTVRTEK", "PÁTEK"];
 
@@ -42,10 +56,19 @@ export const OjpHorizontalCalendar = component$<OjpHorizontalCalendarProps>(
     const viewportWidth = useSignal(800);
 
     // Initialize drag & drop
+    const eventsSignal = useSignal(events);
+
+    useTask$(({ track }) => {
+      track(() => events.length);
+      eventsSignal.value = events;
+    });
+
     const { draggedEventId, draggedEventType, handleEventDrop, handleStartDrag } = useDragAndDrop({
-      events,
+      events: eventsSignal,
+      onCollisionDetected$,
       onEventDrop$,
       timeHourFrom,
+      timeHourTo,
     });
 
     useTask$(({ track }) => {

@@ -2,11 +2,14 @@ import { Card } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
 import type { OjpDen, OjpSal } from "./_mock-events";
+import type { CollisionInfo, DraggedEventInfo } from "./ojp-collision-detection";
 
 import { updateOjpEvent } from "./_actions";
 import { getWeekEvents, useOjpPlanningData } from "./_loaders";
 import { getDenFromDate } from "./_mock-events";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
+import { OjpCollisionModal } from "./ojp-collision-modal";
+import { calculateEventShifts } from "./ojp-event-shift-calculator";
 import { OjpHorizontalCalendar } from "./ojp-horizontal-calendar";
 import { OjpModal } from "./ojp-modal";
 
@@ -35,6 +38,11 @@ export const OjpPlanningCalendar = component$(() => {
   const showNewEventModal = useSignal(false);
   const showEditEventModal = useSignal(false);
   const selectedEvent = useSignal<any>(null);
+
+  // Collision modal state
+  const showCollisionModal = useSignal(false);
+  const currentCollisionInfo = useSignal<CollisionInfo | null>(null);
+  const currentDraggedEventInfo = useSignal<DraggedEventInfo | null>(null);
 
   // Track pending drag&drop updates
   const pendingUpdates = useSignal<Set<string>>(new Set());
@@ -126,11 +134,6 @@ export const OjpPlanningCalendar = component$(() => {
 
   const handleToday = $(() => {
     currentWeekStart.value = startOfWeek(new Date());
-  });
-
-  const handleEventClick = $((event: any) => {
-    selectedEvent.value = event;
-    showEditEventModal.value = true;
   });
 
   const handleEventDrop = $(
@@ -238,27 +241,104 @@ export const OjpPlanningCalendar = component$(() => {
     },
   );
 
-  return (
-    <Card class="flex h-[calc(100vh-12rem)] flex-col">
-      <OjpCalendarHeader
-        onNextWeek$={handleNextWeek}
-        onPrevWeek$={handlePrevWeek}
-        onToday$={handleToday}
-        weekStart={currentWeekStart.value}
-      />
+  const handleEventClick = $((event: any) => {
+    selectedEvent.value = event;
+    showEditEventModal.value = true;
+  });
 
-      <div class="flex-1 overflow-auto">
-        <OjpHorizontalCalendar
-          dates={dates.value}
-          events={eventsSignal.value}
-          newEventTrigger={newEventTrigger}
-          onEventClick$={handleEventClick}
-          onEventDrop$={handleEventDrop}
-          saly={staticData.saly}
-          timeHourFrom={staticData.calendarHourFrom}
-          times={staticData.times}
+  const handleCollisionDetected = $((collisionInfo: CollisionInfo, draggedEventInfo: DraggedEventInfo) => {
+    currentCollisionInfo.value = collisionInfo;
+    currentDraggedEventInfo.value = draggedEventInfo;
+    showCollisionModal.value = true;
+  });
+
+  const handleConfirmShift = $(() => {
+    if (!currentCollisionInfo.value || !currentDraggedEventInfo.value) {
+      return;
+    }
+
+    // Zavři modal
+    showCollisionModal.value = false;
+
+    if (currentCollisionInfo.value.isOutOfBounds) {
+      // Out of bounds - není co dělat, jen ukliď
+      currentCollisionInfo.value = null;
+      currentDraggedEventInfo.value = null;
+      return;
+    }
+
+    // Vypočítej nové pozice všech událostí
+    const shiftResult = calculateEventShifts({
+      allEvents: eventsSignal.value,
+      draggedEventInfo: currentDraggedEventInfo.value,
+      timeHourFrom: staticData.calendarHourFrom,
+      timeHourTo: staticData.calendarHourTo,
+    });
+
+    if (!shiftResult.isValid) {
+      console.error("Cannot shift events:", shiftResult.errorReason);
+      currentCollisionInfo.value = null;
+      currentDraggedEventInfo.value = null;
+      return;
+    }
+
+    // Aplikuj posun na hlavní událost
+    const draggedEventInfo = currentDraggedEventInfo.value;
+    handleEventDrop(
+      draggedEventInfo.eventId,
+      draggedEventInfo.separatorId,
+      draggedEventInfo.newDate,
+      draggedEventInfo.newSal,
+      draggedEventInfo.newStartTime,
+    );
+
+    // Aplikuj posun na kolizní události
+    for (const shift of shiftResult.eventsToShift) {
+      handleEventDrop(
+        shift.eventId,
+        undefined, // Separátor se posune automaticky přes existing logiku
+        draggedEventInfo.newDate,
+        draggedEventInfo.newSal,
+        shift.newStartTime,
+      );
+    }
+
+    // Ukliď state
+    currentCollisionInfo.value = null;
+    currentDraggedEventInfo.value = null;
+  });
+
+  const handleCancelShift = $(() => {
+    showCollisionModal.value = false;
+    currentCollisionInfo.value = null;
+    currentDraggedEventInfo.value = null;
+  });
+
+  return (
+    <>
+      <Card class="flex h-[calc(100vh-12rem)] flex-col">
+        <OjpCalendarHeader
+          onNextWeek$={handleNextWeek}
+          onPrevWeek$={handlePrevWeek}
+          onToday$={handleToday}
+          weekStart={currentWeekStart.value}
         />
-      </div>
+
+        <div class="flex-1 overflow-auto">
+          <OjpHorizontalCalendar
+            dates={dates.value}
+            events={eventsSignal.value}
+            newEventTrigger={newEventTrigger}
+            onCollisionDetected$={handleCollisionDetected}
+            onEventClick$={handleEventClick}
+            onEventDrop$={handleEventDrop}
+            saly={staticData.saly}
+            timeHourFrom={staticData.calendarHourFrom}
+            timeHourTo={staticData.calendarHourTo}
+            times={staticData.times}
+          />
+        </div>
+      </Card>
 
       <OjpModal
         bind:show={showNewEventModal}
@@ -275,6 +355,14 @@ export const OjpPlanningCalendar = component$(() => {
         mode="edit"
         refreshTrigger={refreshTrigger}
       />
-    </Card>
+
+      <OjpCollisionModal
+        bind:show={showCollisionModal}
+        collisionInfo={currentCollisionInfo.value}
+        draggedEventInfo={currentDraggedEventInfo.value}
+        onCancel$={handleCancelShift}
+        onConfirm$={handleConfirmShift}
+      />
+    </>
   );
 });

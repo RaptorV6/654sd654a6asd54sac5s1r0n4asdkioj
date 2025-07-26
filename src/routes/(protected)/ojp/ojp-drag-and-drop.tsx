@@ -1,8 +1,12 @@
+/* eslint-disable no-console */
 import type { QRL, Signal } from "@builder.io/qwik";
 
 import { $, useSignal, useTask$ } from "@builder.io/qwik";
 
 import type { OjpEventPositioned, OjpSal } from "./_mock-events";
+import type { CollisionInfo, DraggedEventInfo } from "./ojp-collision-detection";
+
+import { createDraggedEventInfoFromSnapshot, detectEventCollisions } from "./ojp-collision-detection";
 
 // Types pro drag & drop
 export interface DragState {
@@ -10,12 +14,16 @@ export interface DragState {
   elementOffset?: { x: number; y: number };
   eventId: string;
   eventType: string;
+  originalEvent: OjpEventPositioned; // ✅ Snapshot pôvodného eventu
+  originalSeparator?: OjpEventPositioned; // ✅ Snapshot separátora (ak existuje)
   separatorElement?: HTMLElement;
   separatorId?: string;
   startPos: { x: number; y: number };
 }
 
 export interface DragAndDropAPI {
+  currentCollisionInfo: Signal<CollisionInfo | null>;
+  currentDraggedEventInfo: Signal<DraggedEventInfo | null>;
   draggedEventId: Signal<string>;
   draggedEventType: Signal<string>;
   handleEventDrop: QRL<
@@ -27,18 +35,30 @@ export interface DragAndDropAPI {
 }
 
 interface UseDragAndDropProps {
-  events: OjpEventPositioned[];
+  events: Signal<OjpEventPositioned[]>;
+  onCollisionDetected$?: QRL<(collisionInfo: CollisionInfo, draggedEventInfo: DraggedEventInfo) => void>;
   onEventDrop$?: QRL<
     (eventId: string, separatorId: string | undefined, newDate: Date, newSal: OjpSal, newTime: Date) => void
   >;
   timeHourFrom: number;
+  timeHourTo: number;
 }
 
-export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAndDropProps): DragAndDropAPI {
+export function useDragAndDrop({
+  events,
+  onCollisionDetected$,
+  onEventDrop$,
+  timeHourFrom,
+  timeHourTo,
+}: UseDragAndDropProps): DragAndDropAPI {
   // Drag state
   const dragState = useSignal<DragState | null>(null);
   const draggedEventId = useSignal<string>("");
   const draggedEventType = useSignal<string>("");
+
+  // Collision detection state
+  const currentCollisionInfo = useSignal<CollisionInfo | null>(null);
+  const currentDraggedEventInfo = useSignal<DraggedEventInfo | null>(null);
 
   // Global mouse tracking
   useTask$(({ cleanup, track }) => {
@@ -70,10 +90,56 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
         const elementsUnderElement = document.elementsFromPoint(elementLeftX, elementCenterY);
         const dropSlot = elementsUnderElement.find((el) => el.hasAttribute("data-drop-slot"));
 
-        // ✅ PŘIDAT BORDER VALIDATION
-        dragState.value.dragElement.setAttribute("data-drop-invalid", dropSlot ? "false" : "true");
+        let hasCollision = false;
+        let isOutOfBounds = false;
+
+        if (dropSlot) {
+          // Výpočet nových časů pro collision detection
+          const date = new Date(dropSlot.getAttribute("data-date") || "");
+          const sal = dropSlot.getAttribute("data-sal") as OjpSal;
+          const slotIndex = parseInt(dropSlot.getAttribute("data-slot-index") || "0");
+
+          const minutesFromStart = slotIndex * 5;
+          const hours = timeHourFrom + Math.floor(minutesFromStart / 60);
+          const minutes = minutesFromStart % 60;
+
+          const newTime = new Date(date);
+          newTime.setHours(hours, minutes, 0, 0);
+
+          // ✅ Vytvoř info o táhané události zo snapshot-u (nie zo search v events)
+          const draggedEventInfo = createDraggedEventInfoFromSnapshot(
+            dragState.value.originalEvent,
+            dragState.value.originalSeparator,
+            date,
+            sal,
+            newTime,
+          );
+
+          // Detekuj kolize
+          const collisionInfo = detectEventCollisions({
+            draggedEventInfo,
+            events: events.value,
+            timeHourFrom,
+            timeHourTo,
+          });
+
+          currentCollisionInfo.value = collisionInfo;
+          currentDraggedEventInfo.value = draggedEventInfo;
+
+          hasCollision = collisionInfo.hasCollision;
+          isOutOfBounds = collisionInfo.isOutOfBounds;
+        } else {
+          // Mimo drop slot
+          isOutOfBounds = true;
+          currentCollisionInfo.value = null;
+          currentDraggedEventInfo.value = null;
+        }
+
+        // ✅ VISUAL FEEDBACK BASED ON COLLISION STATE
+        const shouldShowInvalid = !dropSlot || hasCollision || isOutOfBounds;
+        dragState.value.dragElement.setAttribute("data-drop-invalid", shouldShowInvalid ? "true" : "false");
         if (dragState.value.separatorElement) {
-          dragState.value.separatorElement.setAttribute("data-drop-invalid", dropSlot ? "false" : "true");
+          dragState.value.separatorElement.setAttribute("data-drop-invalid", shouldShowInvalid ? "true" : "false");
         }
       });
 
@@ -101,11 +167,21 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
           dragState.value.separatorElement.removeAttribute("data-drop-invalid");
         }
 
+        // Úlož collision info before cleanup
+        const finalCollisionInfo = currentCollisionInfo.value;
+        const finalDraggedEventInfo = currentDraggedEventInfo.value;
+
+        // Cleanup collision state
+        currentCollisionInfo.value = null;
+        currentDraggedEventInfo.value = null;
+
         dragState.value = null;
         draggedEventId.value = "";
         draggedEventType.value = "";
 
-        if (dropSlot && onEventDrop$) {
+        if (dropSlot) {
+          // Drop slot found - proceeding with collision logic
+
           const date = new Date(dropSlot.getAttribute("data-date") || "");
           const sal = dropSlot.getAttribute("data-sal") as OjpSal;
           const slotIndex = parseInt(dropSlot.getAttribute("data-slot-index") || "0");
@@ -117,7 +193,26 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
           const newTime = new Date(date);
           newTime.setHours(hours, minutes, 0, 0);
 
-          onEventDrop$(eventId, separatorId, date, sal, newTime);
+          // Rozhodneť na základě collision info
+          if (finalCollisionInfo && finalDraggedEventInfo) {
+            if (finalCollisionInfo.isOutOfBounds) {
+              console.log("🔴 [DRAG] Out of bounds - calling onCollisionDetected");
+              if (onCollisionDetected$) {
+                onCollisionDetected$(finalCollisionInfo, finalDraggedEventInfo);
+              }
+              return;
+            } else if (finalCollisionInfo.hasCollision) {
+              console.log("🟠 [DRAG] Collision detected - calling onCollisionDetected");
+              if (onCollisionDetected$) {
+                onCollisionDetected$(finalCollisionInfo, finalDraggedEventInfo);
+              }
+              return;
+            }
+          }
+          console.log("🟢 [DRAG] No collision - normal drop");
+          if (onEventDrop$) {
+            onEventDrop$(eventId, separatorId, date, sal, newTime);
+          }
         }
       });
 
@@ -138,16 +233,17 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
     (eventId: string, eventType: string, startPos: { x: number; y: number }, element: HTMLElement) => {
       element.setAttribute("data-being-dragged", "true");
 
-      const draggedEvent = events.find((e) => e.id === eventId);
+      const draggedEvent = events.value.find((e) => e.id === eventId);
       if (!draggedEvent) return;
 
       // ✅ NAJDI PROPOJENÝ EVENT - OBOUSMĚRNĚ
       let separatorId: string | undefined;
       let separatorElement: HTMLElement | undefined;
+      let separatorEvent: OjpEventPositioned | undefined;
 
       if (eventType === "operace") {
         // ✅ OPERACE → hledej navazující separátor
-        const separator = events.find((event) => {
+        const separator = events.value.find((event) => {
           if (event.id === eventId) return false; // Skip sebe
           if (event.sal !== draggedEvent.sal) return false; // Musí být stejný sál
           if (event.dateFrom.toDateString() !== draggedEvent.dateFrom.toDateString()) return false; // Stejný den
@@ -160,11 +256,12 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
 
         if (separator) {
           separatorId = separator.id;
+          separatorEvent = separator;
           separatorElement = document.querySelector(`[data-event-id="${separator.id}"]`) as HTMLElement;
         }
       } else if (eventType === "uklid") {
         // ✅ SEPARÁTOR → hledej předchozí operaci
-        const operation = events.find((event) => {
+        const operation = events.value.find((event) => {
           if (event.id === eventId) return false; // Skip sebe
           if (event.sal !== draggedEvent.sal) return false; // Musí být stejný sál
           if (event.dateFrom.toDateString() !== draggedEvent.dateFrom.toDateString()) return false; // Stejný den
@@ -177,6 +274,7 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
 
         if (operation) {
           separatorId = operation.id;
+          separatorEvent = operation;
           separatorElement = document.querySelector(`[data-event-id="${operation.id}"]`) as HTMLElement;
         }
       }
@@ -192,6 +290,8 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
         },
         eventId,
         eventType,
+        originalEvent: draggedEvent, // ✅ Ulož snapshot pôvodného eventu
+        originalSeparator: separatorEvent, // ✅ Ulož snapshot separátora
         separatorElement,
         separatorId,
         startPos,
@@ -215,6 +315,8 @@ export function useDragAndDrop({ events, onEventDrop$, timeHourFrom }: UseDragAn
   );
 
   return {
+    currentCollisionInfo,
+    currentDraggedEventInfo,
     draggedEventId,
     draggedEventType,
     handleEventDrop,
