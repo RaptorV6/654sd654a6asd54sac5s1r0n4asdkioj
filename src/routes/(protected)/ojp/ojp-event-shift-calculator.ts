@@ -1,6 +1,8 @@
 import type { OjpEventPositioned } from "./_mock-events";
 import type { DraggedEventInfo } from "./ojp-collision-detection";
 
+import { timeRangesOverlap } from "./ojp-collision-detection";
+
 export interface EventShift {
   eventId: string;
   newEndTime: Date;
@@ -25,17 +27,12 @@ interface ShiftCalculationParams {
 }
 
 /**
- * Vypočítá chytrý posun událostí podle směru táhnutí
+ * ✅ ŘETĚZOVÝ POSUN: Postupně hledej jen skutečně kolidující události
  */
 export const calculateEventShifts = (params: ShiftCalculationParams): ShiftCalculationResult => {
   const { allEvents, draggedEventInfo, timeHourFrom, timeHourTo } = params;
 
-  // Určení směru posunu
-  const originalStartTime = draggedEventInfo.originalEvent.dateFrom;
-  const newStartTime = draggedEventInfo.newStartTime;
-  const direction: ShiftDirection = newStartTime >= originalStartTime ? "forward" : "backward";
-
-  // Najdi všechny události v daném sále a dni
+  // Najdi všechny události v daném sále a dni (kromě táhané)
   const sameSlotEvents = allEvents.filter((event) => {
     return (
       event.sal === draggedEventInfo.newSal &&
@@ -45,68 +42,197 @@ export const calculateEventShifts = (params: ShiftCalculationParams): ShiftCalcu
     );
   });
 
-  // Seřaď události podle času
-  const sortedEvents = sameSlotEvents.sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
+  // ✅ NAJDI OBLAST KAM SE TÁHNE + SEPARÁTOR
+  let occupiedStart = draggedEventInfo.newStartTime;
+  let occupiedEnd = draggedEventInfo.newEndTime;
 
-  // Najdi spojené dvojice operace+separátor
-  const eventPairs = findEventPairs(sortedEvents);
+  if (draggedEventInfo.newSeparatorStartTime && draggedEventInfo.newSeparatorEndTime) {
+    occupiedStart = new Date(Math.min(occupiedStart.getTime(), draggedEventInfo.newSeparatorStartTime.getTime()));
+    occupiedEnd = new Date(Math.max(occupiedEnd.getTime(), draggedEventInfo.newSeparatorEndTime.getTime()));
+  }
 
+  // ✅ NAJDI PŘÍMO KOLIDUJÍCÍ UDÁLOSTI
+  const directlyConflicting = sameSlotEvents.filter((event) => {
+    return timeRangesOverlap(occupiedStart, occupiedEnd, event.dateFrom, event.dateTo);
+  });
+
+  if (directlyConflicting.length === 0) {
+    return {
+      direction: draggedEventInfo.newStartTime >= draggedEventInfo.originalEvent.dateFrom ? "forward" : "backward",
+      eventsToShift: [],
+      isValid: true,
+    };
+  }
+
+  // ✅ ŘETĚZOVÝ POSUN
+  const direction: ShiftDirection =
+    draggedEventInfo.newStartTime >= draggedEventInfo.originalEvent.dateFrom ? "forward" : "backward";
   const eventsToShift: EventShift[] = [];
+  const processedIds = new Set<string>();
 
   if (direction === "forward") {
-    // Posun dopředu - posuň všechny události které začínají po newStartTime
-    const eventsToMove = eventPairs.filter((pair) => {
-      const pairStartTime = pair.operation ? pair.operation.dateFrom : pair.separator!.dateFrom;
-      return pairStartTime >= draggedEventInfo.newStartTime;
-    });
+    let currentTime = occupiedEnd;
 
-    let currentShiftTime = draggedEventInfo.newEndTime;
-    if (draggedEventInfo.newSeparatorEndTime) {
-      currentShiftTime = draggedEventInfo.newSeparatorEndTime;
-    }
+    // Začni s přímo kolidujícími událostmi
+    const toProcess = [...directlyConflicting].sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime());
 
-    for (const pair of eventsToMove) {
-      const shiftResult = shiftEventPair(pair, currentShiftTime, timeHourFrom, timeHourTo);
-      if (!shiftResult.isValid) {
+    while (toProcess.length > 0) {
+      const event = toProcess.shift()!;
+      if (processedIds.has(event.id)) continue;
+
+      // Najdi separátor k této události
+      let separator: OjpEventPositioned | undefined;
+      if (event.typ === "operace") {
+        separator = sameSlotEvents.find((e) => {
+          if (e.typ !== "uklid" || processedIds.has(e.id)) return false;
+          const timeDiff = Math.abs(e.dateFrom.getTime() - event.dateTo.getTime());
+          return timeDiff < 5 * 60 * 1000;
+        });
+      }
+
+      // Vypočítej nové pozice
+      const eventDuration = event.dateTo.getTime() - event.dateFrom.getTime();
+      const newEventEnd = new Date(currentTime.getTime() + eventDuration);
+
+      // Kontrola hranic
+      if (!isWithinBounds(currentTime, newEventEnd, event.dateFrom, timeHourFrom, timeHourTo)) {
         return {
           direction,
-          errorReason: shiftResult.errorReason,
+          errorReason: "Událost by opustila povolenou oblast kalendáře",
           eventsToShift: [],
           isValid: false,
         };
       }
-      eventsToShift.push(...shiftResult.shifts);
-      currentShiftTime = shiftResult.nextAvailableTime;
+
+      eventsToShift.push({
+        eventId: event.id,
+        newEndTime: newEventEnd,
+        newStartTime: currentTime,
+        originalEvent: event,
+      });
+
+      processedIds.add(event.id);
+      currentTime = newEventEnd;
+
+      // Posun i separátor
+      if (separator) {
+        const separatorDuration = separator.dateTo.getTime() - separator.dateFrom.getTime();
+        const newSeparatorEnd = new Date(currentTime.getTime() + separatorDuration);
+
+        if (!isWithinBounds(currentTime, newSeparatorEnd, separator.dateFrom, timeHourFrom, timeHourTo)) {
+          return {
+            direction,
+            errorReason: "Separátor by opustil povolenou oblast kalendáře",
+            eventsToShift: [],
+            isValid: false,
+          };
+        }
+
+        eventsToShift.push({
+          eventId: separator.id,
+          newEndTime: newSeparatorEnd,
+          newStartTime: currentTime,
+          originalEvent: separator,
+        });
+
+        processedIds.add(separator.id);
+        currentTime = newSeparatorEnd;
+      }
+
+      // ✅ KLICOVÁ LOGIKA: Zkontroluj jestli posunutá událost nezpůsobí další kolizi
+      const newlyConflicting = sameSlotEvents.filter((e) => {
+        if (processedIds.has(e.id)) return false;
+        if (toProcess.some((tp) => tp.id === e.id)) return false; // už je v frontě
+
+        // Koliduje s nově posunutou oblastí?
+        const shiftedStart =
+          currentTime.getTime() -
+          (separator ? eventDuration + (separator.dateTo.getTime() - separator.dateFrom.getTime()) : eventDuration);
+        const shiftedEnd = currentTime.getTime();
+
+        return timeRangesOverlap(new Date(shiftedStart), new Date(shiftedEnd), e.dateFrom, e.dateTo);
+      });
+
+      // Přidej nově kolidující události do fronty
+      toProcess.push(...newlyConflicting.sort((a, b) => a.dateFrom.getTime() - b.dateFrom.getTime()));
     }
   } else {
-    // Posun dozadu - posuň všechny události které končí před newEndTime
-    const eventsToMove = eventPairs
-      .filter((pair) => {
-        const pairEndTime = pair.separator ? pair.separator.dateTo : pair.operation!.dateTo;
-        return pairEndTime <= draggedEventInfo.newStartTime;
-      })
-      .reverse(); // Zpracováváme odzadu
+    // Dozadu - podobná logika, ale opačně
+    let currentTime = occupiedStart;
+    const toProcess = [...directlyConflicting].sort((a, b) => b.dateFrom.getTime() - a.dateFrom.getTime());
 
-    let currentShiftTime = draggedEventInfo.newStartTime;
-    if (draggedEventInfo.newSeparatorStartTime) {
-      currentShiftTime = draggedEventInfo.newSeparatorStartTime;
-    }
+    while (toProcess.length > 0) {
+      const event = toProcess.shift()!;
+      if (processedIds.has(event.id)) continue;
 
-    for (const pair of eventsToMove) {
-      const pairDuration = calculatePairDuration(pair);
-      const newPairStartTime = new Date(currentShiftTime.getTime() - pairDuration);
+      let separator: OjpEventPositioned | undefined;
+      if (event.typ === "operace") {
+        separator = sameSlotEvents.find((e) => {
+          if (e.typ !== "uklid" || processedIds.has(e.id)) return false;
+          const timeDiff = Math.abs(e.dateFrom.getTime() - event.dateTo.getTime());
+          return timeDiff < 5 * 60 * 1000;
+        });
+      }
 
-      const shiftResult = shiftEventPairBackward(pair, newPairStartTime, timeHourFrom, timeHourTo);
-      if (!shiftResult.isValid) {
+      const eventDuration = event.dateTo.getTime() - event.dateFrom.getTime();
+      const separatorDuration = separator ? separator.dateTo.getTime() - separator.dateFrom.getTime() : 0;
+      const totalDuration = eventDuration + separatorDuration;
+
+      const newEventStart = new Date(currentTime.getTime() - totalDuration);
+      const newEventEnd = new Date(newEventStart.getTime() + eventDuration);
+
+      if (!isWithinBounds(newEventStart, newEventEnd, event.dateFrom, timeHourFrom, timeHourTo)) {
         return {
           direction,
-          errorReason: shiftResult.errorReason,
+          errorReason: "Událost by opustila povolenou oblast kalendáře",
           eventsToShift: [],
           isValid: false,
         };
       }
-      eventsToShift.push(...shiftResult.shifts);
-      currentShiftTime = newPairStartTime;
+
+      eventsToShift.push({
+        eventId: event.id,
+        newEndTime: newEventEnd,
+        newStartTime: newEventStart,
+        originalEvent: event,
+      });
+
+      processedIds.add(event.id);
+
+      if (separator) {
+        const newSeparatorStart = newEventEnd;
+        const newSeparatorEnd = new Date(currentTime);
+
+        if (!isWithinBounds(newSeparatorStart, newSeparatorEnd, separator.dateFrom, timeHourFrom, timeHourTo)) {
+          return {
+            direction,
+            errorReason: "Separátor by opustil povolenou oblast kalendáře",
+            eventsToShift: [],
+            isValid: false,
+          };
+        }
+
+        eventsToShift.push({
+          eventId: separator.id,
+          newEndTime: newSeparatorEnd,
+          newStartTime: newSeparatorStart,
+          originalEvent: separator,
+        });
+
+        processedIds.add(separator.id);
+      }
+
+      currentTime = newEventStart;
+
+      // Najdi další kolidující události
+      const newlyConflicting = sameSlotEvents.filter((e) => {
+        if (processedIds.has(e.id)) return false;
+        if (toProcess.some((tp) => tp.id === e.id)) return false;
+
+        return timeRangesOverlap(newEventStart, new Date(currentTime), e.dateFrom, e.dateTo);
+      });
+
+      toProcess.push(...newlyConflicting.sort((a, b) => b.dateFrom.getTime() - a.dateFrom.getTime()));
     }
   }
 
@@ -115,208 +241,6 @@ export const calculateEventShifts = (params: ShiftCalculationParams): ShiftCalcu
     eventsToShift,
     isValid: true,
   };
-};
-
-interface EventPair {
-  operation?: OjpEventPositioned;
-  separator?: OjpEventPositioned;
-}
-
-/**
- * Najde spojené dvojice operace+separátor
- */
-const findEventPairs = (events: OjpEventPositioned[]): EventPair[] => {
-  const pairs: EventPair[] = [];
-  const processedIds = new Set<string>();
-
-  for (const event of events) {
-    if (processedIds.has(event.id)) continue;
-
-    if (event.typ === "operace") {
-      // Najdi navazující separátor
-      const separator = events.find((e) => {
-        if (e.typ !== "uklid" || processedIds.has(e.id)) return false;
-        const timeDiff = Math.abs(e.dateFrom.getTime() - event.dateTo.getTime());
-        return timeDiff < 5 * 60 * 1000; // 5 minut tolerance
-      });
-
-      pairs.push({ operation: event, separator });
-      processedIds.add(event.id);
-      if (separator) processedIds.add(separator.id);
-    } else if (event.typ === "uklid" && !processedIds.has(event.id)) {
-      // Osamocený separátor
-      pairs.push({ separator: event });
-      processedIds.add(event.id);
-    } else if (!processedIds.has(event.id)) {
-      // Jiné typy událostí (pauza, svatek)
-      pairs.push({ operation: event });
-      processedIds.add(event.id);
-    }
-  }
-
-  return pairs;
-};
-
-interface ShiftPairResult {
-  errorReason?: string;
-  isValid: boolean;
-  nextAvailableTime: Date;
-  shifts: EventShift[];
-}
-
-/**
- * Posune dvojici událostí dopředu
- */
-const shiftEventPair = (
-  pair: EventPair,
-  startTime: Date,
-  timeHourFrom: number,
-  timeHourTo: number,
-): ShiftPairResult => {
-  const shifts: EventShift[] = [];
-  let currentTime = startTime;
-
-  // Posun operace (nebo jiné události)
-  if (pair.operation) {
-    const duration = pair.operation.dateTo.getTime() - pair.operation.dateFrom.getTime();
-    const newEndTime = new Date(currentTime.getTime() + duration);
-
-    // Kontrola hranic
-    if (!isWithinBounds(currentTime, newEndTime, pair.operation.dateFrom, timeHourFrom, timeHourTo)) {
-      return {
-        errorReason: "Událost by opustila povolenou oblast kalendáře",
-        isValid: false,
-        nextAvailableTime: currentTime,
-        shifts: [],
-      };
-    }
-
-    shifts.push({
-      eventId: pair.operation.id,
-      newEndTime,
-      newStartTime: currentTime,
-      originalEvent: pair.operation,
-    });
-
-    currentTime = newEndTime;
-  }
-
-  // Posun separátoru
-  if (pair.separator) {
-    const duration = pair.separator.dateTo.getTime() - pair.separator.dateFrom.getTime();
-    const newEndTime = new Date(currentTime.getTime() + duration);
-
-    // Kontrola hranic
-    if (!isWithinBounds(currentTime, newEndTime, pair.separator.dateFrom, timeHourFrom, timeHourTo)) {
-      return {
-        errorReason: "Separátor by opustil povolenou oblast kalendáře",
-        isValid: false,
-        nextAvailableTime: currentTime,
-        shifts: [],
-      };
-    }
-
-    shifts.push({
-      eventId: pair.separator.id,
-      newEndTime,
-      newStartTime: currentTime,
-      originalEvent: pair.separator,
-    });
-
-    currentTime = newEndTime;
-  }
-
-  return {
-    isValid: true,
-    nextAvailableTime: currentTime,
-    shifts,
-  };
-};
-
-/**
- * Posune dvojici událostí dozadu
- */
-const shiftEventPairBackward = (
-  pair: EventPair,
-  newStartTime: Date,
-  timeHourFrom: number,
-  timeHourTo: number,
-): ShiftPairResult => {
-  const shifts: EventShift[] = [];
-  let currentTime = newStartTime;
-
-  // Posun operace (nebo jiné události) - začíná na newStartTime
-  if (pair.operation) {
-    const duration = pair.operation.dateTo.getTime() - pair.operation.dateFrom.getTime();
-    const newEndTime = new Date(currentTime.getTime() + duration);
-
-    // Kontrola hranic
-    if (!isWithinBounds(currentTime, newEndTime, pair.operation.dateFrom, timeHourFrom, timeHourTo)) {
-      return {
-        errorReason: "Událost by opustila povolenou oblast kalendáře",
-        isValid: false,
-        nextAvailableTime: currentTime,
-        shifts: [],
-      };
-    }
-
-    shifts.push({
-      eventId: pair.operation.id,
-      newEndTime,
-      newStartTime: currentTime,
-      originalEvent: pair.operation,
-    });
-
-    currentTime = newEndTime;
-  }
-
-  // Posun separátoru - navazuje po operaci
-  if (pair.separator) {
-    const duration = pair.separator.dateTo.getTime() - pair.separator.dateFrom.getTime();
-    const newEndTime = new Date(currentTime.getTime() + duration);
-
-    // Kontrola hranic
-    if (!isWithinBounds(currentTime, newEndTime, pair.separator.dateFrom, timeHourFrom, timeHourTo)) {
-      return {
-        errorReason: "Separátor by opustil povolenou oblast kalendáře",
-        isValid: false,
-        nextAvailableTime: currentTime,
-        shifts: [],
-      };
-    }
-
-    shifts.push({
-      eventId: pair.separator.id,
-      newEndTime,
-      newStartTime: currentTime,
-      originalEvent: pair.separator,
-    });
-
-    currentTime = newEndTime;
-  }
-
-  return {
-    isValid: true,
-    nextAvailableTime: currentTime,
-    shifts,
-  };
-};
-
-/**
- * Vypočítá celkovou dobu trvání dvojice událostí
- */
-const calculatePairDuration = (pair: EventPair): number => {
-  let totalDuration = 0;
-
-  if (pair.operation) {
-    totalDuration += pair.operation.dateTo.getTime() - pair.operation.dateFrom.getTime();
-  }
-
-  if (pair.separator) {
-    totalDuration += pair.separator.dateTo.getTime() - pair.separator.dateFrom.getTime();
-  }
-
-  return totalDuration;
 };
 
 /**

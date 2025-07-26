@@ -1,12 +1,12 @@
+/* eslint-disable no-console */
 import { Card } from "@akeso/ui-components";
 import { $, component$, useSignal, useStore, useTask$ } from "@builder.io/qwik";
 
-import type { OjpDen, OjpSal } from "./_mock-events";
+import type { OjpSal } from "./_mock-events";
 import type { CollisionInfo, DraggedEventInfo } from "./ojp-collision-detection";
 
 import { updateOjpEvent } from "./_actions";
 import { getWeekEvents, useOjpPlanningData } from "./_loaders";
-import { getDenFromDate } from "./_mock-events";
 import { OjpCalendarHeader } from "./ojp-calendar-header";
 import { OjpCollisionModal } from "./ojp-collision-modal";
 import { calculateEventShifts } from "./ojp-event-shift-calculator";
@@ -143,101 +143,115 @@ export const OjpPlanningCalendar = component$(() => {
         return;
       }
 
+      console.log(
+        `🔄 [EVENT DROP] Posún event ${eventId}${separatorId ? ` + separátor ${separatorId}` : ""} na ${newTime.toLocaleTimeString()}`,
+      );
+
       // ✅ MARK BOTH EVENTS AS PENDING
       const pendingIds = separatorId ? [eventId, separatorId] : [eventId];
       pendingUpdates.value = new Set([...pendingUpdates.value, ...pendingIds]);
 
       const originalDuration = event.dateTo.getTime() - event.dateFrom.getTime();
       const newEndTime = new Date(newTime.getTime() + originalDuration);
-      const newDen: OjpDen = getDenFromDate(newDate);
-
-      // ✅ UPDATE HLAVNÍ EVENT (to co se táhne)
-      const updatedEvents = eventsSignal.value.map((e) => {
-        if (e.id === eventId) {
-          return {
-            ...e,
-            dateFrom: newTime,
-            dateTo: newEndTime,
-            den: newDen,
-            sal: newSal,
-          };
-        }
-        // ✅ UPDATE PROPOJENÝ EVENT (pokud existuje)
-        if (separatorId && e.id === separatorId) {
-          const connectedDuration = e.dateTo.getTime() - e.dateFrom.getTime();
-
-          // ✅ SPRÁVNÉ POZICOVÁNÍ: záleží na tom co se táhne
-          let connectedStart: Date;
-          if (event.typ === "operace") {
-            // Táhnu operaci → separátor následuje za operací
-            connectedStart = new Date(newEndTime);
-          } else {
-            // Táhnu separátor → operace končí kde separátor začíná
-            connectedStart = new Date(newTime.getTime() - connectedDuration);
-          }
-
-          const connectedEnd = new Date(connectedStart.getTime() + connectedDuration);
-
-          return {
-            ...e,
-            dateFrom: connectedStart,
-            dateTo: connectedEnd,
-            den: newDen,
-            sal: newSal,
-          };
-        }
-        return e;
-      });
-      eventsSignal.value = updatedEvents;
-
-      // ✅ SERVER UPDATE - původní logika
       const localDate = new Date(newDate.getTime() - newDate.getTimezoneOffset() * 60000);
       const dateString = localDate.toISOString().split("T")[0];
 
-      const updateData = {
-        casDo: newEndTime.toTimeString().slice(0, 5),
-        casOd: newTime.toTimeString().slice(0, 5),
-        datum: dateString,
-        id: eventId,
-        operator: event.operator || "",
-        poznamka: event.poznamka || "",
-        sal: newSal,
-        title: event.title,
-        typ: event.typ,
+      // ✅ UPDATE HLAVNÍ EVENT
+      const updateMainEvent = async () => {
+        try {
+          const updateData = {
+            casDo: newEndTime.toTimeString().slice(0, 5),
+            casOd: newTime.toTimeString().slice(0, 5),
+            datum: dateString,
+            id: eventId,
+            operator: event.operator || "",
+            poznamka: event.poznamka || "",
+            sal: newSal,
+            title: event.title,
+            typ: event.typ,
+          };
+
+          console.log(`🔄 [SERVER] Ukládám hlavní event:`, updateData);
+          const result = updateOjpEvent(updateData);
+
+          if (result.failed) {
+            console.error(`❌ [SERVER] Chyba při ukládání hlavního eventu:`, result.message);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error(`❌ [SERVER] Exception při ukládání hlavního eventu:`, error);
+          return false;
+        }
       };
 
-      try {
-        const result = updateOjpEvent(updateData);
+      // ✅ UPDATE SEPARÁTOR (pokud existuje)
+      const updateSeparatorEvent = async () => {
+        if (!separatorId) return true;
 
-        // Clean up pending states
-        const newPending = new Set(pendingUpdates.value);
-        pendingIds.forEach((id) => newPending.delete(id));
-        pendingUpdates.value = newPending;
-
-        if (result.failed) {
-          // Rollback both events
-          eventsSignal.value = eventsSignal.value.map((e) => {
-            if (pendingIds.includes(e.id)) {
-              const originalEvent = eventsSignal.value.find((orig) => orig.id === e.id);
-              return originalEvent || e;
-            }
-            return e;
-          });
+        const separatorEvent = eventsSignal.value.find((e) => e.id === separatorId);
+        if (!separatorEvent) {
+          console.warn(`⚠️ [EVENT DROP] Separátor ${separatorId} nebyl nalezen`);
+          return true;
         }
-      } catch {
-        // Rollback on error
+
+        try {
+          const separatorDuration = separatorEvent.dateTo.getTime() - separatorEvent.dateFrom.getTime();
+          let separatorStart: Date;
+
+          if (event.typ === "operace") {
+            // Táhnu operaci → separátor následuje za operací
+            separatorStart = new Date(newEndTime);
+          } else {
+            // Táhnu separátor → operace končí kde separátor začíná
+            separatorStart = new Date(newTime.getTime() - separatorDuration);
+          }
+
+          const separatorEnd = new Date(separatorStart.getTime() + separatorDuration);
+
+          const separatorUpdateData = {
+            casDo: separatorEnd.toTimeString().slice(0, 5),
+            casOd: separatorStart.toTimeString().slice(0, 5),
+            datum: dateString,
+            id: separatorId,
+            operator: separatorEvent.operator || "",
+            poznamka: separatorEvent.poznamka || "",
+            sal: newSal,
+            title: separatorEvent.title,
+            typ: separatorEvent.typ,
+          };
+
+          console.log(`🔄 [SERVER] Ukládám separátor:`, separatorUpdateData);
+          const result = updateOjpEvent(separatorUpdateData);
+
+          if (result.failed) {
+            console.error(`❌ [SERVER] Chyba při ukládání separátoru:`, result.message);
+            return false;
+          }
+          return true;
+        } catch (error) {
+          console.error(`❌ [SERVER] Exception při ukládání separátoru:`, error);
+          return false;
+        }
+      };
+
+      // ✅ PARALELNÍ UPDATES
+      Promise.all([updateMainEvent(), updateSeparatorEvent()]).then(([mainSuccess, separatorSuccess]) => {
+        // Cleanup pending states
         const newPending = new Set(pendingUpdates.value);
         pendingIds.forEach((id) => newPending.delete(id));
         pendingUpdates.value = newPending;
 
-        eventsSignal.value = eventsSignal.value.map((e) => {
-          if (pendingIds.includes(e.id)) {
-            const originalEvent = eventsSignal.value.find((orig) => orig.id === e.id);
-            return originalEvent || e;
-          }
-          return e;
-        });
-      }
+        if (mainSuccess && separatorSuccess) {
+          console.log(`✅ [EVENT DROP] Úspěšně uloženo na server`);
+          // Refresh data ze serveru
+          refreshTrigger.value += 1;
+        } else {
+          console.error(`❌ [EVENT DROP] Chyba při ukládání - rollback`);
+          // Refresh data (rollback)
+          refreshTrigger.value += 1;
+        }
+      });
     },
   );
 
@@ -260,19 +274,36 @@ export const OjpPlanningCalendar = component$(() => {
     // Zavři modal
     showCollisionModal.value = false;
 
+    // ✅ OUT OF BOUNDS - jen zavři modal, nic neposunuj
     if (currentCollisionInfo.value.isOutOfBounds) {
-      // Out of bounds - není co dělat, jen ukliď
       currentCollisionInfo.value = null;
       currentDraggedEventInfo.value = null;
-      return;
+      return; // Událost zůstane na původním místě
     }
+
+    // Získej draggedEventInfo před jeho použitím
+    const draggedEventInfo = currentDraggedEventInfo.value;
 
     // Vypočítej nové pozice všech událostí
     const shiftResult = calculateEventShifts({
       allEvents: eventsSignal.value,
-      draggedEventInfo: currentDraggedEventInfo.value,
+      draggedEventInfo: draggedEventInfo,
       timeHourFrom: staticData.calendarHourFrom,
       timeHourTo: staticData.calendarHourTo,
+    });
+
+    console.log("🔧 [SHIFT DEBUG] Collision analysis:", {
+      calculatedShifts: shiftResult.eventsToShift.map(
+        (s) =>
+          `${s.originalEvent.title}: ${s.originalEvent.dateFrom.toLocaleTimeString()}-${s.originalEvent.dateTo.toLocaleTimeString()} -> ${s.newStartTime.toLocaleTimeString()}-${s.newEndTime.toLocaleTimeString()}`,
+      ),
+      conflictingEvents: currentCollisionInfo.value.conflictingEvents.map(
+        (e) => `${e.title} (${e.dateFrom.toLocaleTimeString()}-${e.dateTo.toLocaleTimeString()})`,
+      ),
+      draggedEvent: `${draggedEventInfo.originalEvent.title} (${draggedEventInfo.originalEvent.dateFrom.toLocaleTimeString()}-${draggedEventInfo.originalEvent.dateTo.toLocaleTimeString()})`,
+      isValid: shiftResult.isValid,
+      shiftDirection: shiftResult.direction,
+      targetPosition: `${draggedEventInfo.newStartTime.toLocaleTimeString()}-${draggedEventInfo.newEndTime.toLocaleTimeString()}`,
     });
 
     if (!shiftResult.isValid) {
@@ -283,7 +314,6 @@ export const OjpPlanningCalendar = component$(() => {
     }
 
     // Aplikuj posun na hlavní událost
-    const draggedEventInfo = currentDraggedEventInfo.value;
     handleEventDrop(
       draggedEventInfo.eventId,
       draggedEventInfo.separatorId,
@@ -292,11 +322,16 @@ export const OjpPlanningCalendar = component$(() => {
       draggedEventInfo.newStartTime,
     );
 
-    // Aplikuj posun na kolizní události
+    // ✅ Aplikuj posun na kolizní události BEZ separátorů
     for (const shift of shiftResult.eventsToShift) {
+      console.log(
+        `🔄 [SHIFT] Aplikuji posun: ${shift.originalEvent.title} -> ${shift.newStartTime.toLocaleTimeString()}-${shift.newEndTime.toLocaleTimeString()}`,
+      );
+
+      // ✅ NEPŘEDÁVEJ separatorId - logika v _actions.ts si najde separátor sama
       handleEventDrop(
         shift.eventId,
-        undefined, // Separátor se posune automaticky přes existing logiku
+        undefined, // ✅ Nechám undefined - separatory se posunou automaticky
         draggedEventInfo.newDate,
         draggedEventInfo.newSal,
         shift.newStartTime,
